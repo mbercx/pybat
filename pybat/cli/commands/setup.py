@@ -11,6 +11,7 @@ Setup scripts for the calculations.
 """
 
 DFT_FUNCTIONAL = "PBE_54"
+PBE_RELAX_INCAR = {"ISMEAR":0, "EDIFF":1e-4}
 
 def find_transition_structures(directory, initial_contains="init",
                                final_contains="final"):
@@ -70,12 +71,25 @@ def set_up_transition(directory, initial_structure, final_structure,
     final locations of the migrating ion.
 
     """
+
+    # Check if a magnetic moment was not provided for the sites. If not, make
+    # sure it is zero for the calculations.
+    if not "magmom" in initial_structure.site_properties.keys():
+        initial_structure.add_site_property("magmom",
+                                            [0]*len(initial_structure.sites))
+
+    if not "magmom" in final_structure.site_properties.keys():
+        final_structure.add_site_property("magmom",
+                                          [0] * len(initial_structure.sites))
+
     # Set up the initial and final optimization calculations
     initial_optimization = MPRelaxSet(structure=initial_structure,
-                                      potcar_functional=DFT_FUNCTIONAL)
+                                      potcar_functional=DFT_FUNCTIONAL,
+                                      user_incar_settings=PBE_RELAX_INCAR)
 
     final_optimization = MPRelaxSet(structure=final_structure,
-                                    potcar_functional=DFT_FUNCTIONAL)
+                                    potcar_functional=DFT_FUNCTIONAL,
+                                    user_incar_settings=PBE_RELAX_INCAR)
 
     # Set up the root directory for the neb calculation
     neb_dir = os.path.abspath(directory)
