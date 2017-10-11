@@ -47,9 +47,10 @@ def transition(directory, migration):
     (initial_structure_file,
      final_structure_file) = find_transition_files(directory)
 
-
-
-
+    set_up_transition(directory=directory,
+                      initial_structure=initial_structure_file,
+                      final_structure=final_structure_file,
+                      is_migration=migration)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
