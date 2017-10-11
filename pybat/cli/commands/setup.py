@@ -11,6 +11,33 @@ Setup scripts for the calculations.
 
 DFT_FUNCTIONAL = "PBE_54"
 
+def find_transition_files(directory, initial_contains="init",
+                          final_contains="final"):
+    """
+    Find the initial and final structure files for a transition.
+
+    Args:
+        directory:
+
+    Returns:
+
+    """
+    directory = os.path.abspath(directory)
+
+    initial_structure_file = None
+    final_structure_file = None
+
+    for item in os.listdir(directory):
+
+        if initial_contains in item and os.path.isfile(item):
+            initial_structure_file = os.path.join(directory, item)
+
+        if final_contains in item and os.path.isfile(item):
+            final_structure_file = os.path.join(directory, item)
+
+    return (initial_structure_file, final_structure_file)
+
+
 def define_migration():
     """
     This script allows the user to define a migration in a structure.
@@ -54,6 +81,7 @@ def set_up_transition(directory, initial_structure, final_structure,
         host_structure = initial_structure.remove_sites([migration_site_index])
         host_scf = MPStaticSet(host_structure)
         host_scf.write_input(os.path.join(neb_dir, "host"))
+
 
 def set_up_NEB(initial_structure, final_structure, charge_density):
     """

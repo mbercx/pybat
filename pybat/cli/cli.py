@@ -27,13 +27,27 @@ def setup():
 @click.option("--directory", "-d", default=".",
               help="Directory in which to set up the calculations for the "
                    "first step in the transition path determination. Note "
-                   "that this directory has to contain the structure files")
-def transition(directory, initial_):
+                   "that this directory has to contain the structure files "
+                   "for the initial and final state. ")
+@click.option("--migration", "-m", is_flag=True,
+              help="Flag to designate the transition as a migration. "
+                   "Activating this flag means that a static calculation will "
+                   "be set up to determine the charge density of the host "
+                   "structure, i.e. without the migrating ion. This charge "
+                   "density can then be used to find a good initial guess "
+                   "for the migration pathway.")
+def transition(directory, migration):
     """
     Set up a NEB calculation to study a transition of state in the structure.
     """
 
+    from pybat.cli.commands.setup import find_transition_files
     from pybat.cli.commands.setup import set_up_transition
+
+    (initial_structure_file,
+     final_structure_file) = find_transition_files(directory)
+
+
 
 
 
