@@ -13,6 +13,13 @@ Setup scripts for the calculations.
 DFT_FUNCTIONAL = "PBE_54"
 PBE_RELAX_INCAR = {"ISMEAR":0, "EDIFF":1e-4}
 
+def define_migration():
+    """
+    This script allows the user to define a migration in a structure.
+
+    """
+    pass
+
 def find_transition_structures(directory, initial_contains="init",
                                final_contains="final"):
     """
@@ -52,13 +59,6 @@ def find_transition_structures(directory, initial_contains="init",
 
     return (initial_structure, final_structure)
 
-
-def define_migration():
-    """
-    This script allows the user to define a migration in a structure.
-
-    """
-    pass
 
 def set_up_transition(directory, initial_structure, final_structure,
                       is_migration=False):

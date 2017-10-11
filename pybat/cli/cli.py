@@ -17,11 +17,27 @@ def main():
     pass
 
 @main.group(context_settings=CONTEXT_SETTINGS)
+def define():
+    """
+    Set up calculations.
+    """
+    pass
+
+@define.command(context_settings=CONTEXT_SETTINGS)
+def migration():
+    """
+    Set up a NEB calculation to study the migration of elements in the
+    structure.
+    """
+    pass
+
+@main.group(context_settings=CONTEXT_SETTINGS)
 def setup():
     """
     Set up calculations.
     """
     pass
+
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".",
@@ -51,15 +67,6 @@ def transition(directory, migration):
                       initial_structure=initial_structure,
                       final_structure=final_structure,
                       is_migration=migration)
-
-
-@setup.command(context_settings=CONTEXT_SETTINGS)
-def migration():
-    """
-    Set up a NEB calculation to study the migration of elements in the
-    structure.
-    """
-    pass
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
 def neb():
