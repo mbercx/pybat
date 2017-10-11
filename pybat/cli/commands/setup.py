@@ -3,6 +3,7 @@ import os
 
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
+from pymatgen.io.vasp.outputs import Chgcar
 from pymatgen.io.vasp.sets import MPRelaxSet, MPHSERelaxSet, MITNEBSet, \
     MPStaticSet
 
@@ -111,29 +112,55 @@ def set_up_transition(directory, initial_structure, final_structure,
         host_scf.write_input(os.path.join(neb_dir, "host"))
 
 
-def set_up_NEB(initial_structure, final_structure, charge_density):
+def set_up_NEB(directory, nimages=8, is_migration=False):
     """
-    Set up the NEB calculation from the initial and final structure.
+    Set up the NEB calculation from the initial and final structures.
 
     """
-    # Set up the static potential for the Pathfinder from the host charge
-    # density
-    host_potential = ChgcarPotential(charge_density)
+    directory = os.path.abspath(directory)
 
-    migration_site_index = initial_structure.sites.index(
-        find_migrating_ion(initial_structure, final_structure)
-    )
+    # Extract the optimized initial and final geometry
+    initial_dir = os.path.join(directory,"initial")
+    final_dir = os.path.join(directory,"final")
 
-    neb = NEBPathfinder(start_struct=initial_structure,
-                        end_struct=final_structure,
-                        relax_sites= migration_site_index,
-                        v=host_potential)
+    initial_structure = Structure.from_file(os.path.join(initial_dir,
+                                                         "CONTCAR"))
+    final_structure = Structure.from_file(os.path.join(final_dir,
+                                                       "CONTCAR"))
 
-    neb.plot_images("neb.vasp")
+    # In case the transition is a migration
+    if is_migration:
+        # Set up the static potential for the Pathfinder from the host charge
+        # density
+        host_charge_density = Chgcar.from_file(os.path.join(directory, "host"))
+        host_potential = ChgcarPotential(host_charge_density)
 
-    #neb_calculation = MITNEBSet()
+        migration_site_index = initial_structure.sites.index(
+            find_migrating_ion(initial_structure, final_structure)
+        )
 
-# Utility scripts
+        neb = NEBPathfinder(start_struct=initial_structure,
+                            end_struct=final_structure,
+                            relax_sites= migration_site_index,
+                            v=host_potential)
+
+        images = neb.images
+        neb.plot_images("neb.vasp")
+
+    else:
+        # Linearly interpolate the initial and final structures
+        images = initial_structure.interpolate(end_structure=final_structure,
+                                               nimages=nimages)
+
+
+    neb_calculation = MITNEBSet(images)
+
+    # Set up the NEB calculation
+    neb_calculation.write_input(directory)
+
+###########
+# UTILITY #
+###########
 
 def find_migrating_ion(initial_structure, final_structure):
     """

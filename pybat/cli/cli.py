@@ -54,7 +54,8 @@ def setup():
                    "for the migration pathway.")
 def transition(directory, migration):
     """
-    Set up a NEB calculation to study a transition of state in the structure.
+    Set up a the geometry optimizations for the initial and final state of a
+    transition.
     """
 
     from pybat.cli.commands.setup import find_transition_structures
@@ -69,7 +70,21 @@ def transition(directory, migration):
                       is_migration=migration)
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
-def neb():
+@click.option("--directory", "-d", default=".",
+              help="Directory in which to set up the calculations for the "
+                   "first step in the transition path determination. Note "
+                   "that this directory has to contain the structure files "
+                   "for the initial and final state. ")
+@click.option("--nimages", "-n", default=8,
+              help="Number of images.")
+@click.option("--migration", "-m", is_flag=True,
+              help="Flag to designate the transition as a migration. "
+                   "Activating this flag means that a static calculation will "
+                   "be set up to determine the charge density of the host "
+                   "structure, i.e. without the migrating ion. This charge "
+                   "density can then be used to find a good initial guess "
+                   "for the migration pathway.")
+def neb(directory, nimages, migration):
     """
     Set up the Nudged Elastic Band calculation based on the output in the
     initial and final directory.
@@ -77,4 +92,8 @@ def neb():
     Returns:
 
     """
+    from pybat.cli.commands.setup import set_up_NEB
 
+    set_up_NEB(directory=directory,
+               nimages=nimages,
+               is_migration=migration)
