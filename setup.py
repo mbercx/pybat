@@ -12,6 +12,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        pybat=pybat.cli.pybat:main
+        pybat=pybat.cli.cli:main
     '''
 )

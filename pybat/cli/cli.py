@@ -41,15 +41,15 @@ def transition(directory, migration):
     Set up a NEB calculation to study a transition of state in the structure.
     """
 
-    from pybat.cli.commands.setup import find_transition_files
+    from pybat.cli.commands.setup import find_transition_structures
     from pybat.cli.commands.setup import set_up_transition
 
-    (initial_structure_file,
-     final_structure_file) = find_transition_files(directory)
+    (initial_structure,
+     final_structure) = find_transition_structures(directory)
 
     set_up_transition(directory=directory,
-                      initial_structure=initial_structure_file,
-                      final_structure=final_structure_file,
+                      initial_structure=initial_structure,
+                      final_structure=final_structure,
                       is_migration=migration)
 
 

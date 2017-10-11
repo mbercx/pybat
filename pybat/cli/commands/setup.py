@@ -1,6 +1,7 @@
 import numpy as np
 import os
 
+from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
 from pymatgen.io.vasp.sets import MPRelaxSet, MPHSERelaxSet, MITNEBSet, \
     MPStaticSet
@@ -11,10 +12,11 @@ Setup scripts for the calculations.
 
 DFT_FUNCTIONAL = "PBE_54"
 
-def find_transition_files(directory, initial_contains="init",
-                          final_contains="final"):
+def find_transition_structures(directory, initial_contains="init",
+                               final_contains="final"):
     """
-    Find the initial and final structure files for a transition.
+    Find the initial and final structures for a transition from the files in a
+    directory.
 
     Args:
         directory:
@@ -35,7 +37,19 @@ def find_transition_files(directory, initial_contains="init",
         if final_contains in item and os.path.isfile(item):
             final_structure_file = os.path.join(directory, item)
 
-    return (initial_structure_file, final_structure_file)
+    if initial_structure_file:
+        initial_structure = Structure.from_file(initial_structure_file)
+    else:
+        raise FileNotFoundError("No suitably named initial structure file in "
+                                "directory.")
+
+    if final_structure_file:
+        final_structure = Structure.from_file(final_structure_file)
+    else:
+        raise FileNotFoundError("No suitably named final structure file in "
+                                "directory.")
+
+    return (initial_structure, final_structure)
 
 
 def define_migration():
