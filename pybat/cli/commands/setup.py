@@ -1,7 +1,9 @@
 import numpy as np
+import os
 
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
-from pymatgen.io.vasp.sets import MITRelaxSet, MITNEBSet, MPStaticSet
+from pymatgen.io.vasp.sets import MPRelaxSet, MPHSERelaxSet, MITNEBSet, \
+    MPStaticSet
 
 """
 Setup scripts for the calculations.
@@ -16,7 +18,8 @@ def define_migration():
     """
     pass
 
-def set_up_transition(initial_structure, final_structure, is_migration=False):
+def set_up_transition(directory, initial_structure, final_structure,
+                      is_migration=False):
     """
     This script will set up the geometry optimizations for the initial and final
     structures.
@@ -26,24 +29,31 @@ def set_up_transition(initial_structure, final_structure, is_migration=False):
     final locations of the migrating ion.
 
     """
+    # Set up the initial and final optimization calculations
+    initial_optimization = MPRelaxSet(structure=initial_structure,
+                                      potcar_functional=DFT_FUNCTIONAL)
 
-    initial_optimization = MITRelaxSet(structure=initial_structure,
-                                       potcar_functional=DFT_FUNCTIONAL)
+    final_optimization = MPRelaxSet(structure=final_structure,
+                                    potcar_functional=DFT_FUNCTIONAL)
 
-    final_optimization = MITRelaxSet(structure=final_structure,
-                                     potcar_functional=DFT_FUNCTIONAL)
+    # Set up the root directory for the neb calculation
+    neb_dir = os.path.abspath(directory)
 
+    # Write input files to directories
+    initial_optimization.write_input(os.path.join(neb_dir, "initial"))
+    final_optimization.write_input(os.path.join(neb_dir, "final"))
+
+    # If the transition is a migration of an atom in the structure, set up the
+    # calculation for the charge density, used to find a better initial pathway
     if is_migration:
+
         migration_site_index = initial_structure.sites.index(
             find_migrating_ion(initial_structure, final_structure)
         )
 
         host_structure = initial_structure.remove_sites([migration_site_index])
-
-
-
-
-
+        host_scf = MPStaticSet(host_structure)
+        host_scf.write_input(os.path.join(neb_dir, "host"))
 
 def set_up_NEB(initial_structure, final_structure, charge_density):
     """
