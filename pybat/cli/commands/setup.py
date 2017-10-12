@@ -12,7 +12,7 @@ Setup scripts for the calculations.
 """
 
 DFT_FUNCTIONAL = "PBE_54"
-PBE_RELAX_INCAR = {"ISMEAR":0, "EDIFF":1e-4}
+PBE_RELAX_INCAR = {"ISMEAR":0, "EDIFF":1e-4, "ISIF":2}
 
 def define_migration():
     """
