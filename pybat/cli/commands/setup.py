@@ -1,6 +1,7 @@
 import numpy as np
 import os
 
+from monty.serialization import loadfn
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
 from pymatgen.io.vasp.outputs import Chgcar
@@ -12,14 +13,16 @@ Setup scripts for the calculations.
 """
 
 DFT_FUNCTIONAL = "PBE_54"
+
 PBE_RELAX_INCAR = {"ISMEAR":0, "EDIFF":1e-4, "ISIF":2}
 
-def define_migration():
-    """
-    This script allows the user to define a migration in a structure.
+MODULE_DIR = os.path.abspath("../../set_configs/")
 
-    """
-    pass
+def _load_yaml_config(fname):
+    config = loadfn(os.path.join(MODULE_DIR, "%s.yaml" % fname))
+    return config
+
+NEB_CONFIG = _load_yaml_config()
 
 def find_transition_structures(directory, initial_contains="init",
                                final_contains="final"):
@@ -153,7 +156,7 @@ def set_up_NEB(directory, nimages=8, is_migration=False):
                                                nimages=nimages)
 
 
-    neb_calculation = MITNEBSet(images)
+    neb_calculation = MITNEBSet(images, potcar_functional=DFT_FUNCTIONAL)
 
     # Set up the NEB calculation
     neb_calculation.write_input(directory)

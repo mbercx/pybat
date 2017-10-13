@@ -22,6 +22,7 @@ def main():
 def define():
     """
     Set up calculations.
+
     """
     pass
 
@@ -29,10 +30,25 @@ def define():
 @define.command(context_settings=CONTEXT_SETTINGS)
 def migration():
     """
-    Set up a NEB calculation to study the migration of elements in the
-    structure.
+    Define a migration of an ion in a structure.
+
     """
     pass
+
+@define.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--site_indices", "-i", default=(0,0))
+@click.option("--distance", "-d", default=float(0))
+def dimer(structure_file, site_indices, distance):
+    """
+    Define the formation of a dimer in a structure.
+
+    """
+    from pybat.cli.commands.define import define_dimer
+
+    define_dimer(structure_file=structure_file,
+                 site_indices=site_indices,
+                 distance=distance)
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)

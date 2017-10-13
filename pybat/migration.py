@@ -11,6 +11,8 @@ battery cathodes
 
 """
 
+
+
 class Cathode(Structure):
     """
     A class representing a cathode material in a battery.
