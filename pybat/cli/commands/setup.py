@@ -1,12 +1,12 @@
 import numpy as np
 import os
 
-from monty.serialization import loadfn
+from pybat.sets import pybatRelaxSet, pybatNEBSet
+
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
 from pymatgen.io.vasp.outputs import Chgcar
-from pymatgen.io.vasp.sets import MPRelaxSet, MPHSERelaxSet, MITNEBSet, \
-    MPStaticSet
+from pymatgen.io.vasp.sets import MPRelaxSet, MPHSERelaxSet, MPStaticSet
 
 """
 Setup scripts for the calculations.
@@ -14,54 +14,22 @@ Setup scripts for the calculations.
 
 DFT_FUNCTIONAL = "PBE_54"
 
-PBE_RELAX_INCAR = {"ISMEAR":0, "EDIFF":1e-4, "ISIF":2}
-
-MODULE_DIR = os.path.abspath("../../set_configs/")
-
-def _load_yaml_config(fname):
-    config = loadfn(os.path.join(MODULE_DIR, "%s.yaml" % fname))
-    return config
-
-NEB_CONFIG = _load_yaml_config()
-
-def find_transition_structures(directory, initial_contains="init",
-                               final_contains="final"):
+def set_up_relaxation(structure_file, calculation_dir):
     """
-    Find the initial and final structures for a transition from the files in a
-    directory.
-
-    Args:
-        directory:
-
-    Returns:
+    Set up a standard relaxation of a structure.
 
     """
-    directory = os.path.abspath(directory)
+    USER_INCAR_SETTINGS = {"ISMEAR":0}
 
-    initial_structure_file = None
-    final_structure_file = None
+    structure_file = os.path.abspath(structure_file)
+    structure = Structure.from_file(structure_file)
+    calculation_dir = os.path.abspath(calculation_dir)
 
-    for item in os.listdir(directory):
+    geo_optimization = MPRelaxSet(structure=structure,
+                                  potcar_functional=DFT_FUNCTIONAL,
+                                  user_incar_settings=USER_INCAR_SETTINGS)
 
-        if initial_contains in item and os.path.isfile(item):
-            initial_structure_file = os.path.join(directory, item)
-
-        if final_contains in item and os.path.isfile(item):
-            final_structure_file = os.path.join(directory, item)
-
-    if initial_structure_file:
-        initial_structure = Structure.from_file(initial_structure_file)
-    else:
-        raise FileNotFoundError("No suitably named initial structure file in "
-                                "directory.")
-
-    if final_structure_file:
-        final_structure = Structure.from_file(final_structure_file)
-    else:
-        raise FileNotFoundError("No suitably named final structure file in "
-                                "directory.")
-
-    return (initial_structure, final_structure)
+    geo_optimization.write_input(calculation_dir)
 
 
 def set_up_transition(directory, initial_structure, final_structure,
@@ -87,13 +55,11 @@ def set_up_transition(directory, initial_structure, final_structure,
                                           [0] * len(initial_structure.sites))
 
     # Set up the initial and final optimization calculations
-    initial_optimization = MPRelaxSet(structure=initial_structure,
-                                      potcar_functional=DFT_FUNCTIONAL,
-                                      user_incar_settings=PBE_RELAX_INCAR)
+    initial_optimization = pybatRelaxSet(structure=initial_structure,
+                                      potcar_functional=DFT_FUNCTIONAL)
 
-    final_optimization = MPRelaxSet(structure=final_structure,
-                                    potcar_functional=DFT_FUNCTIONAL,
-                                    user_incar_settings=PBE_RELAX_INCAR)
+    final_optimization = pybatRelaxSet(structure=final_structure,
+                                    potcar_functional=DFT_FUNCTIONAL)
 
     # Set up the root directory for the neb calculation
     neb_dir = os.path.abspath(directory)
@@ -156,7 +122,7 @@ def set_up_NEB(directory, nimages=8, is_migration=False):
                                                nimages=nimages)
 
 
-    neb_calculation = MITNEBSet(images, potcar_functional=DFT_FUNCTIONAL)
+    neb_calculation = pybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL)
 
     # Set up the NEB calculation
     neb_calculation.write_input(directory)
@@ -164,6 +130,45 @@ def set_up_NEB(directory, nimages=8, is_migration=False):
 ###########
 # UTILITY #
 ###########
+
+def find_transition_structures(directory, initial_contains="init",
+                               final_contains="final"):
+    """
+    Find the initial and final structures for a transition from the files in a
+    directory.
+
+    Args:
+        directory:
+
+    Returns:
+
+    """
+    directory = os.path.abspath(directory)
+
+    initial_structure_file = None
+    final_structure_file = None
+
+    for item in os.listdir(directory):
+
+        if initial_contains in item and os.path.isfile(item):
+            initial_structure_file = os.path.join(directory, item)
+
+        if final_contains in item and os.path.isfile(item):
+            final_structure_file = os.path.join(directory, item)
+
+    if initial_structure_file:
+        initial_structure = Structure.from_file(initial_structure_file)
+    else:
+        raise FileNotFoundError("No suitably named initial structure file in "
+                                "directory.")
+
+    if final_structure_file:
+        final_structure = Structure.from_file(final_structure_file)
+    else:
+        raise FileNotFoundError("No suitably named final structure file in "
+                                "directory.")
+
+    return (initial_structure, final_structure)
 
 def find_migrating_ion(initial_structure, final_structure):
     """

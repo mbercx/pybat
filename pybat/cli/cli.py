@@ -60,6 +60,20 @@ def setup():
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--calculation_dir", "-d", default="relax",
+              help="The directory in which to set up the calculation.")
+def relax(structure_file, calculation_dir):
+    """
+    Set up a geometry optimization for a structure.
+    """
+    from pybat.cli.commands.setup import set_up_relaxation
+
+    set_up_relaxation(structure_file=structure_file,
+                      calculation_dir=calculation_dir)
+
+
+@setup.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".",
               help="Directory in which to set up the calculations for the "
                    "first step in the transition path determination. Note "

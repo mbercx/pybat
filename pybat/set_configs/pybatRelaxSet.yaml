@@ -3,9 +3,12 @@
 # with Materials Project data for analysis.
 INCAR:
   ALGO: FAST
+  EDIFF: 1.0e-05
+  ENCUT: 500
+  IBRION: 2
   ICHARG: 1
-  ISIF: 3
-  ISMEAR: -5
+  ISIF: 2
+  ISMEAR: 0
   ISPIN: 2
   LDAU: true
   LDAUJ:
@@ -67,6 +70,7 @@ INCAR:
       V: 3.25
       W: 6.2
   LDAUPRINT: 1
+  LMAXMIX: 4
   LORBIT: 11
   LREAL: AUTO
   LWAVE: false
