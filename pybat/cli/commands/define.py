@@ -1,5 +1,5 @@
 
-from pybat.migration import change_site_distance
+from pybat.core import change_site_distance
 from pymatgen.core import Structure
 
 """

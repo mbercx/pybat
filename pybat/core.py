@@ -1,17 +1,17 @@
 # Encoding: utf-8
 
-import pymatgen as pmg
+import os
+
 import numpy as np
 
 from pymatgen.core import Structure
+from pymatgen.io.vasp.sets import MITNEBSet
 
 """
 Module that contains tools to represent and calculate the properties of
 battery cathodes
 
 """
-
-
 
 class Cathode(Structure):
     """
