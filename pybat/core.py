@@ -29,12 +29,35 @@ class Cathode(Structure):
                              coords_are_cartesian=coords_are_cartesian,
                              site_properties=site_properties)
 
-    def remove_cations(self):
+    def remove_cations(self, cation="Li", indices=None):
         """
         Remove the cations from the cathode, i.e. delithiate the structure in
         case Li is the cation of the cathode.
 
         :return:
+        """
+
+        # If no indices are given
+        if indices == None:
+            # Remove all the cations
+            self.remove_species(cation)
+
+        # Else
+        else:
+            # Check if the indices provided correspond to cation sites
+            if not [self.sites[index].species_string for index in indices] == \
+                [cation]*len(indices):
+                raise IOError("Provided indices do not all correspond to a " +
+                              cation + " site!")
+            # Remove the cations with the requested indices
+            self.remove_sites(indices)
+
+    def find_cation_configurations(self):
+        """
+
+
+        Returns:
+
         """
         pass
 

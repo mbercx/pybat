@@ -17,9 +17,11 @@ Package that described the various calculation sets used.
 MODULE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           "set_configs/")
 
+
 def _load_yaml_config(fname):
     config = loadfn(os.path.join(MODULE_DIR, "%s.yaml" % fname))
     return config
+
 
 class pybatRelaxSet(DictSet):
     """
@@ -31,10 +33,17 @@ class pybatRelaxSet(DictSet):
 
     CONFIG = _load_yaml_config("pybatRelaxSet")
 
-    def __init__(self, structure, **kwargs):
+    def __init__(self, structure, hse_calculation=False, **kwargs):
         super(pybatRelaxSet, self).__init__(
             structure, pybatNEBSet.CONFIG, **kwargs
         )
+
+        # HSE specific defaults
+        if hse_calculation:
+            hse_config = {"ALGO": "All", "HFSCREEN": 0.2, "LDAU": False,
+                          "LHFCALC": True, "PRECFOCK": "Fast"}
+            self._config_dict["INCAR"].update(hse_config)
+
         self.kwargs = kwargs
 
 
@@ -46,19 +55,16 @@ class pybatNEBSet(pybatRelaxSet):
     However, note that we changed the defaults to include LDA+U.
 
     Args:
-        unset_encut (bool): Whether to unset ENCUT.
         \\*\\*kwargs: Other kwargs supported by :class:`DictSet`.
     """
 
-    def __init__(self, structures, unset_encut=False, **kwargs):
+    def __init__(self, structures, hse_calculation=False, **kwargs):
         if len(structures) < 3:
             raise ValueError("You need at least 3 structures for an NEB.")
         kwargs["sort_structure"] = False
-        super(pybatNEBSet, self).__init__(structures[0], **kwargs)
-        self.structures = self._process_structures(structures)
-        self.unset_encut = False
-        if unset_encut:
-            self._config_dict["INCAR"].pop("ENCUT", None)
+        super(pybatNEBSet, self).__init__(structures[0], hse_calculation,
+                                          **kwargs)
+        self._structures = self._process_structures(structures)
 
         if "EDIFF" not in self._config_dict["INCAR"]:
             self._config_dict["INCAR"]["EDIFF"] = self._config_dict[
@@ -76,6 +82,10 @@ class pybatNEBSet(pybatRelaxSet):
     @property
     def poscars(self):
         return [Poscar(s) for s in self.structures]
+
+    @property
+    def structures(self):
+        return self._structures
 
     def _process_structures(self, structures):
         """
@@ -139,3 +149,16 @@ class pybatNEBSet(pybatRelaxSet):
                 sites.add(PeriodicSite(site.species_and_occu, site.frac_coords, l))
             nebpath = Structure.from_sites(sorted(sites))
             nebpath.to(filename=os.path.join(output_dir, 'path.cif'))
+
+    def visualize_transition(self, filename="transition"):
+        """
+        Write a file to show the transition
+
+        """
+
+        transition_structure = self.structures[0].copy()
+        for structure in self.structures[1:]:
+            for site in structure:
+                transition_structure.append(site.specie, site.frac_coords)
+
+        transition_structure.to("cif", filename + ".cif")

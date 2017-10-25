@@ -63,14 +63,16 @@ def setup():
 @click.argument("structure_file", nargs=1)
 @click.option("--calculation_dir", "-d", default="relax",
               help="The directory in which to set up the calculation.")
-def relax(structure_file, calculation_dir):
+@click.option("--hse", "-H", is_flag=True)
+def relax(structure_file, calculation_dir, hse):
     """
     Set up a geometry optimization for a structure.
     """
     from pybat.cli.commands.setup import set_up_relaxation
 
     set_up_relaxation(structure_file=structure_file,
-                      calculation_dir=calculation_dir)
+                      calculation_dir=calculation_dir,
+                      hse_calculation=hse)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -86,7 +88,8 @@ def relax(structure_file, calculation_dir):
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
-def transition(directory, is_migration):
+@click.option("--hse", "-H", is_flag=True)
+def transition(directory, is_migration, hse):
     """
     Set up a the geometry optimizations for the initial and final state of a
     transition.
@@ -109,7 +112,7 @@ def transition(directory, is_migration):
               help="Directory in which to set up the calculations for the "
                    "first step in the transition path determination. Note "
                    "that this directory has to contain the structure files "
-                   "for the initial and final state. ")
+                   "for the initial and final state.")
 @click.option("--nimages", "-n", default=8,
               help="Number of images.")
 @click.option("--is_migration", "-m", is_flag=True,
@@ -119,7 +122,8 @@ def transition(directory, is_migration):
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
-def neb(directory, nimages, is_migration):
+@click.option("--hse", "-H", is_flag=True)
+def neb(directory, nimages, is_migration, hse):
     """
     Set up the Nudged Elastic Band calculation based on the output in the
     initial and final directory.
@@ -131,4 +135,38 @@ def neb(directory, nimages, is_migration):
 
     set_up_NEB(directory=directory,
                nimages=nimages,
-               is_migration=is_migration)
+               is_migration=is_migration,
+               hse_calculation=hse)
+
+
+@main.group(context_settings=CONTEXT_SETTINGS)
+def util():
+    """
+    Utility command for the pybat package.
+
+    """
+    pass
+
+@util.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".")
+@click.option("--filename", "-f", default="neb_result")
+def showpath(directory, filename):
+    """
+    Combine the images of a NEB calculation to show the transition.
+
+    """
+    from pybat.cli.commands.util import show_path
+
+    show_path(directory=directory,
+              filename=filename)
+
+@util.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".")
+def barrier(directory):
+    """
+    Combine the images of a NEB calculation to show the transition.
+
+    """
+    from pybat.cli.commands.util import plot_barrier
+
+    plot_barrier(directory=directory)
