@@ -5,7 +5,7 @@ from pybat.sets import pybatRelaxSet, pybatNEBSet
 
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
-from pymatgen.io.vasp.outputs import Chgcar
+from pymatgen.io.vasp.outputs import Chgcar, Outcar
 from pymatgen.io.vasp.sets import MPRelaxSet, MPHSERelaxSet, MPStaticSet
 
 """
@@ -14,7 +14,7 @@ Setup scripts for the calculations.
 
 DFT_FUNCTIONAL = "PBE_54"
 
-def set_up_relaxation(structure_file, calculation_dir):
+def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
     """
     Set up a standard relaxation of a structure.
 
@@ -25,15 +25,20 @@ def set_up_relaxation(structure_file, calculation_dir):
     structure = Structure.from_file(structure_file)
     calculation_dir = os.path.abspath(calculation_dir)
 
-    geo_optimization = MPRelaxSet(structure=structure,
-                                  potcar_functional=DFT_FUNCTIONAL,
-                                  user_incar_settings=USER_INCAR_SETTINGS)
+    if hse_calculation:
+        geo_optimization = MPHSERelaxSet(structure=structure,
+                                         potcar_functional=DFT_FUNCTIONAL)
+
+    else:
+        geo_optimization = MPRelaxSet(structure=structure,
+                                      potcar_functional=DFT_FUNCTIONAL,
+                                      user_incar_settings=USER_INCAR_SETTINGS)
 
     geo_optimization.write_input(calculation_dir)
 
 
 def set_up_transition(directory, initial_structure, final_structure,
-                      is_migration=False):
+                      is_migration=False, hse_calculation=False):
     """
     This script will set up the geometry optimizations for the initial and final
     structures.
@@ -56,10 +61,12 @@ def set_up_transition(directory, initial_structure, final_structure,
 
     # Set up the initial and final optimization calculations
     initial_optimization = pybatRelaxSet(structure=initial_structure,
-                                      potcar_functional=DFT_FUNCTIONAL)
+                                         potcar_functional=DFT_FUNCTIONAL,
+                                         hse_calculation=hse_calculation)
 
     final_optimization = pybatRelaxSet(structure=final_structure,
-                                    potcar_functional=DFT_FUNCTIONAL)
+                                       potcar_functional=DFT_FUNCTIONAL,
+                                       hse_calculation=hse_calculation)
 
     # Set up the root directory for the neb calculation
     neb_dir = os.path.abspath(directory)
@@ -81,7 +88,8 @@ def set_up_transition(directory, initial_structure, final_structure,
         host_scf.write_input(os.path.join(neb_dir, "host"))
 
 
-def set_up_NEB(directory, nimages=8, is_migration=False):
+def set_up_NEB(directory, nimages=8, is_migration=False,
+               hse_calculation=False):
     """
     Set up the NEB calculation from the initial and final structures.
 
@@ -96,6 +104,11 @@ def set_up_NEB(directory, nimages=8, is_migration=False):
                                                          "CONTCAR"))
     final_structure = Structure.from_file(os.path.join(final_dir,
                                                        "CONTCAR"))
+
+    # Add the magnetic configuration to the initial structure
+    initial_out = Outcar(os.path.join(initial_dir,"OUTCAR"))
+    initial_magmom = [site["tot"] for site in initial_out.magnetization]
+    initial_structure.add_site_property("magmom", initial_magmom)
 
     # In case the transition is a migration
     if is_migration:
@@ -126,6 +139,9 @@ def set_up_NEB(directory, nimages=8, is_migration=False):
 
     # Set up the NEB calculation
     neb_calculation.write_input(directory)
+
+    # Make a file to visualize the transition
+    neb_calculation.visualize_transition()
 
 ###########
 # UTILITY #
