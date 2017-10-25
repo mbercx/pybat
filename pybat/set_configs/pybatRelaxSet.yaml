@@ -74,6 +74,7 @@ INCAR:
   LORBIT: 11
   LREAL: AUTO
   LWAVE: false
+  MAGMOM: true
   NELM: 100
   NSW: 99
   PREC: Accurate
