@@ -43,3 +43,24 @@ def conventional_structure(structure_file, fmt="cif"):
     conv_structure_file = structure_file.split(".")[0] + "_conv" + "." + fmt
     spg.get_conventional_standard_structure().to(fmt, conv_structure_file)
 
+def make_supercell(structure_file, supercell, fmt="cif"):
+    """
+
+    Args:
+        structure_file:
+        supercell:
+        fmt:
+
+    Returns:
+
+    """
+    # Turn into list TODO add checks
+    supercell_list = [int(number) for number in supercell]
+
+    structure = Structure.from_file(structure_file)
+    structure.make_supercell(supercell_list)
+
+    super_structure_file = structure_file.split(".")[0] + "_" + supercell\
+                           + "." + fmt
+    structure.to(fmt, super_structure_file)
+
