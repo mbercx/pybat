@@ -25,6 +25,11 @@ def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
     structure = Structure.from_file(structure_file)
     calculation_dir = os.path.abspath(calculation_dir)
 
+    # Check if a magnetic moment was not provided for the sites. If not, make
+    # sure it is zero for the calculations.
+    if not "magmom" in structure.site_properties.keys():
+        structure.add_site_property("magmom", [0] * len(structure.sites))
+
     if hse_calculation:
         geo_optimization = MPHSERelaxSet(structure=structure,
                                          potcar_functional=DFT_FUNCTIONAL)
