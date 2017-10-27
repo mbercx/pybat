@@ -28,12 +28,17 @@ def define():
 
 
 @define.command(context_settings=CONTEXT_SETTINGS)
-def migration():
+@click.argument("structure_file", nargs=1)
+@click.option("--write_cif", "-c", is_flag=True)
+def migration(structure_file, write_cif):
     """
     Define a migration of an ion in a structure.
 
     """
-    pass
+    from pybat.cli.commands.define import define_migration
+
+    define_migration(structure_file=structure_file,
+                     write_cif=write_cif)
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
@@ -173,6 +178,21 @@ def conv(structure_file, format):
 
     conventional_structure(structure_file=structure_file,
                            fmt=format)
+
+@util.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("supercell", nargs=1)
+@click.argument("structure_file", nargs=1)
+@click.option("--format", "-F", default="cif")
+def super(supercell, structure_file, format):
+    """
+    Convert a structure to a supercell.
+
+    """
+    from pybat.cli.commands.util import make_supercell
+
+    make_supercell(structure_file=structure_file,
+                   supercell=supercell,
+                   fmt=format)
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
