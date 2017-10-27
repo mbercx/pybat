@@ -1,7 +1,9 @@
 
 import os
 
+from pymatgen.core import Structure
 from pymatgen.analysis.transition_state import NEBAnalysis
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 """
 Utility command for the pybat package.
@@ -25,14 +27,19 @@ def show_path(directory, filename):
 
     transition_structure.to("cif", filename + ".cif")
 
-def plot_barrier(directory):
+
+def conventional_structure(structure_file, fmt="cif"):
     """
-    Plot the migration barrier of a transition in a directory.
+
     Args:
-        directory:
+        structure_file:
 
     Returns:
 
     """
-    neb = NEBAnalysis.from_dir(directory)
-    neb.get_plot().show()
+    structure = Structure.from_file(structure_file)
+    spg = SpacegroupAnalyzer(structure)
+
+    conv_structure_file = structure_file.split(".")[0] + "_conv" + ".json"
+    spg.get_conventional_standard_structure().to(fmt, conv_structure_file)
+

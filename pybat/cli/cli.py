@@ -160,13 +160,58 @@ def showpath(directory, filename):
     show_path(directory=directory,
               filename=filename)
 
+
 @util.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--format", "-F", default="cif")
+def conv(structure_file, format):
+    """
+    Convert a structure into the conventional unit cell.
+
+    """
+    from pybat.cli.commands.util import conventional_structure
+
+    conventional_structure(structure_file=structure_file,
+                           fmt=format)
+
+
+@main.group(context_settings=CONTEXT_SETTINGS)
+def get():
+    """
+    Obtain data from output files.
+
+    """
+    pass
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".")
+def structure(directory):
+    """
+    Obtain the structure with its magnetic configuration.
+
+    """
+    from pybat.cli.commands.get import get_structure
+
+    get_structure(directory=directory)
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
 def barrier(directory):
     """
     Combine the images of a NEB calculation to show the transition.
 
     """
-    from pybat.cli.commands.util import plot_barrier
+    from pybat.cli.commands.get import get_barrier
 
-    plot_barrier(directory=directory)
+    get_barrier(directory=directory)
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
+def voltage():
+    """
+    Calculate the voltage for a battery cathode versus a Li anode.
+    """
+    pass
+    # TODO
