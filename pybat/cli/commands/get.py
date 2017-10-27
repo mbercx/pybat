@@ -5,6 +5,8 @@ from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.analysis.transition_state import NEBAnalysis
 
+# Total Energy per Li of metallic lithium
+LI_ENERGY = -1.89
 
 def get_structure(directory):
     """
@@ -38,3 +40,17 @@ def get_barrier(directory):
     """
     neb = NEBAnalysis.from_dir(directory)
     neb.get_plot().show()
+
+def get_voltage(directory, calculation="relax", functional=None):
+    """
+    Calculate the voltage of a battery consisting of a cathode specified by the
+    directory versus a metallic Li anode.
+
+    Args:
+        directory:
+
+    Returns:
+
+    """
+    pass
+
