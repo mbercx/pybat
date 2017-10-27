@@ -40,6 +40,6 @@ def conventional_structure(structure_file, fmt="cif"):
     structure = Structure.from_file(structure_file)
     spg = SpacegroupAnalyzer(structure)
 
-    conv_structure_file = structure_file.split(".")[0] + "_conv" + ".json"
+    conv_structure_file = structure_file.split(".")[0] + "_conv" + "." + fmt
     spg.get_conventional_standard_structure().to(fmt, conv_structure_file)
 
