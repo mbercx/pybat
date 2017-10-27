@@ -76,6 +76,7 @@ INCAR:
   LWAVE: false
   MAGMOM: true
   NELM: 100
+  NELMIN: 5
   NSW: 99
   PREC: Accurate
   SIGMA: 0.05
