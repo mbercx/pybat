@@ -4,7 +4,7 @@ import itertools
 
 import numpy as np
 
-from pymatgen.core import Structure, Element
+from pymatgen.core import Structure, Element, Molecule
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 
@@ -18,10 +18,16 @@ battery cathodes
 VORONOI_DIST_FACTOR = 1.3
 VORONOI_ANG_FACTOR = 0.7
 
+# Tuple of possible cations
+CATIONS = (Element("Li"), Element("Na"), Element("Mg"))
+
 
 class Cathode(Structure):
     """
     A class representing a cathode material in a battery.
+
+    The Cathode starts in a completely discharged state, i.e. with all cations
+    present.
     """
     def __init__(self, lattice, species, coords, validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -34,8 +40,30 @@ class Cathode(Structure):
                              to_unit_cell=to_unit_cell,
                              coords_are_cartesian=coords_are_cartesian,
                              site_properties=site_properties)
-        self._lithium_positions = []
+
+        self._cation_configuration = self.cation_sites
         self._voronoi = None
+
+    @property
+    def cation_sites(self):
+        """
+        A list of all indices which correspond to cations in the Cathode.
+        Returns:
+
+        """
+        return [index for index in range(len(self.sites))
+                if self.sites[index].specie in CATIONS]
+
+    @property
+    def cation_configuration(self):
+        """
+        The configuration of the cations present in the Cathode, i.e. the
+        indices of the cations.
+
+        Returns:
+
+        """
+        return self._cation_configuration
 
     @property
     def voronoi(self):
@@ -64,7 +92,7 @@ class Cathode(Structure):
         # If no indices are given
         if indices is None:
             # Remove all the cations
-            self.remove_species(cation)
+            self._cation_configuration = []
 
         # Else
         else:
@@ -172,12 +200,14 @@ class Cathode(Structure):
         oxygen_environment = self.copy()
         oxygen_environment.remove_sites(remove_indices)
 
+        # Turn the structure into a molecule
+        oxygen_environment = Molecule.from_sites(oxygen_environment.sites)
 
         if filename == None:
-            filename = str(self.composition).replace(" ", "") \
+            filename = str(self.composition).replace(" ", "") + "_" \
                        + str(dimer_indices[0]) + "_" + str(dimer_indices[1])
-        else:
-            oxygen_environment.to("xyz", filename + ".xyz")
+
+        oxygen_environment.to("xyz", filename + ".xyz")
 
     def change_site_distance(self, site_indices, distance):
         """
@@ -282,13 +312,16 @@ def test_script(structure_file):
     cat = Cathode.from_file(structure_file)
 
     print(cat)
-    site_index = input("Please give the site around which you would like to "
-                       "study O-O dimers:")
+    site_index = int(input("Please give the site around which you would like to "
+                       "study O-O dimers: "))
 
     dimers = cat.find_oxygen_dimers(site_index)
 
     print("Oxygen dimers of site")
     print(dimers)
+
+    for dimer in dimers:
+        cat.visualize_dimer_environment(dimer)
 
 
 
