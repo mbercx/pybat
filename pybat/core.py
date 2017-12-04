@@ -173,47 +173,53 @@ class Cathode(Structure):
 
         return oxygen_dimers
 
-    def visualize_dimer_environment(self, dimer_indices, filename=None):
-        """
-        Remove all the atoms which are not part of the environment of a dimer
-        in order to see the environment more clearly.
-
-        Returns:
-
-        """
+    def get_dimer_environment(self, dimer_indices):
 
         # Find the oxygen neighbours
         oxygen_A_neighbors = [
             neighbor["index"] for neighbor
             in self.voronoi.neighbors(dimer_indices[0], VORONOI_DIST_FACTOR,
-                                 VORONOI_ANG_FACTOR)
+                                      VORONOI_ANG_FACTOR)
         ]
         oxygen_B_neighbors = [
             neighbor["index"] for neighbor
             in self.voronoi.neighbors(dimer_indices[1], VORONOI_DIST_FACTOR,
-                                 VORONOI_ANG_FACTOR)
+                                      VORONOI_ANG_FACTOR)
         ]
 
         # Determine the indices of the oxygen environment
-        oxygen_environment_indices = set(dimer_indices)\
+        dimer_environment_indices = set(dimer_indices) \
             .union(oxygen_A_neighbors).union(oxygen_B_neighbors)
+
+        return dimer_environment_indices
+
+    def visualize_dimer_environment(self, dimer_indices, filename=None):
+        """
+        Remove all the atoms which are not part of the environment of a dimer
+        and creates a .xyz file of the oxygen dimer environment in order to see
+        it more clearly.
+
+        Returns:
+
+        """
+        dimer_environment_indices = self.get_dimer_environment(dimer_indices)
+
         # Determine the indices which are to be removed
         remove_indices = [i for i in range(len(self.sites))
-                          if i not in oxygen_environment_indices]
+                          if i not in dimer_environment_indices]
 
-
-        # Set up the oxygen environment structure
-        oxygen_environment = self.copy()
-        oxygen_environment.remove_sites(remove_indices)
+        # Set up the dimer environment structure
+        dimer_environment = self.copy()
+        dimer_environment.remove_sites(remove_indices)
 
         # Turn the structure into a molecule
-        oxygen_environment = Molecule.from_sites(oxygen_environment.sites)
+        dimer_environment = Molecule.from_sites(dimer_environment.sites)
 
         if filename == None:
             filename = str(self.composition).replace(" ", "") + "_" \
                        + str(dimer_indices[0]) + "_" + str(dimer_indices[1])
 
-        oxygen_environment.to("xyz", filename + ".xyz")
+        dimer_environment.to("xyz", filename + ".xyz")
 
     def change_site_distance(self, site_indices, distance):
         """
@@ -273,26 +279,42 @@ class Cathode(Structure):
         Returns:
 
         """
-        # Find the oxygen neighbours
-        oxygen_A_neighbors = [
-            neighbor["index"] for neighbor
-            in self.voronoi.neighbors(dimer_indices[0], VORONOI_DIST_FACTOR,
-                                      VORONOI_ANG_FACTOR)
-        ]
-        oxygen_B_neighbors = [
-            neighbor["index"] for neighbor
-            in self.voronoi.neighbors(dimer_indices[1], VORONOI_DIST_FACTOR,
-                                      VORONOI_ANG_FACTOR)
-        ]
-        dimer_neighbour_indices = set(oxygen_B_neighbors)\
-            .union(oxygen_A_neighbors)
 
-        # Find the indices of the neighbouring cations
+        # Find the indices of the dimer environment
+        dimer_environment_indices = self.get_dimer_environment(dimer_indices)
+
         remove_indices = [index for index in range(len(self.sites))
-                          if index in dimer_neighbour_indices and
+                          if index in dimer_environment_indices and
                           self.species[index] in CATIONS]
 
         self._cation_configuration.remove(remove_indices)
+
+    def find_noneq_dimers(self, dimers):
+        """
+        A script that distills the non-equivalent oxygen dimers from a list of
+        dimers.
+
+        Returns:
+
+        """
+
+        noneq_dimers = []
+        pass
+
+    def compare_dimers(self, dimers):
+        """
+        A script that checks if two oxygen dimers in the structure are
+        equivalent.
+
+        Args:
+            dimers:
+
+        Returns:
+
+        """
+
+        dimer_A = Molecule.from_sites()
+
 
     def set_to_high_spin(self):
         """
