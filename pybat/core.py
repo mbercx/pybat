@@ -126,6 +126,86 @@ class Cathode(Structure):
         """
         raise NotImplementedError
 
+    def change_site_distance(self, site_indices, distance):
+        """
+        Change the coordinates of two sites in a structure in order to adjust
+        their distance.
+
+        Args:
+            self: (pymatgen.core.structure.Structure)
+            site_indices:
+
+        Returns:
+            None
+        """
+
+        site_A = self.sites[site_indices[0]]
+        site_B = self.sites[site_indices[1]]
+
+        # Find the distance between the sites, as well as the image of site B
+        # closest to site A
+        (original_distance, closest_image_B) = site_A.distance_and_image(
+            site_B)
+
+        image_cart_coords = self.lattice.get_cartesian_coords(
+            site_B.frac_coords + closest_image_B
+        )
+
+        # Calculate the vector that connects site A with site B
+        connection_vector = image_cart_coords - site_A.coords
+
+        # Make it a unit vector
+        connection_vector /= np.linalg.norm(connection_vector)
+
+        # Calculate the distance the sites need to be moved.
+        site_move_distance = (original_distance - distance) / 2
+
+        # Calculate the new cartesian coordinates of the sites
+        new_site_A_coords = site_A.coords + site_move_distance * connection_vector
+        new_site_B_coords = site_B.coords - site_move_distance * connection_vector
+
+        # Change the sites in the structure
+        self.replace(i=site_indices[0], species=site_A.species_string,
+                     coords=new_site_A_coords,
+                     coords_are_cartesian=True,
+                     properties=site_A.properties)
+
+        self.replace(i=site_indices[1], species=site_B.species_string,
+                     coords=new_site_B_coords,
+                     coords_are_cartesian=True,
+                     properties=site_B.properties)
+
+    def set_to_high_spin(self):
+        """
+
+        :return:
+        """
+        pass
+
+    def set_to_low_spin(self):
+        """
+
+        :return:
+        """
+        pass
+
+
+class LiRichCathode(Cathode):
+    """
+    A class representing a Li-rich cathode material.
+
+    """
+    def __init__(self, lattice, species, coords, validate_proximity=False,
+                 to_unit_cell=False, coords_are_cartesian=False,
+                 site_properties=None):
+
+        super(LiRichCathode, self).__init__(
+            lattice=lattice, species=species, coords=coords,
+            validate_proximity=validate_proximity, to_unit_cell=to_unit_cell,
+            coords_are_cartesian=coords_are_cartesian,
+            site_properties=site_properties
+        )
+
     def find_oxygen_dimers(self, site_index):
         """
         Returns a list of index pairs corresponding to the oxygen dimers that
@@ -304,71 +384,6 @@ class Cathode(Structure):
         print(pointgroup_analyzer_A.symmops)
 
         # TODO FINISH
-
-
-    def change_site_distance(self, site_indices, distance):
-        """
-        Change the coordinates of two sites in a structure in order to adjust
-        their distance.
-
-        Args:
-            self: (pymatgen.core.structure.Structure)
-            site_indices:
-
-        Returns:
-            None
-        """
-
-        site_A = self.sites[site_indices[0]]
-        site_B = self.sites[site_indices[1]]
-
-        # Find the distance between the sites, as well as the image of site B
-        # closest to site A
-        (original_distance, closest_image_B) = site_A.distance_and_image(
-            site_B)
-
-        image_cart_coords = self.lattice.get_cartesian_coords(
-            site_B.frac_coords + closest_image_B
-        )
-
-        # Calculate the vector that connects site A with site B
-        connection_vector = image_cart_coords - site_A.coords
-
-        # Make it a unit vector
-        connection_vector /= np.linalg.norm(connection_vector)
-
-        # Calculate the distance the sites need to be moved.
-        site_move_distance = (original_distance - distance) / 2
-
-        # Calculate the new cartesian coordinates of the sites
-        new_site_A_coords = site_A.coords + site_move_distance * connection_vector
-        new_site_B_coords = site_B.coords - site_move_distance * connection_vector
-
-        # Change the sites in the structure
-        self.replace(i=site_indices[0], species=site_A.species_string,
-                     coords=new_site_A_coords,
-                     coords_are_cartesian=True,
-                     properties=site_A.properties)
-
-        self.replace(i=site_indices[1], species=site_B.species_string,
-                     coords=new_site_B_coords,
-                     coords_are_cartesian=True,
-                     properties=site_B.properties)
-
-    def set_to_high_spin(self):
-        """
-
-        :return:
-        """
-        pass
-
-    def set_to_low_spin(self):
-        """
-
-        :return:
-        """
-        pass
-
 
 def test_script(structure_file):
 
