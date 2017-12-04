@@ -81,7 +81,7 @@ class Cathode(Structure):
         else:
             return self._voronoi
 
-    def remove_cations(self, cation="Li", indices=None):
+    def remove_cations(self, indices=None):
         """
         Remove the cations from the cathode, i.e. delithiate the structure in
         case Li is the cation of the cathode.
@@ -97,21 +97,23 @@ class Cathode(Structure):
         # Else
         else:
             # Check if the indices provided correspond to cation sites
-            if not [self.sites[index].species_string for index in indices] == \
-                            [cation]*len(indices):
-                raise IOError("Provided indices do not all correspond to a " +
-                              cation + " site!")
+            for index in indices:
+                if not self.sites[index].specie in CATIONS:
+                    raise IOError("Provided indices do not all correspond to "
+                                  "a cation site!")
+
             # Remove the cations with the requested indices
-            self.remove_sites(indices)
+            self._cation_configuration.remove(indices)
 
     def find_cation_configurations(self):
         """
-
+        Plan is to find all non-equivalent cation configurations. Is probably
+        already implemented elsewhere.
 
         Returns:
 
         """
-        pass
+        raise NotImplementedError
 
     def find_oxygen_dimers(self, site_index):
         """
