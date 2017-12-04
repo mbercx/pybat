@@ -4,7 +4,7 @@ import itertools
 
 import numpy as np
 
-from pymatgen.core import Structure, Element, Molecule
+from pymatgen.core import Structure, Element, Molecule, Site
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
@@ -198,7 +198,34 @@ class Cathode(Structure):
         dimer_environment_indices = set(dimer_indices) \
             .union(oxygen_A_neighbors).union(oxygen_B_neighbors)
 
-        return dimer_environment_indices
+        # Recover the corresponding sites
+        dimer_environment = [self.sites[index] for index
+                             in dimer_environment_indices]
+
+        return dimer_environment
+
+    def get_dimer_molecule(self, dimer_environment):
+
+        # TODO Add serious unit tests for this one.
+        # Find the center of the oxygen sites
+        oxygen_sites = []
+        for site in dimer_environment:
+            if site.specie == Element("O"):
+                oxygen_sites.append(site)
+
+        oxygen_center = sum([site.frac_coords for site in oxygen_sites])
+
+        molecule_sites = []
+
+        for site in dimer_environment:
+
+            jimage = site.distance_and_image_from_frac_coords(oxygen_center)[1]
+            image_cart_coords = self.lattice.get_cartesian_coords(
+                site.frac_coords + jimage
+            )
+            molecule_sites.append(Site(site.specie, image_cart_coords))
+
+         return Molecule.from_sites(molecule_sites)
 
     def visualize_dimer_environment(self, dimer_indices, filename=None):
         """
@@ -209,17 +236,16 @@ class Cathode(Structure):
         Returns:
 
         """
-        dimer_environment_sites = [self.sites[index] for index in
-                                   self.get_dimer_environment(dimer_indices)]
+        dimer_environment = self.get_dimer_environment(dimer_indices)
 
         # Turn the structure into a molecule
-        dimer_environment = Molecule.from_sites(dimer_environment_sites)
+        dimer_environment_molecule = self.get_dimer_molecule(dimer_environment)
 
         if filename == None:
             filename = str(self.composition).replace(" ", "") + "_" \
                        + str(dimer_indices[0]) + "_" + str(dimer_indices[1])
 
-        dimer_environment.to("xyz", filename + ".xyz")
+        dimer_environment_molecule.to("xyz", filename + ".xyz")
 
 
     def remove_dimer_cations(self, dimer_indices):
@@ -266,10 +292,8 @@ class Cathode(Structure):
         """
 
         # Obtain the dimer environments
-        dimer_environment_A = [self.sites[index] for index in
-                               self.get_dimer_environment(dimers[0])]
-        dimer_environment_B = [self.sites[index] for index in
-                               self.get_dimer_environment(dimers[1])]
+        dimer_environment_A = self.get_dimer_environment(dimers[0])
+        dimer_environment_B = self.get_dimer_environment(dimers[1])
 
         # Transform the dimer environments into molecules
         dimer_A = Molecule.from_sites(dimer_environment_A)
@@ -362,7 +386,7 @@ def test_script(structure_file):
 
     for dimer in dimers:
         cat.visualize_dimer_environment(dimer)
-        cat.comare_dimers(dimer, dimers[0])
+        cat.compare_dimers([dimer, dimers[0]])
 
 
 
