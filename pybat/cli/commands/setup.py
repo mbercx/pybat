@@ -19,7 +19,7 @@ def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
     Set up a standard relaxation of a structure.
 
     """
-    USER_INCAR_SETTINGS = {"ISMEAR":0}
+    USER_INCAR_SETTINGS = {"ISMEAR": 0}
 
     structure_file = os.path.abspath(structure_file)
     structure = Structure.from_file(structure_file)
@@ -32,7 +32,8 @@ def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
 
     if hse_calculation:
         geo_optimization = MPHSERelaxSet(structure=structure,
-                                         potcar_functional=DFT_FUNCTIONAL)
+                                         potcar_functional=DFT_FUNCTIONAL,
+                                         user_incar_settings={"EDIFFG": -0.01})
 
     else:
         geo_optimization = MPRelaxSet(structure=structure,
@@ -88,8 +89,10 @@ def set_up_transition(directory, initial_structure, final_structure,
             find_migrating_ion(initial_structure, final_structure)
         )
 
-        host_structure = initial_structure.remove_sites([migration_site_index])
-        host_scf = MPStaticSet(host_structure)
+        host_structure = initial_structure.copy()
+        host_structure.remove_sites([migration_site_index])
+        host_scf = MPStaticSet(host_structure,
+                               potcar_functional=DFT_FUNCTIONAL)
         host_scf.write_input(os.path.join(neb_dir, "host"))
 
 
