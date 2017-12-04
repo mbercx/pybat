@@ -1,5 +1,5 @@
 
-from pybat.core import change_site_distance
+from pybat.core import Cathode, change_site_distance
 from pymatgen.core import Structure
 
 """
@@ -10,7 +10,7 @@ interface.
 
 
 
-def define_migration(structure_file, write_cif=False):
+def define_migration(structure_file, provide_coords=False, write_cif=False):
     """
     This script allows the user to define a migration in a structure.
 
@@ -19,6 +19,10 @@ def define_migration(structure_file, write_cif=False):
     site should migrate to which other one. The script then removes the atom
     which occupies the site to which the cation migrates. After this, the user
     can still remove other atoms as desired.
+
+    A second addition is the possibility of choosing the final migration
+    coordinates, in case the final site is not among the sites of the
+    structure.
 
     """
     final_structure = Structure.from_file(structure_file)
@@ -30,28 +34,53 @@ def define_migration(structure_file, write_cif=False):
     print("")
     migration_site_index = int(input("Please provide the index of the "
                                      "migrating cation:\n"))
-    print("")
-    final_site_index = int(input("Please provide the index of the site to "
-                                 "which the cation is migrating:\n"))
+    if provide_coords:
+        final_coords = input("Please provide the final fractional coordinates "
+                             "of the migrating site:\n")
+        final_coords = [float(number) for number
+                        in list(final_coords.split(" "))]
+    else:
+        print("")
+        final_site_index = int(input("Please provide the index of the site to "
+                                     "which the cation is migrating:\n"))
     print("")
     remove_site_indices = input("Provide addition site indices to remove:\n")
 
-    remove_site_indices = tuple([int(number) for number in
-                                 list(remove_site_indices.split(" "))])
+    # A bit of processing
+    if remove_site_indices == "":
+        remove_site_indices = []
+    else:
+        remove_site_indices = [int(number) for number in
+                               list(remove_site_indices.split(" "))]
+
+    migration_species = final_structure.sites[migration_site_index].specie
 
     initial_structure = final_structure.copy()
-    # Replace the final migration site by the migrating species
-    final_structure.replace(final_site_index,
-                            final_structure.sites[migration_site_index].specie,
-                            properties=final_structure.sites[
-                                migration_site_index].properties)
+    if provide_coords:
+        # Add the final position of the migrating ion
+        final_structure.append(migration_species,
+                               final_coords,
+                               properties=final_structure.sites[
+                                    migration_site_index].properties)
+    else:
+        # Replace the final migration site by the migrating species
+        final_structure.replace(final_site_index,
+                                migration_species,
+                                properties=final_structure.sites[
+                                    migration_site_index].properties)
 
     # Remove the original site from the final structure, as well as the other
     # sites which are to be removed.
     final_structure.remove_sites([migration_site_index] + remove_site_indices)
 
-    # Remove the other sites from the initial structure as well
-    initial_structure.remove_sites(remove_site_indices)
+    if provide_coords:
+        # Remove the other sites as determined by the user
+        initial_structure.remove_sites(remove_site_indices)
+    else:
+        # Remove the final site from the initial structure, as well as the
+        # other sites which are to be removed.
+        initial_structure.remove_sites([final_site_index] +
+                                       remove_site_indices)
 
     # Write out the initial and final structures
     initial_structure.to("json", "init.json")
@@ -63,7 +92,8 @@ def define_migration(structure_file, write_cif=False):
         final_structure.to("cif", "final.cif")
 
 
-def define_dimer(structure_file, site_indices=(0,0), distance=0):
+def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
+                 remove_cations=False):
     """
     Define a dimerization of oxygen in a structure.
 
@@ -71,20 +101,20 @@ def define_dimer(structure_file, site_indices=(0,0), distance=0):
 
     """
 
-    structure = Structure.from_file(structure_file)
+    cathode = Cathode.from_file(structure_file)
 
-    if site_indices == (0,0):
+    if dimer_indices == (0, 0):
         print("")
         print("No site indices were given for structure:")
         print("")
-        print(structure)
+        print(cathode)
         print("")
-        site_indices = input("Please provide the two indices of the elements "
+        dimer_indices = input("Please provide the two indices of the elements "
                              "that need to form a dimer, separated by a "
                              "space: \n")
 
-        site_indices = tuple([int(number) for number in
-                              list(site_indices.split(" "))])
+        dimer_indices = tuple([int(number) for number in
+                               list(dimer_indices.split(" "))])
 
     if distance == 0:
         print("")
@@ -92,8 +122,17 @@ def define_dimer(structure_file, site_indices=(0,0), distance=0):
                          "in the dimer: \n")
         distance = float(distance)
 
-    change_site_distance(structure, site_indices, distance)
+    if remove_cations:
+        # Remove the cations around the oxygen dimer
+        cathode.remove_dimer_cations(dimer_indices)
 
-    dimer_structure_file = structure_file.split(".")[0] + "_dimer" + ".json"
-    structure.to("json", dimer_structure_file)
+    dimer_structure_file = structure_file.split(".")[0] + "_dimer_init" \
+                           + ".json"
+    cathode.to(dimer_structure_file)
+
+    cathode.change_site_distance(dimer_indices, distance)
+
+    dimer_structure_file = structure_file.split(".")[0] + "_dimer_final" \
+                           + ".json"
+    cathode.to("json", dimer_structure_file)
 
