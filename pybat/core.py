@@ -230,8 +230,8 @@ class Cathode(Structure):
     def visualize_dimer_environment(self, dimer_indices, filename=None):
         """
         Remove all the atoms which are not part of the environment of a dimer
-        and creates a .xyz file of the oxygen dimer environment in order to see
-        it more clearly.
+        and creates a .xyz file of the oxygen dimer environment in order to
+        visualize it more clearly.
 
         Returns:
 
@@ -259,13 +259,12 @@ class Cathode(Structure):
         """
 
         # Find the indices of the dimer environment
-        dimer_environment_indices = self.get_dimer_environment(dimer_indices)
+        dimer_environment = self.get_dimer_environment(dimer_indices)
 
-        remove_indices = [index for index in range(len(self.sites))
-                          if index in dimer_environment_indices and
-                          self.species[index] in CATIONS]
+        remove_sites = [site for site in dimer_environment
+                       if site.specie in CATIONS]
 
-        self._cation_configuration.remove(remove_indices)
+        self.remove_cations(remove_sites)
 
     def find_noneq_dimers(self, dimers):
         """
@@ -296,15 +295,15 @@ class Cathode(Structure):
         dimer_environment_B = self.get_dimer_environment(dimers[1])
 
         # Transform the dimer environments into molecules
-        dimer_A = Molecule.from_sites(dimer_environment_A)
-        dimer_B = Molecule.from_sites(dimer_environment_B)
+        dimer_A = self.get_dimer_molecule(dimer_environment_A)
+        dimer_B = self.get_dimer_molecule(dimer_environment_B)
 
         # Center the molecules
-        pointgroup_A = PointGroupAnalyzer(dimer_A)
-        pointgroup_B = PointGroupAnalyzer(dimer_B)
+        pointgroup_analyzer_A = PointGroupAnalyzer(dimer_A)
 
-        print(pointgroup_A.get_pointgroup())
-        print(pointgroup_B.get_pointgroup())
+        print(pointgroup_analyzer_A.symmops)
+
+        # TODO FINISH
 
 
     def change_site_distance(self, site_indices, distance):
