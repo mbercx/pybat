@@ -18,7 +18,9 @@ battery cathodes
 VORONOI_DIST_FACTOR = 1.3
 VORONOI_ANG_FACTOR = 0.7
 
-# Tuple of possible cations
+# Tuple of possible cations. This idea should work rather well, considering
+# the fact that these cation elements rarely serve another purpose than being
+# a cation.
 CATIONS = (Element("Li"), Element("Na"), Element("Mg"))
 
 
@@ -41,6 +43,7 @@ class Cathode(Structure):
                              coords_are_cartesian=coords_are_cartesian,
                              site_properties=site_properties)
 
+        # TODO Currently works with indices... Perhaps switching to sites is more pythonic?
         self._cation_configuration = self.cation_sites
         self._voronoi = None
 
@@ -53,6 +56,7 @@ class Cathode(Structure):
         """
         return [index for index in range(len(self.sites))
                 if self.sites[index].specie in CATIONS]
+
 
     @property
     def cation_configuration(self):
@@ -260,7 +264,7 @@ class Cathode(Structure):
                      coords_are_cartesian=True,
                      properties=site_B.properties)
 
-    def remove_dimer_cations(self, dimer_indices, cation="Li"):
+    def remove_dimer_cations(self, dimer_indices):
         """
 
         Args:
@@ -286,13 +290,9 @@ class Cathode(Structure):
         # Find the indices of the neighbouring cations
         remove_indices = [index for index in range(len(self.sites))
                           if index in dimer_neighbour_indices and
-                          self.species[index] == Element(cation)]
+                          self.species[index] in CATIONS]
 
-        # Set up the dimer structure
-        dimer_structure = self.copy()
-        dimer_structure.remove_sites(remove_indices)
-
-        return dimer_structure
+        self._cation_configuration.remove(remove_indices)
 
     def set_to_high_spin(self):
         """
