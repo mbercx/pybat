@@ -5,6 +5,7 @@ import itertools
 import numpy as np
 
 from pymatgen.core import Structure, Element, Molecule
+from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 
@@ -274,6 +275,14 @@ class Cathode(Structure):
         dimer_A = Molecule.from_sites(dimer_environment_A)
         dimer_B = Molecule.from_sites(dimer_environment_B)
 
+        # Center the molecules
+        pointgroup_A = PointGroupAnalyzer(dimer_A)
+        pointgroup_B = PointGroupAnalyzer(dimer_B)
+
+        print(pointgroup_A.get_pointgroup())
+        print(pointgroup_B.get_pointgroup())
+
+
     def change_site_distance(self, site_indices, distance):
         """
         Change the coordinates of two sites in a structure in order to adjust
@@ -353,6 +362,7 @@ def test_script(structure_file):
 
     for dimer in dimers:
         cat.visualize_dimer_environment(dimer)
+        cat.comare_dimers(dimer, dimers[0])
 
 
 
