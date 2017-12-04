@@ -2,8 +2,9 @@
 # Reasonably robust. Use this if you intend to combine your calculated data
 # with Materials Project data for analysis.
 INCAR:
-  ALGO: FAST
-  EDIFF: 1.0e-05
+  ALGO: Normal
+  EDIFF: 1.0e-4
+  EDIFFG: -0.01
   ENCUT: 500
   IBRION: 2
   ICHARG: 1

@@ -29,8 +29,9 @@ def define():
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--write_cif", "-c", is_flag=True)
-def migration(structure_file, write_cif):
+@click.option("--provide_coords", "-C", is_flag=True)
+@click.option("--write_cif", "-w", is_flag=True)
+def migration(structure_file, provide_coords, write_cif):
     """
     Define a migration of an ion in a structure.
 
@@ -38,13 +39,15 @@ def migration(structure_file, write_cif):
     from pybat.cli.commands.define import define_migration
 
     define_migration(structure_file=structure_file,
+                     provide_coords=provide_coords,
                      write_cif=write_cif)
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--site_indices", "-i", default=(0,0))
+@click.option("--dimer_indices", "-i", default=(0,0))
 @click.option("--distance", "-d", default=float(0))
-def dimer(structure_file, site_indices, distance):
+@click.option("--remove_cations", "-R", isflag=True)
+def dimer(structure_file, dimer_indices, distance, remove_cations):
     """
     Define the formation of a dimer in a structure.
 
@@ -52,8 +55,9 @@ def dimer(structure_file, site_indices, distance):
     from pybat.cli.commands.define import define_dimer
 
     define_dimer(structure_file=structure_file,
-                 site_indices=site_indices,
-                 distance=distance)
+                 dimer_indices=dimer_indices,
+                 distance=distance,
+                 remove_cations=remove_cations)
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -235,3 +239,13 @@ def voltage():
     """
     pass
     # TODO
+
+@main.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file")
+def test(structure_file):
+    """
+    Scripts or methods in the testing phase!
+    """
+    from pybat.core import test_script
+
+    test_script(structure_file)
