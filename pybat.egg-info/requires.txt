@@ -1,0 +1,4 @@
+pymatgen
+numpy
+scipy
+click
