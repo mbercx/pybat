@@ -50,19 +50,18 @@ class Cathode(Structure):
     @property
     def cation_sites(self):
         """
-        A list of all indices which correspond to cations in the Cathode.
+        A list of all sites which correspond to cations in the Cathode.
+
         Returns:
 
         """
-        return [index for index in range(len(self.sites))
-                if self.sites[index].specie in CATIONS]
-
+        return [site for site in self.sites if site.specie in CATIONS]
 
     @property
     def cation_configuration(self):
         """
         The configuration of the cations present in the Cathode, i.e. the
-        indices of the cations.
+        sites of all the present cations.
 
         Returns:
 
@@ -85,7 +84,7 @@ class Cathode(Structure):
         else:
             return self._voronoi
 
-    def remove_cations(self, indices=None):
+    def remove_cations(self, sites=None):
         """
         Remove the cations from the cathode, i.e. delithiate the structure in
         case Li is the cation of the cathode.
@@ -94,20 +93,20 @@ class Cathode(Structure):
         """
 
         # If no indices are given
-        if indices is None:
+        if sites is None:
             # Remove all the cations
             self._cation_configuration = []
 
         # Else
         else:
             # Check if the indices provided correspond to cation sites
-            for index in indices:
-                if not self.sites[index].specie in CATIONS:
+            for site in sites:
+                if not site.specie in CATIONS:
                     raise IOError("Provided indices do not all correspond to "
                                   "a cation site!")
 
             # Remove the cations with the requested indices
-            self._cation_configuration.remove(indices)
+            self._cation_configuration.remove(sites)
 
     def find_cation_configurations(self):
         """
