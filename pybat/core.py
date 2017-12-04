@@ -4,6 +4,8 @@ import itertools
 
 import numpy as np
 
+from monty.json import MSONable
+
 from pymatgen.core import Structure, Element, Molecule, Site
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
@@ -260,74 +262,6 @@ class LiRichCathode(Cathode):
 
         return oxygen_dimers
 
-    def get_dimer_environment(self, dimer_indices):
-
-        # Find the oxygen neighbours
-        oxygen_A_neighbors = [
-            neighbor["index"] for neighbor
-            in self.voronoi.neighbors(dimer_indices[0], VORONOI_DIST_FACTOR,
-                                      VORONOI_ANG_FACTOR)
-        ]
-        oxygen_B_neighbors = [
-            neighbor["index"] for neighbor
-            in self.voronoi.neighbors(dimer_indices[1], VORONOI_DIST_FACTOR,
-                                      VORONOI_ANG_FACTOR)
-        ]
-
-        # Determine the indices of the oxygen environment
-        dimer_environment_indices = set(dimer_indices) \
-            .union(oxygen_A_neighbors).union(oxygen_B_neighbors)
-
-        # Recover the corresponding sites
-        dimer_environment = [self.sites[index] for index
-                             in dimer_environment_indices]
-
-        return dimer_environment
-
-    def get_dimer_molecule(self, dimer_environment):
-
-        # TODO Add serious unit tests for this one.
-        # Find the center of the oxygen sites
-        oxygen_sites = []
-        for site in dimer_environment:
-            if site.specie == Element("O"):
-                oxygen_sites.append(site)
-
-        oxygen_center = sum([site.frac_coords for site in oxygen_sites])/2
-
-        molecule_sites = []
-
-        for site in dimer_environment:
-
-            jimage = site.distance_and_image_from_frac_coords(oxygen_center)[1]
-            image_cart_coords = self.lattice.get_cartesian_coords(
-                site.frac_coords - jimage
-            )
-            molecule_sites.append(Site(site.specie, image_cart_coords))
-
-        return Molecule.from_sites(molecule_sites)
-
-    def visualize_dimer_environment(self, dimer_indices, filename=None):
-        """
-        Remove all the atoms which are not part of the environment of a dimer
-        and creates a .xyz file of the oxygen dimer environment in order to
-        visualize it more clearly.
-
-        Returns:
-
-        """
-        dimer_environment = self.get_dimer_environment(dimer_indices)
-
-        # Turn the structure into a molecule
-        dimer_environment_molecule = self.get_dimer_molecule(dimer_environment)
-
-        if filename == None:
-            filename = str(self.composition).replace(" ", "") + "_" \
-                       + str(dimer_indices[0]) + "_" + str(dimer_indices[1])
-
-        dimer_environment_molecule.to("xyz", filename + ".xyz")
-
-
     def remove_dimer_cations(self, dimer_indices):
         """
 
@@ -384,6 +318,140 @@ class LiRichCathode(Cathode):
         print(pointgroup_analyzer_A.symmops)
 
         # TODO FINISH
+
+class Dimer(MSONable):
+    """
+    Class representing an oxygen dimer in a Li-rich cathode structure.
+
+    """
+
+    # TODO Give the definition of this class a good hard thinking over.
+
+    def __init__(self, cathode, dimer_indices):
+        """
+        Initialize
+
+        Args:
+            cathode
+            dimer_indices
+
+        Returns:
+            pybat.core.Dimer
+
+        """
+        self._cathode = cathode
+        self._indices = dimer_indices
+        self._sites = list
+        self._center = None
+
+    def __eq__(self, other):
+        """
+        Checks if the dimer environments of two dimers are the same.
+
+
+        Args:
+            other:
+
+        Returns:
+
+        """
+        pass
+
+    @property
+    def cathode(self):
+        return self._cathode
+
+    @property
+    def indices(self):
+        return self._indices
+
+    @property
+    def sites(self):
+
+        if self._sites is list:
+            # Find the oxygen neighbours
+            oxygen_A_neighbors = [
+                neighbor["index"] for neighbor
+                in self.cathode.voronoi.neighbors(self.indices[0],
+                                                  VORONOI_DIST_FACTOR,
+                                                  VORONOI_ANG_FACTOR)
+            ]
+            oxygen_B_neighbors = [
+                neighbor["index"] for neighbor
+                in self.cathode.voronoi.neighbors(self.indices[1],
+                                                  VORONOI_DIST_FACTOR,
+                                                  VORONOI_ANG_FACTOR)
+            ]
+
+            # Determine the indices of the oxygen environment
+            dimer_environment_indices = set(self._indices) \
+                .union(oxygen_A_neighbors).union(oxygen_B_neighbors)
+
+            # Recover the corresponding sites
+            self._sites = [self.cathode.sites[index] for index
+                                 in dimer_environment_indices]
+
+        return self._sites
+
+    @property
+    def center(self):
+
+        if self._center is None:
+
+            # Find the center of the oxygen sites
+            oxygen_sites = []
+            for site in self.sites:
+                if site.specie == Element("O"):
+                    oxygen_sites.append(site)
+
+            self._center = sum(
+                [site.frac_coords for site in oxygen_sites]) / 2
+
+        return self._center
+
+    def get_dimer_molecule(self):
+
+        molecule_sites = []
+
+        for site in self.sites:
+
+            jimage = site.distance_and_image_from_frac_coords(self.center)[1]
+            image_cart_coords = self.cathode.lattice.get_cartesian_coords(
+                site.frac_coords - jimage
+            )
+            molecule_sites.append(Site(site.specie, image_cart_coords))
+
+        return Molecule.from_sites(molecule_sites)
+
+    def visualize_dimer_environment(self, filename=None):
+        """
+        Remove all the atoms which are not part of the environment of a dimer
+        and creates a .xyz file of the oxygen dimer environment in order to
+        visualize it more clearly.
+
+        Returns:
+
+        """
+
+        # Turn the structure into a molecule
+        dimer_environment_molecule = self.get_dimer_molecule()
+
+        if filename == None:
+            filename = str(self.cathode.composition).replace(" ", "") + "_" \
+                       + str(self.indices[0]) + "_" + str(self.indices[1])
+
+        dimer_environment_molecule.to("xyz", filename + ".xyz")
+
+
+    # TODO Check if MSONable methods need to be implemented
+
+    def as_dict(self):
+        pass
+
+    @classmethod
+    def from_dict(cls, d):
+        pass
+
 
 def test_script(structure_file):
 
