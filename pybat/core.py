@@ -35,16 +35,14 @@ class Cathode(Structure):
                  to_unit_cell=False, coords_are_cartesian=False,
                  site_properties=None):
 
-        super(Cathode,
-              self).__init__(lattice=lattice, species=species,
-                             coords=coords,
-                             validate_proximity=validate_proximity,
-                             to_unit_cell=to_unit_cell,
-                             coords_are_cartesian=coords_are_cartesian,
-                             site_properties=site_properties)
+        super(Cathode, self).__init__(
+            lattice=lattice, species=species, coords=coords,
+            validate_proximity=validate_proximity, to_unit_cell=to_unit_cell,
+            coords_are_cartesian=coords_are_cartesian,
+            site_properties=site_properties
+        )
 
-        # TODO Currently works with indices... Perhaps switching to sites is more pythonic?
-        self._cation_configuration = self.cation_sites
+        self._cation_configuration = None
         self._voronoi = None
 
     @property
@@ -66,6 +64,9 @@ class Cathode(Structure):
         Returns:
 
         """
+        if self._cation_configuration is None:
+            self._cation_configuration = self.cation_sites
+
         return self._cation_configuration
 
     @property
@@ -97,16 +98,16 @@ class Cathode(Structure):
             # Remove all the cations
             self._cation_configuration = []
 
-        # Else
+        # Else remove the requested sites from the cation configuration
         else:
-            # Check if the indices provided correspond to cation sites
             for site in sites:
+                # Check if the indices provided correspond to cation sites
                 if not site.specie in CATIONS:
                     raise IOError("Provided indices do not all correspond to "
                                   "a cation site!")
-
-            # Remove the cations with the requested indices
-            self._cation_configuration.remove(sites)
+                else:
+                    # Remove the cations with the requested indices
+                    self._cation_configuration.remove(sites)
 
     def find_cation_configurations(self):
         """

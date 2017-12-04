@@ -42,6 +42,7 @@ def migration(structure_file, provide_coords, write_cif):
                      provide_coords=provide_coords,
                      write_cif=write_cif)
 
+
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--dimer_indices", "-i", default=(0,0))
