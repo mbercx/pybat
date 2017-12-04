@@ -213,7 +213,7 @@ class Cathode(Structure):
             if site.specie == Element("O"):
                 oxygen_sites.append(site)
 
-        oxygen_center = sum([site.frac_coords for site in oxygen_sites])
+        oxygen_center = sum([site.frac_coords for site in oxygen_sites])/2
 
         molecule_sites = []
 
@@ -221,11 +221,11 @@ class Cathode(Structure):
 
             jimage = site.distance_and_image_from_frac_coords(oxygen_center)[1]
             image_cart_coords = self.lattice.get_cartesian_coords(
-                site.frac_coords + jimage
+                site.frac_coords - jimage
             )
             molecule_sites.append(Site(site.specie, image_cart_coords))
 
-         return Molecule.from_sites(molecule_sites)
+        return Molecule.from_sites(molecule_sites)
 
     def visualize_dimer_environment(self, dimer_indices, filename=None):
         """
@@ -385,6 +385,10 @@ def test_script(structure_file):
     print(dimers)
 
     for dimer in dimers:
+        print("")
+        print("Dimer")
+        print(dimer)
+        print("")
         cat.visualize_dimer_environment(dimer)
         cat.compare_dimers([dimer, dimers[0]])
 
