@@ -177,7 +177,7 @@ class Cathode(Structure):
             filename = str(self.composition).replace(" ", "") \
                        + str(dimer_indices[0]) + "_" + str(dimer_indices[1])
         else:
-            oxygen_environment.to("cif", filename + ".cif")
+            oxygen_environment.to("xyz", filename + ".xyz")
 
     def change_site_distance(self, site_indices, distance):
         """

@@ -46,7 +46,7 @@ def migration(structure_file, provide_coords, write_cif):
 @click.argument("structure_file", nargs=1)
 @click.option("--dimer_indices", "-i", default=(0,0))
 @click.option("--distance", "-d", default=float(0))
-@click.option("--remove_cations", "-R", isflag=True)
+@click.option("--remove_cations", "-R", is_flag=True)
 def dimer(structure_file, dimer_indices, distance, remove_cations):
     """
     Define the formation of a dimer in a structure.
