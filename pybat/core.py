@@ -425,9 +425,8 @@ class Dimer(MSONable):
 
     def visualize_dimer_environment(self, filename=None):
         """
-        Remove all the atoms which are not part of the environment of a dimer
-        and creates a .xyz file of the oxygen dimer environment in order to
-        visualize it more clearly.
+        Creates a .xyz file of the oxygen dimer environment in order to
+        visualize it in e.g. VESTA.
 
         Returns:
 
@@ -474,5 +473,20 @@ def test_script(structure_file):
         cat.visualize_dimer_environment(dimer)
         cat.compare_dimers([dimer, dimers[0]])
 
+
+def rotation_matrix(axis, theta):
+    """
+    Return the rotation matrix associated with clockwise rotation about
+    the given axis by theta radians.
+    """
+    axis = np.asarray(axis)
+    axis = axis/math.sqrt(np.dot(axis, axis))
+    a = math.cos(theta/2.0)
+    b, c, d = axis*math.sin(theta/2.0)
+    aa, bb, cc, dd = a*a, b*b, c*c, d*d
+    bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
+    return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
+                     [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
+                     [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
 
 
