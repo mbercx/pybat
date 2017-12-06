@@ -3,10 +3,11 @@
 import itertools
 
 import numpy as np
+import math
 
 from monty.json import MSONable
 
-from pymatgen.core import Structure, Element, Molecule, Site
+from pymatgen.core import Structure, Element, Molecule, Site, PeriodicSite
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
@@ -28,6 +29,10 @@ VORONOI_ANG_FACTOR = 0.7
 # a cation.
 CATIONS = (Element("Li"), Element("Na"), Element("Mg"))
 
+# Tolerance for the template determination. This can be pretty big, since
+# the dimer structure is known.
+TEMPLATE_DIST_TOL = 5e-1
+TEMPLATE_ANGLE_TOL = 2e-1
 
 class Cathode(Structure):
     """
@@ -319,11 +324,21 @@ class LiRichCathode(Cathode):
 
         # TODO FINISH
 
+
 class Dimer(MSONable):
     """
     Class representing an oxygen dimer in a Li-rich cathode structure.
 
     """
+
+    SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
+                             [2, 1, 3, 4, 7, 8, 5, 6, 11, 12, 9, 10],
+                             [1, 2, 3, 4, 5, 6, 7, 8, 10, 9, 12, 11],
+                             [2, 1, 4, 3, 8, 7, 6, 5, 11, 12, 9, 10],
+                             [1, 2, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11],
+                             [2, 1, 4, 3, 8, 7, 6, 5, 12, 11, 10, 9],
+                             [2, 1, 3, 4, 7, 8, 5, 6, 12, 11, 10, 9],
+                             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
 
     # TODO Give the definition of this class a good hard thinking over.
 
@@ -340,9 +355,10 @@ class Dimer(MSONable):
 
         """
         self._cathode = cathode
-        self._indices = dimer_indices
+        self._indices = tuple(dimer_indices)
         self._sites = list
         self._center = None
+        self._template = list
 
     def __eq__(self, other):
         """
@@ -383,9 +399,20 @@ class Dimer(MSONable):
                                                   VORONOI_ANG_FACTOR)
             ]
 
-            # Determine the indices of the oxygen environment
-            dimer_environment_indices = set(self._indices) \
-                .union(oxygen_A_neighbors).union(oxygen_B_neighbors)
+            # Determine the indices of the oxygen environment. The indices are
+            # sorted in such a way that the oxygen indices come first,
+            # followed by the indices of the shared neighbors.
+            # TODO This can be done better. Really.
+            shared_neighbors = tuple(set(oxygen_A_neighbors).intersection(oxygen_B_neighbors))
+            other_neighbors = set(oxygen_A_neighbors).union(oxygen_B_neighbors)
+            other_neighbors.remove(shared_neighbors[0])
+            other_neighbors.remove(shared_neighbors[1])
+            other_neighbors = tuple(other_neighbors)
+
+            dimer_environment_indices = self._indices + shared_neighbors \
+                                        + other_neighbors
+
+            print(dimer_environment_indices)
 
             # Recover the corresponding sites
             self._sites = [self.cathode.sites[index] for index
@@ -408,6 +435,96 @@ class Dimer(MSONable):
                 [site.frac_coords for site in oxygen_sites]) / 2
 
         return self._center
+
+    @property
+    def template(self):
+        if self._template is list:
+
+            # A template # TODO Add definition
+
+            # The template idea seems like the fastest way of being able to
+            # compare two dimers. By reducing them to a template, we are able
+            # compare dimers by applying permutations that represent symmetry
+            # transformations. This is not a very general approach, clearly.
+
+            # Note that the sites property is built in such a way that the
+            # first two sites correspond to the oxygen atoms and the next two
+            # correspond to the shared neighbours. This convention is made to
+            # save us some work here.
+
+            dimer_molecule = self.get_dimer_molecule()
+
+            oxy_1 = dimer_molecule.sites[0]
+            oxy_2 = dimer_molecule.sites[1]
+
+            shared_neighbor_3 = dimer_molecule.sites[2]
+            shared_neighbor_4 = dimer_molecule.sites[3]
+
+            # The template is defined as a dictionary between site numbers and
+            # dimer environment sites
+            template = {1:oxy_1.specie,
+                        2:oxy_2.specie,
+                        3:shared_neighbor_3.specie,
+                        4:shared_neighbor_4.specie}
+
+            # Loop over the remaining sites to find their template positions
+            for site in dimer_molecule.sites[4:]:
+
+                # Find the sites which are in the plane of the oxygens and
+                # their shared neighbors.
+                if np.linalg.norm(oxy_1.coords
+                        - (shared_neighbor_4.coords - oxy_1.coords)
+                        - site.coords) < TEMPLATE_DIST_TOL:
+
+                    template[5] = site.specie
+
+                if np.linalg.norm(oxy_1.coords
+                        - (shared_neighbor_3.coords - oxy_1.coords)
+                        - site.coords) < TEMPLATE_DIST_TOL:
+
+                    template[6] = site.specie
+
+                if np.linalg.norm(oxy_2.coords
+                        - (shared_neighbor_4.coords - oxy_2.coords)
+                        - site.coords) < TEMPLATE_DIST_TOL:
+
+                    template[7] = site.specie
+
+                if np.linalg.norm(oxy_2.coords
+                        - (shared_neighbor_3.coords - oxy_2.coords)\
+                        - site.coords) < TEMPLATE_DIST_TOL:
+
+                    template[8] = site.specie
+
+                # Find the sites which are out of plane
+                oxy_1_oop = np.cross(
+                    shared_neighbor_4.coords - oxy_1.coords,
+                    shared_neighbor_3.coords - oxy_1.coords
+                )
+                oxy_2_oop = np.cross(
+                    shared_neighbor_3.coords - oxy_2.coords,
+                    shared_neighbor_4.coords - oxy_2.coords
+                )
+
+                if angle_between(oxy_1_oop, site.coords - oxy_1.coords) < TEMPLATE_ANGLE_TOL:
+
+                    template[9] = site.specie
+
+                if angle_between(oxy_1_oop, site.coords - oxy_1.coords) > math.pi - TEMPLATE_ANGLE_TOL:
+
+                    template[10] = site.specie
+
+                if angle_between(oxy_2_oop, site.coords - oxy_2.coords) < TEMPLATE_ANGLE_TOL:
+
+                    template[11] = site.specie
+
+                if angle_between(oxy_2_oop, site.coords - oxy_2.coords) > math.pi - TEMPLATE_ANGLE_TOL:
+
+                    template[12] = site.specie
+
+            self._template = template
+
+        return self._template
 
     def get_dimer_molecule(self):
 
@@ -474,19 +591,42 @@ def test_script(structure_file):
         cat.compare_dimers([dimer, dimers[0]])
 
 
-def rotation_matrix(axis, theta):
-    """
-    Return the rotation matrix associated with clockwise rotation about
-    the given axis by theta radians.
-    """
-    axis = np.asarray(axis)
-    axis = axis/math.sqrt(np.dot(axis, axis))
-    a = math.cos(theta/2.0)
-    b, c, d = axis*math.sin(theta/2.0)
-    aa, bb, cc, dd = a*a, b*b, c*c, d*d
-    bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
-    return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
-                     [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
-                     [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
 
 
+def angle_between(v1, v2):
+    """
+    Returns the angle in radians between vectors 'v1' and 'v2'::
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
+# def rotation_matrix(axis, theta):
+#     """
+#     Return the rotation matrix associated with clockwise rotation about
+#     the given axis by theta radians.
+#     """
+#     axis = np.asarray(axis)
+#     axis = axis/math.sqrt(np.dot(axis, axis))
+#     a = math.cos(theta/2.0)
+#     b, c, d = axis*math.sin(theta/2.0)
+#     aa, bb, cc, dd = a*a, b*b, c*c, d*d
+#     bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
+#     return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
+#                      [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
+#                      [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
+
+def permute(iterable, permutation):
+
+    if len(iterable) != len(permutation):
+        raise ValueError("Length of list does not match permutation length!")
+
+    if len(set([i for i in range(1, len(iterable)+1)]).intersection(permutation)) \
+        != len(permutation):
+
+        raise ValueError("Permutation is ill-defined.")
+
+    return [iterable[index - 1] for index in permutation]
