@@ -295,17 +295,45 @@ class LiRichCathode(Cathode):
 
         self.remove_cations(remove_sites)
 
-    def find_noneq_dimers(self, dimers):
+    def find_noneq_dimers(self, site_index=None):
         """
-        A script that distills the non-equivalent oxygen dimers from a list of
-        dimers.
+        A script that distills the non-equivalent oxygen dimers around a site
+        index.
 
         Returns:
 
         """
 
         noneq_dimers = []
-        pass
+
+        if site_index is None:
+
+            ignore = set(CATIONS).union((Element("O"),))
+
+            transition_metal_indices = [index for index in
+                                        range(len(self.sites))
+                                        if self.sites[index].specie
+                                        not in ignore]
+
+            for index in transition_metal_indices:
+
+                dimers = [Dimer(self, dimer_indices) for dimer_indices
+                          in self.find_oxygen_dimers(index)]
+
+                for dimer in dimers:
+                    if dimer not in noneq_dimers:
+                        noneq_dimers.append(dimer)
+
+        else:
+
+            dimers = [Dimer(self, dimer_indices) for dimer_indices
+                      in self.find_oxygen_dimers(site_index)]
+
+            for dimer in dimers:
+                if dimer not in noneq_dimers:
+                    noneq_dimers.append(dimer)
+
+        return noneq_dimers
 
 
 class Dimer(MSONable):
@@ -412,8 +440,30 @@ class Dimer(MSONable):
                 if site.specie == Element("O"):
                     oxygen_sites.append(site)
 
-            self._center = sum(
-                [site.frac_coords for site in oxygen_sites]) / 2
+            (distance, oxygen_image) = oxygen_sites[0].distance_and_image(oxygen_sites[1])
+
+            image_cart_coords = oxygen_sites[1].coords \
+                                + np.dot(oxygen_image,
+                                         self.cathode.lattice.matrix)
+
+            self._center = ( oxygen_sites[0].coords + image_cart_coords ) / 2
+
+            # print("Oxygen 1 coordinates:")
+            # print(oxygen_sites[0].coords)
+            #
+            # print("Oxygen 2 coordinates:")
+            # print(oxygen_sites[1].coords)
+            #
+            # print("Dimer center:")
+            # print(self._center)
+            #
+            # print("Found distance using pmg")
+            # print(distance)
+            #
+            # print("Found distance using cart coords")
+            # print(np.linalg.norm(oxygen_sites[0].coords - image_cart_coords))
+            #
+            # print()
 
         return self._center
 
@@ -505,6 +555,9 @@ class Dimer(MSONable):
 
             self._template = template
 
+            if len(template) != len(self.sites):
+                raise ValueError("Template creation failed!")
+
         return self._template
 
     def get_dimer_molecule(self):
@@ -513,10 +566,20 @@ class Dimer(MSONable):
 
         for site in self.sites:
 
-            jimage = site.distance_and_image_from_frac_coords(self.center)[1]
-            image_cart_coords = self.cathode.lattice.get_cartesian_coords(
-                site.frac_coords - jimage
-            )
+            # print()
+            # print("Distance between image and oxygen center:")
+
+            (distance, jimage) = site.distance_and_image_from_frac_coords(
+                self.cathode.lattice.get_fractional_coords(self.center))
+
+            image_cart_coords = site.coords \
+                                - np.dot(jimage, self.cathode.lattice.matrix)
+
+            # print(distance)
+            #
+            # print("Distance found using cart coords")
+            # print(np.linalg.norm(image_cart_coords - self.center))
+
             molecule_sites.append(Site(site.specie, image_cart_coords))
 
         return Molecule.from_sites(molecule_sites)
@@ -552,7 +615,7 @@ class Dimer(MSONable):
 
 def test_script(structure_file):
 
-    cat = Cathode.from_file(structure_file)
+    cat = LiRichCathode.from_file(structure_file)
 
     print(cat)
     site_index = int(input("Please give the site around which you would like to "
@@ -568,8 +631,7 @@ def test_script(structure_file):
         print("Dimer")
         print(dimer)
         print("")
-        cat.visualize_dimer_environment(dimer)
-        cat.compare_dimers([dimer, dimers[0]])
+        Dimer(cat, dimer).visualize_dimer_environment()
 
 
 def unit_vector(vector):
