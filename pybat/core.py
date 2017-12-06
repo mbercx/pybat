@@ -34,6 +34,16 @@ CATIONS = (Element("Li"), Element("Na"), Element("Mg"))
 TEMPLATE_DIST_TOL = 5e-1
 TEMPLATE_ANGLE_TOL = 2e-1
 
+# Dimer template symmetry permutations
+SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
+                         [2, 1, 3, 4, 7, 8, 5, 6, 11, 12, 9, 10],
+                         [1, 2, 3, 4, 5, 6, 7, 8, 10, 9, 12, 11],
+                         [2, 1, 4, 3, 8, 7, 6, 5, 11, 12, 9, 10],
+                         [1, 2, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11],
+                         [2, 1, 4, 3, 8, 7, 6, 5, 12, 11, 10, 9],
+                         [2, 1, 3, 4, 7, 8, 5, 6, 12, 11, 10, 9],
+                         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
+
 class Cathode(Structure):
     """
     A class representing a cathode material in a battery.
@@ -297,48 +307,12 @@ class LiRichCathode(Cathode):
         noneq_dimers = []
         pass
 
-    def compare_dimers(self, dimers):
-        """
-        A script that checks if two oxygen dimers in the structure are
-        equivalent.
-
-        Args:
-            dimers:
-
-        Returns:
-
-        """
-
-        # Obtain the dimer environments
-        dimer_environment_A = self.get_dimer_environment(dimers[0])
-        dimer_environment_B = self.get_dimer_environment(dimers[1])
-
-        # Transform the dimer environments into molecules
-        dimer_A = self.get_dimer_molecule(dimer_environment_A)
-        dimer_B = self.get_dimer_molecule(dimer_environment_B)
-
-        # Center the molecules
-        pointgroup_analyzer_A = PointGroupAnalyzer(dimer_A)
-
-        print(pointgroup_analyzer_A.symmops)
-
-        # TODO FINISH
-
 
 class Dimer(MSONable):
     """
     Class representing an oxygen dimer in a Li-rich cathode structure.
 
     """
-
-    SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
-                             [2, 1, 3, 4, 7, 8, 5, 6, 11, 12, 9, 10],
-                             [1, 2, 3, 4, 5, 6, 7, 8, 10, 9, 12, 11],
-                             [2, 1, 4, 3, 8, 7, 6, 5, 11, 12, 9, 10],
-                             [1, 2, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11],
-                             [2, 1, 4, 3, 8, 7, 6, 5, 12, 11, 10, 9],
-                             [2, 1, 3, 4, 7, 8, 5, 6, 12, 11, 10, 9],
-                             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
 
     # TODO Give the definition of this class a good hard thinking over.
 
@@ -371,7 +345,16 @@ class Dimer(MSONable):
         Returns:
 
         """
-        pass
+        is_equal = False
+
+        for permutation in SYMMETRY_PERMUTATIONS:
+
+            if [self.template[index] for index in range(1,13)] == \
+                    [other.template[key] for key in permutation]:
+
+                is_equal = True
+
+        return is_equal
 
     @property
     def cathode(self):
@@ -411,8 +394,6 @@ class Dimer(MSONable):
 
             dimer_environment_indices = self._indices + shared_neighbors \
                                         + other_neighbors
-
-            print(dimer_environment_indices)
 
             # Recover the corresponding sites
             self._sites = [self.cathode.sites[index] for index
