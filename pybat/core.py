@@ -105,9 +105,8 @@ class Cathode(Structure):
         """
         if self._voronoi is None:
             self._voronoi = DetailedVoronoiContainer(self)
-            return self._voronoi
-        else:
-            return self._voronoi
+
+        return self._voronoi
 
     @voronoi.setter
     def voronoi(self, voronoi_container):
@@ -227,7 +226,8 @@ class Cathode(Structure):
                                          fmt=fmt, **kwargs)
 
         d["cation_configuration"] = self.cation_configuration
-        d["voronoi"] = self.voronoi.as_dict()
+
+        return d
 
     @classmethod
     def from_dict(cls, d, fmt=None):
@@ -235,7 +235,8 @@ class Cathode(Structure):
         structure = super(cls).from_dict(d)
         cathode = cls.from_structure(structure)
         cathode.cation_configuration = d["cation_configuration"]
-        cathode.voronoi = DetailedVoronoiContainer.from_dict(d["voronoi"])
+
+        return cathode
 
 
 class LiRichCathode(Cathode):
