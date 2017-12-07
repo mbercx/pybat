@@ -14,12 +14,13 @@ Setup scripts for the calculations.
 
 DFT_FUNCTIONAL = "PBE_54"
 
+
 def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
     """
     Set up a standard relaxation of a structure.
 
     """
-    USER_INCAR_SETTINGS = {"ISMEAR": 0}
+    user_incar_settings = {"ISMEAR": 0}
 
     structure_file = os.path.abspath(structure_file)
     structure = Structure.from_file(structure_file)
@@ -27,7 +28,7 @@ def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.
-    if not "magmom" in structure.site_properties.keys():
+    if "magmom" not in structure.site_properties.keys():
         structure.add_site_property("magmom", [0] * len(structure.sites))
 
     if hse_calculation:
@@ -38,7 +39,7 @@ def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
     else:
         geo_optimization = MPRelaxSet(structure=structure,
                                       potcar_functional=DFT_FUNCTIONAL,
-                                      user_incar_settings=USER_INCAR_SETTINGS)
+                                      user_incar_settings=user_incar_settings)
 
     geo_optimization.write_input(calculation_dir)
 
@@ -46,8 +47,8 @@ def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
 def set_up_transition(directory, initial_structure, final_structure,
                       is_migration=False, hse_calculation=False):
     """
-    This script will set up the geometry optimizations for the initial and final
-    structures.
+    This script will set up the geometry optimizations for the initial and
+    final structures.
 
     If requested, it will also set up a charge density calculation for the
     "host structure", i.e. the structure with vacancies at the initial and
@@ -57,11 +58,11 @@ def set_up_transition(directory, initial_structure, final_structure,
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.
-    if not "magmom" in initial_structure.site_properties.keys():
+    if "magmom" not in initial_structure.site_properties.keys():
         initial_structure.add_site_property("magmom",
                                             [0]*len(initial_structure.sites))
 
-    if not "magmom" in final_structure.site_properties.keys():
+    if "magmom" not in final_structure.site_properties.keys():
         final_structure.add_site_property("magmom",
                                           [0] * len(initial_structure.sites))
 
@@ -96,7 +97,7 @@ def set_up_transition(directory, initial_structure, final_structure,
         host_scf.write_input(os.path.join(neb_dir, "host"))
 
 
-def set_up_NEB(directory, nimages=8, is_migration=False,
+def set_up_neb(directory, nimages=8, is_migration=False,
                hse_calculation=False):
     """
     Set up the NEB calculation from the initial and final structures.
@@ -105,8 +106,8 @@ def set_up_NEB(directory, nimages=8, is_migration=False,
     directory = os.path.abspath(directory)
 
     # Extract the optimized initial and final geometry
-    initial_dir = os.path.join(directory,"initial")
-    final_dir = os.path.join(directory,"final")
+    initial_dir = os.path.join(directory, "initial")
+    final_dir = os.path.join(directory, "final")
 
     initial_structure = Structure.from_file(os.path.join(initial_dir,
                                                          "CONTCAR"))
@@ -114,7 +115,7 @@ def set_up_NEB(directory, nimages=8, is_migration=False,
                                                        "CONTCAR"))
 
     # Add the magnetic configuration to the initial structure
-    initial_out = Outcar(os.path.join(initial_dir,"OUTCAR"))
+    initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
     initial_magmom = [site["tot"] for site in initial_out.magnetization]
     initial_structure.add_site_property("magmom", initial_magmom)
 
@@ -131,7 +132,7 @@ def set_up_NEB(directory, nimages=8, is_migration=False,
 
         neb = NEBPathfinder(start_struct=initial_structure,
                             end_struct=final_structure,
-                            relax_sites= migration_site_index,
+                            relax_sites=migration_site_index,
                             v=host_potential)
 
         images = neb.images
@@ -141,7 +142,6 @@ def set_up_NEB(directory, nimages=8, is_migration=False,
         # Linearly interpolate the initial and final structures
         images = initial_structure.interpolate(end_structure=final_structure,
                                                nimages=nimages)
-
 
     neb_calculation = pybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL)
 
@@ -155,6 +155,7 @@ def set_up_NEB(directory, nimages=8, is_migration=False,
 # UTILITY #
 ###########
 
+
 def find_transition_structures(directory, initial_contains="init",
                                final_contains="final"):
     """
@@ -163,6 +164,8 @@ def find_transition_structures(directory, initial_contains="init",
 
     Args:
         directory:
+        initial_contains:
+        final_contains:
 
     Returns:
 
@@ -192,7 +195,8 @@ def find_transition_structures(directory, initial_contains="init",
         raise FileNotFoundError("No suitably named final structure file in "
                                 "directory.")
 
-    return (initial_structure, final_structure)
+    return initial_structure, final_structure
+
 
 def find_migrating_ion(initial_structure, final_structure):
     """
@@ -228,10 +232,3 @@ def find_migrating_ion(initial_structure, final_structure):
             migrating_site = site_pair[0]
 
     return migrating_site
-
-
-
-
-
-
-
