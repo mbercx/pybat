@@ -149,27 +149,27 @@ class Cathode(Structure):
         their distance.
 
         Args:
-            self: (pymatgen.core.structure.Structure)
             site_indices:
+            distance:
 
         Returns:
-            None
+
         """
 
-        site_A = self.sites[site_indices[0]]
-        site_B = self.sites[site_indices[1]]
+        site_a = self.sites[site_indices[0]]
+        site_b = self.sites[site_indices[1]]
 
         # Find the distance between the sites, as well as the image of site B
         # closest to site A
-        (original_distance, closest_image_B) = site_A.distance_and_image(
-            site_B)
+        (original_distance, closest_image_b) = site_a.distance_and_image(
+            site_b)
 
         image_cart_coords = self.lattice.get_cartesian_coords(
-            site_B.frac_coords + closest_image_B
+            site_b.frac_coords + closest_image_b
         )
 
         # Calculate the vector that connects site A with site B
-        connection_vector = image_cart_coords - site_A.coords
+        connection_vector = image_cart_coords - site_a.coords
 
         # Make it a unit vector
         connection_vector /= np.linalg.norm(connection_vector)
@@ -178,21 +178,21 @@ class Cathode(Structure):
         site_move_distance = (original_distance - distance) / 2
 
         # Calculate the new cartesian coordinates of the sites
-        new_site_A_coords = site_A.coords + site_move_distance \
-                                            * connection_vector
-        new_site_B_coords = site_B.coords - site_move_distance \
-                                            * connection_vector
+        new_site_a_coords = site_a.coords + site_move_distance\
+            * connection_vector
+        new_site_b_coords = site_b.coords - site_move_distance\
+            * connection_vector
 
         # Change the sites in the structure
-        self.replace(i=site_indices[0], species=site_A.species_string,
-                     coords=new_site_A_coords,
+        self.replace(i=site_indices[0], species=site_a.species_string,
+                     coords=new_site_a_coords,
                      coords_are_cartesian=True,
-                     properties=site_A.properties)
+                     properties=site_a.properties)
 
-        self.replace(i=site_indices[1], species=site_B.species_string,
-                     coords=new_site_B_coords,
+        self.replace(i=site_indices[1], species=site_b.species_string,
+                     coords=new_site_b_coords,
                      coords_are_cartesian=True,
-                     properties=site_B.properties)
+                     properties=site_b.properties)
 
     def set_to_high_spin(self):
         """
@@ -258,12 +258,12 @@ class LiRichCathode(Cathode):
 
         for oxygen_pair in oxygen_combinations:
 
-            oxygen_A_neighbors = [
+            oxygen_a_neighbors = [
                 neighbor["index"] for neighbor
                 in self.voronoi.neighbors(oxygen_pair[0], VORONOI_DIST_FACTOR,
                                           VORONOI_ANG_FACTOR)
             ]
-            oxygen_B_neighbors = [
+            oxygen_b_neighbors = [
                 neighbor["index"] for neighbor
                 in self.voronoi.neighbors(oxygen_pair[1], VORONOI_DIST_FACTOR,
                                           VORONOI_ANG_FACTOR)
@@ -271,7 +271,7 @@ class LiRichCathode(Cathode):
 
             # Check how many neighbours the oxygen have in common
             shared_neighbours = list(
-                set(oxygen_A_neighbors).intersection(oxygen_B_neighbors)
+                set(oxygen_a_neighbors).intersection(oxygen_b_neighbors)
             )
 
             if len(shared_neighbours) == 2:
@@ -289,11 +289,11 @@ class LiRichCathode(Cathode):
 
         """
 
-        # Find the indices of the dimer environment
-        dimer_environment = self.get_dimer_environment(dimer_indices)
+        # Find the sites of the dimer environment
+        dimer_environment = Dimer(self, dimer_indices).sites
 
         remove_sites = [site for site in dimer_environment
-                       if site.specie in CATIONS]
+                        if site.specie in CATIONS]
 
         self.remove_cations(remove_sites)
 
@@ -399,13 +399,13 @@ class Dimer(MSONable):
 
         if self._sites is list:
             # Find the oxygen neighbours
-            oxygen_A_neighbors = [
+            oxygen_a_neighbors = [
                 neighbor["index"] for neighbor
                 in self.cathode.voronoi.neighbors(self.indices[0],
                                                   VORONOI_DIST_FACTOR,
                                                   VORONOI_ANG_FACTOR)
             ]
-            oxygen_B_neighbors = [
+            oxygen_b_neighbors = [
                 neighbor["index"] for neighbor
                 in self.cathode.voronoi.neighbors(self.indices[1],
                                                   VORONOI_DIST_FACTOR,
@@ -417,19 +417,19 @@ class Dimer(MSONable):
             # followed by the indices of the shared neighbors.
             # TODO This can be done better. Really.
             shared_neighbors = tuple(
-                set(oxygen_A_neighbors).intersection(oxygen_B_neighbors)
+                set(oxygen_a_neighbors).intersection(oxygen_b_neighbors)
             )
-            other_neighbors = set(oxygen_A_neighbors).union(oxygen_B_neighbors)
+            other_neighbors = set(oxygen_a_neighbors).union(oxygen_b_neighbors)
             other_neighbors.remove(shared_neighbors[0])
             other_neighbors.remove(shared_neighbors[1])
             other_neighbors = tuple(other_neighbors)
 
             dimer_environment_indices = self._indices + shared_neighbors \
-                                        + other_neighbors
+                + other_neighbors
 
             # Recover the corresponding sites
             self._sites = [self.cathode.sites[index] for index
-                                 in dimer_environment_indices]
+                           in dimer_environment_indices]
 
         return self._sites
 
@@ -448,27 +448,9 @@ class Dimer(MSONable):
                 oxygen_sites[1])
 
             image_cart_coords = oxygen_sites[1].coords \
-                                + np.dot(oxygen_image,
-                                         self.cathode.lattice.matrix)
+                + np.dot(oxygen_image, self.cathode.lattice.matrix)
 
-            self._center = ( oxygen_sites[0].coords + image_cart_coords ) / 2
-
-            # print("Oxygen 1 coordinates:")
-            # print(oxygen_sites[0].coords)
-            #
-            # print("Oxygen 2 coordinates:")
-            # print(oxygen_sites[1].coords)
-            #
-            # print("Dimer center:")
-            # print(self._center)
-            #
-            # print("Found distance using pmg")
-            # print(distance)
-            #
-            # print("Found distance using cart coords")
-            # print(np.linalg.norm(oxygen_sites[0].coords - image_cart_coords))
-            #
-            # print()
+            self._center = (oxygen_sites[0].coords + image_cart_coords) / 2
 
         return self._center
 
@@ -503,6 +485,8 @@ class Dimer(MSONable):
                               2:oxy_2.specie,
                               3:shared_neighbor_3.specie,
                               4:shared_neighbor_4.specie}
+
+            # TODO Find a cleaner way of assigning representation positions
 
             # Loop over the remaining sites to find their representation
             # positions
@@ -577,19 +561,11 @@ class Dimer(MSONable):
 
         for site in self.sites:
 
-            # print()
-            # print("Distance between image and oxygen center:")
-
             (distance, jimage) = site.distance_and_image_from_frac_coords(
                 self.cathode.lattice.get_fractional_coords(self.center))
 
-            image_cart_coords = site.coords \
-                                - np.dot(jimage, self.cathode.lattice.matrix)
-
-            # print(distance)
-            #
-            # print("Distance found using cart coords")
-            # print(np.linalg.norm(image_cart_coords - self.center))
+            image_cart_coords = \
+                site.coords - np.dot(jimage, self.cathode.lattice.matrix)
 
             molecule_sites.append(Site(site.specie, image_cart_coords))
 
@@ -607,12 +583,11 @@ class Dimer(MSONable):
         # Turn the structure into a molecule
         dimer_environment_molecule = self.get_dimer_molecule()
 
-        if filename == None:
+        if filename is None:
             filename = str(self.cathode.composition).replace(" ", "") + "_" \
                        + str(self.indices[0]) + "_" + str(self.indices[1])
 
         dimer_environment_molecule.to("xyz", filename + ".xyz")
-
 
     # TODO Check if MSONable methods need to be implemented
 
