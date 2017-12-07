@@ -1,11 +1,12 @@
 # Encoding: utf-8
 
 import itertools
+import math
+import json
 
 import numpy as np
-import math
 
-import json
+from monty.io import zopen
 from monty.json import MSONable
 
 from pymatgen.core import Structure, Element, Molecule, Site, PeriodicSite
@@ -644,12 +645,32 @@ class Dimer(MSONable):
 
     # TODO Check if MSONable methods need to be implemented
 
+    def to(self, filename, fmt="json"):
+
+        if fmt == "json":
+            if filename:
+                with zopen(filename, "wt", encoding='utf8') as file:
+                    return json.dump(self.as_dict(), file)
+            else:
+                return json.dumps(self.as_dict())
+        else:
+            raise NotImplementedError("Currently only json format is "
+                                      "supported.")
+
     def as_dict(self):
-        pass
+
+        d = {}
+
+        d["cathode"] = self.cathode.as_dict()
+        d["dimer_indices"] = self.indices
+
+        return d
 
     @classmethod
     def from_dict(cls, d):
-        pass
+
+        return cls(cathode=LiRichCathode.from_dict(d["cathode"]),
+                   dimer_indices=d["dimer_indices"])
 
 
 def test_script(structure_file):
