@@ -225,8 +225,8 @@ class Cathode(Structure):
     def from_str(cls, input_string, fmt, primitive=False, sort=False,
                  merge_tol=0.0):
         if fmt is not "json":
-            return super(Cathode, cls).from_str(input_string, fmt, primitive, sort,
-                                           merge_tol)
+            return super(Cathode, cls).from_str(input_string, fmt, primitive,
+                                                sort, merge_tol)
         else:
             d = json.loads(input_string)
             return cls.from_dict(d)
@@ -251,7 +251,7 @@ class Cathode(Structure):
     @classmethod
     def from_dict(cls, d, fmt=None):
 
-        structure = super(cls).from_dict(d)
+        structure = super(Cathode, cls).from_dict(d)
         cathode = cls.from_structure(structure)
         cation_configuration = d.get("cation_configuration", None)
 
