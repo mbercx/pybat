@@ -23,7 +23,7 @@ def _load_yaml_config(fname):
     return config
 
 
-class pybatRelaxSet(DictSet):
+class PybatRelaxSet(DictSet):
     """
     Subclass of the MITNEBSet, with specific settings for migration
     calculations in batteries, i.e. POTCAR files with more valence electrons
@@ -34,8 +34,8 @@ class pybatRelaxSet(DictSet):
     CONFIG = _load_yaml_config("pybatRelaxSet")
 
     def __init__(self, structure, hse_calculation=False, **kwargs):
-        super(pybatRelaxSet, self).__init__(
-            structure, pybatNEBSet.CONFIG, **kwargs
+        super(PybatRelaxSet, self).__init__(
+            structure, PybatNEBSet.CONFIG, **kwargs
         )
 
         # HSE specific defaults
@@ -47,7 +47,7 @@ class pybatRelaxSet(DictSet):
         self.kwargs = kwargs
 
 
-class pybatNEBSet(pybatRelaxSet):
+class PybatNEBSet(PybatRelaxSet):
     """
     Class for writing NEB inputs, based on the settings of pybatRelaxSet.
 
@@ -62,7 +62,7 @@ class pybatNEBSet(pybatRelaxSet):
         if len(structures) < 3:
             raise ValueError("You need at least 3 structures for an NEB.")
         kwargs["sort_structure"] = False
-        super(pybatNEBSet, self).__init__(structures[0], hse_calculation,
+        super(PybatNEBSet, self).__init__(structures[0], hse_calculation,
                                           **kwargs)
         self._structures = self._process_structures(structures)
 
@@ -134,19 +134,26 @@ class pybatNEBSet(pybatRelaxSet):
             if write_cif:
                 p.structure.to(filename=os.path.join(d, '{}.cif'.format(i)))
         if write_endpoint_inputs:
-            end_point_param = pybatRelaxSet(
+            end_point_param = PybatRelaxSet(
                 self.structures[0],
                 user_incar_settings=self.user_incar_settings)
 
             for image in ['00', str(len(self.structures) - 1).zfill(2)]:
-                end_point_param.incar.write_file(os.path.join(output_dir, image, 'INCAR'))
-                end_point_param.kpoints.write_file(os.path.join(output_dir, image, 'KPOINTS'))
-                end_point_param.potcar.write_file(os.path.join(output_dir, image, 'POTCAR'))
+                end_point_param.incar.write_file(
+                    os.path.join(output_dir, image, 'INCAR')
+                )
+                end_point_param.kpoints.write_file(
+                    os.path.join(output_dir, image, 'KPOINTS')
+                )
+                end_point_param.potcar.write_file(
+                    os.path.join(output_dir, image, 'POTCAR')
+                )
         if write_path_cif:
             sites = set()
             l = self.structures[0].lattice
             for site in chain(*(s.sites for s in self.structures)):
-                sites.add(PeriodicSite(site.species_and_occu, site.frac_coords, l))
+                sites.add(PeriodicSite(site.species_and_occu, site.frac_coords,
+                                       l))
             nebpath = Structure.from_sites(sorted(sites))
             nebpath.to(filename=os.path.join(output_dir, 'path.cif'))
 

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-from pybat.sets import pybatRelaxSet, pybatNEBSet
+from pybat.sets import PybatRelaxSet, PybatNEBSet
 
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
@@ -67,11 +67,11 @@ def set_up_transition(directory, initial_structure, final_structure,
                                           [0] * len(initial_structure.sites))
 
     # Set up the initial and final optimization calculations
-    initial_optimization = pybatRelaxSet(structure=initial_structure,
+    initial_optimization = PybatRelaxSet(structure=initial_structure,
                                          potcar_functional=DFT_FUNCTIONAL,
                                          hse_calculation=hse_calculation)
 
-    final_optimization = pybatRelaxSet(structure=final_structure,
+    final_optimization = PybatRelaxSet(structure=final_structure,
                                        potcar_functional=DFT_FUNCTIONAL,
                                        hse_calculation=hse_calculation)
 
@@ -143,7 +143,7 @@ def set_up_neb(directory, nimages=8, is_migration=False,
         images = initial_structure.interpolate(end_structure=final_structure,
                                                nimages=nimages)
 
-    neb_calculation = pybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL)
+    neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL)
 
     # Set up the NEB calculation
     neb_calculation.write_input(directory)
