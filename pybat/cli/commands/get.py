@@ -8,6 +8,7 @@ from pymatgen.analysis.transition_state import NEBAnalysis
 # Total Energy per Li of metallic lithium
 LI_ENERGY = -1.89
 
+
 def get_structure(directory):
     """
     Construct a .json file with the structure and magnetic moment from the
@@ -41,6 +42,7 @@ def get_barrier(directory):
     neb = NEBAnalysis.from_dir(directory)
     neb.get_plot().show()
 
+
 def get_voltage(directory, calculation="relax", functional=None):
     """
     Calculate the voltage of a battery consisting of a cathode specified by the
@@ -48,9 +50,10 @@ def get_voltage(directory, calculation="relax", functional=None):
 
     Args:
         directory:
+        calculation:
+        functional:
 
     Returns:
 
     """
     pass
-
