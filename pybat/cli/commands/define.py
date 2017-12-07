@@ -1,5 +1,5 @@
 
-from pybat.core import Cathode, change_site_distance
+from pybat.core import Cathode
 from pymatgen.core import Structure
 
 """
@@ -7,7 +7,6 @@ Set of scripts used to define state transitions easily from the command line
 interface.
 
 """
-
 
 
 def define_migration(structure_file, provide_coords=False, write_cif=False):
@@ -58,14 +57,12 @@ def define_migration(structure_file, provide_coords=False, write_cif=False):
     initial_structure = final_structure.copy()
     if provide_coords:
         # Add the final position of the migrating ion
-        final_structure.append(migration_species,
-                               final_coords,
+        final_structure.append(migration_species, final_coords,
                                properties=final_structure.sites[
                                     migration_site_index].properties)
     else:
         # Replace the final migration site by the migrating species
-        final_structure.replace(final_site_index,
-                                migration_species,
+        final_structure.replace(final_site_index, migration_species,
                                 properties=final_structure.sites[
                                     migration_site_index].properties)
 
@@ -110,8 +107,8 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
         print(cathode)
         print("")
         dimer_indices = input("Please provide the two indices of the elements "
-                             "that need to form a dimer, separated by a "
-                             "space: \n")
+                              "that need to form a dimer, separated by a "
+                              "space: \n")
 
         dimer_indices = tuple([int(number) for number in
                                list(dimer_indices.split(" "))])
@@ -127,12 +124,11 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
         cathode.remove_dimer_cations(dimer_indices)
 
     dimer_structure_file = structure_file.split(".")[0] + "_dimer_init" \
-                           + ".json"
+        + ".json"
     cathode.to(dimer_structure_file)
 
     cathode.change_site_distance(dimer_indices, distance)
 
     dimer_structure_file = structure_file.split(".")[0] + "_dimer_final" \
-                           + ".json"
+        + ".json"
     cathode.to("json", dimer_structure_file)
-
