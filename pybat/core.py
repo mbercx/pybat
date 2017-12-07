@@ -645,7 +645,7 @@ class Dimer(MSONable):
 
     # TODO Check if MSONable methods need to be implemented
 
-    def to(self, filename, fmt="json"):
+    def to(self, fmt="json", filename=None):
 
         if fmt == "json":
             if filename:
@@ -656,6 +656,35 @@ class Dimer(MSONable):
         else:
             raise NotImplementedError("Currently only json format is "
                                       "supported.")
+    @classmethod
+    def from_str(cls, input_string, fmt="json"):
+        """
+        Initialize a Facet from a string.
+
+        Currently only supports 'json' formats.
+
+        Args:
+            input_string (str): String from which the Facet is initialized.
+            fmt (str): Format of the string representation.
+
+        Returns:
+            (*cage.Facet*)
+        """
+        if fmt == "json":
+            d = json.loads(input_string)
+            return cls.from_dict(d)
+        else:
+            raise NotImplementedError('Only json formats have been '
+                                      'implemented.')
+
+    @classmethod
+    def from_file(cls, filename):
+
+        with zopen(filename) as file:
+            contents = file.read()
+
+        return cls.from_str(contents)
+
 
     def as_dict(self):
 
