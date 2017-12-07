@@ -236,6 +236,13 @@ class Cathode(Structure):
         cathode = cls.from_structure(structure)
         cathode.cation_configuration = d["cation_configuration"]
 
+        # Note The voronoi decomposition can unfortunately not be MSONabled,
+        # because of a recursion issue where the as_dict method of the
+        # DetailedVoronoiContainer uses the as_dict() method from the structure
+        # it is based on (infinite recursion).
+
+        # TODO Add voronoi decomposition, by adding the dictionary components manually
+
         return cathode
 
 
