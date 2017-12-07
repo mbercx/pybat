@@ -7,8 +7,7 @@ import math
 
 from monty.json import MSONable
 
-from pymatgen.core import Structure, Element, Molecule, Site, PeriodicSite
-from pymatgen.symmetry.analyzer import PointGroupAnalyzer
+from pymatgen.core import Structure, Element, Molecule, Site
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 
@@ -29,12 +28,12 @@ VORONOI_ANG_FACTOR = 0.7
 # a cation.
 CATIONS = (Element("Li"), Element("Na"), Element("Mg"))
 
-# Tolerance for the template determination. This can be pretty big, since
+# Tolerance for the representation determination. This can be pretty big, since
 # the dimer structure is known.
-TEMPLATE_DIST_TOL = 5e-1
-TEMPLATE_ANGLE_TOL = 2e-1
+REPRESENTATION_DIST_TOL = 5e-1
+REPRESENTATION_ANGLE_TOL = 2e-1
 
-# Dimer template symmetry permutations
+# Dimer representation symmetry permutations
 SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
                          [2, 1, 3, 4, 7, 8, 5, 6, 11, 12, 9, 10],
                          [1, 2, 3, 4, 5, 6, 7, 8, 10, 9, 12, 11],
@@ -43,6 +42,7 @@ SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
                          [2, 1, 4, 3, 8, 7, 6, 5, 12, 11, 10, 9],
                          [2, 1, 3, 4, 7, 8, 5, 6, 12, 11, 10, 9],
                          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
+
 
 class Cathode(Structure):
     """
@@ -122,7 +122,7 @@ class Cathode(Structure):
         else:
             for site in sites:
                 # Check if the site provided corresponds to a cation site
-                if not site.specie in CATIONS:
+                if site.specie not in CATIONS:
                     raise IOError("Provided indices do not all correspond to "
                                   "a cation site!")
                 else:
@@ -178,8 +178,10 @@ class Cathode(Structure):
         site_move_distance = (original_distance - distance) / 2
 
         # Calculate the new cartesian coordinates of the sites
-        new_site_A_coords = site_A.coords + site_move_distance * connection_vector
-        new_site_B_coords = site_B.coords - site_move_distance * connection_vector
+        new_site_A_coords = site_A.coords + site_move_distance \
+                                            * connection_vector
+        new_site_B_coords = site_B.coords - site_move_distance \
+                                            * connection_vector
 
         # Change the sites in the structure
         self.replace(i=site_indices[0], species=site_A.species_string,
@@ -338,7 +340,7 @@ class LiRichCathode(Cathode):
 
 class Dimer(MSONable):
     """
-    Class representing an oxygen dimer in a Li-rich cathode structure.
+    Class definition of an oxygen dimer in a Li-rich cathode structure.
 
     """
 
@@ -360,7 +362,7 @@ class Dimer(MSONable):
         self._indices = tuple(dimer_indices)
         self._sites = list
         self._center = None
-        self._template = list
+        self._representation = list
 
     def __eq__(self, other):
         """
@@ -377,8 +379,8 @@ class Dimer(MSONable):
 
         for permutation in SYMMETRY_PERMUTATIONS:
 
-            if [self.template[index] for index in range(1,13)] == \
-                    [other.template[key] for key in permutation]:
+            if [self.representation[index] for index in range(1, 13)] == \
+                    [other.representation[key] for key in permutation]:
 
                 is_equal = True
 
@@ -414,7 +416,9 @@ class Dimer(MSONable):
             # sorted in such a way that the oxygen indices come first,
             # followed by the indices of the shared neighbors.
             # TODO This can be done better. Really.
-            shared_neighbors = tuple(set(oxygen_A_neighbors).intersection(oxygen_B_neighbors))
+            shared_neighbors = tuple(
+                set(oxygen_A_neighbors).intersection(oxygen_B_neighbors)
+            )
             other_neighbors = set(oxygen_A_neighbors).union(oxygen_B_neighbors)
             other_neighbors.remove(shared_neighbors[0])
             other_neighbors.remove(shared_neighbors[1])
@@ -440,7 +444,8 @@ class Dimer(MSONable):
                 if site.specie == Element("O"):
                     oxygen_sites.append(site)
 
-            (distance, oxygen_image) = oxygen_sites[0].distance_and_image(oxygen_sites[1])
+            (distance, oxygen_image) = oxygen_sites[0].distance_and_image(
+                oxygen_sites[1])
 
             image_cart_coords = oxygen_sites[1].coords \
                                 + np.dot(oxygen_image,
@@ -468,15 +473,16 @@ class Dimer(MSONable):
         return self._center
 
     @property
-    def template(self):
-        if self._template is list:
+    def representation(self):
+        if self._representation is list:
 
-            # A template # TODO Add definition
+            # A representation # TODO Add definition
 
-            # The template idea seems like the fastest way of being able to
-            # compare two dimers. By reducing them to a template, we are able
-            # compare dimers by applying permutations that represent symmetry
-            # transformations. This is not a very general approach, clearly.
+            # The representation idea seems like the fastest way of being able
+            # to compare two dimers. By reducing them to a representation, we
+            # are able compare dimers by applying permutations that represent
+            # symmetry transformations. This is not a very general approach,
+            # clearly.
 
             # Note that the sites property is built in such a way that the
             # first two sites correspond to the oxygen atoms and the next two
@@ -491,41 +497,42 @@ class Dimer(MSONable):
             shared_neighbor_3 = dimer_molecule.sites[2]
             shared_neighbor_4 = dimer_molecule.sites[3]
 
-            # The template is defined as a dictionary between site numbers and
-            # dimer environment sites
-            template = {1:oxy_1.specie,
-                        2:oxy_2.specie,
-                        3:shared_neighbor_3.specie,
-                        4:shared_neighbor_4.specie}
+            # The representation is defined as a dictionary between site
+            # numbers and dimer environment sites
+            representation = {1:oxy_1.specie,
+                              2:oxy_2.specie,
+                              3:shared_neighbor_3.specie,
+                              4:shared_neighbor_4.specie}
 
-            # Loop over the remaining sites to find their template positions
+            # Loop over the remaining sites to find their representation
+            # positions
             for site in dimer_molecule.sites[4:]:
 
                 # Find the sites which are in the plane of the oxygens and
                 # their shared neighbors.
                 if np.linalg.norm(oxy_1.coords
                         - (shared_neighbor_4.coords - oxy_1.coords)
-                        - site.coords) < TEMPLATE_DIST_TOL:
+                        - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    template[5] = site.specie
+                    representation[5] = site.specie
 
                 if np.linalg.norm(oxy_1.coords
                         - (shared_neighbor_3.coords - oxy_1.coords)
-                        - site.coords) < TEMPLATE_DIST_TOL:
+                        - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    template[6] = site.specie
+                    representation[6] = site.specie
 
                 if np.linalg.norm(oxy_2.coords
                         - (shared_neighbor_4.coords - oxy_2.coords)
-                        - site.coords) < TEMPLATE_DIST_TOL:
+                        - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    template[7] = site.specie
+                    representation[7] = site.specie
 
                 if np.linalg.norm(oxy_2.coords
                         - (shared_neighbor_3.coords - oxy_2.coords)\
-                        - site.coords) < TEMPLATE_DIST_TOL:
+                        - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    template[8] = site.specie
+                    representation[8] = site.specie
 
                 # Find the sites which are out of plane
                 oxy_1_oop = np.cross(
@@ -537,28 +544,32 @@ class Dimer(MSONable):
                     shared_neighbor_4.coords - oxy_2.coords
                 )
 
-                if angle_between(oxy_1_oop, site.coords - oxy_1.coords) < TEMPLATE_ANGLE_TOL:
+                if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
+                        < REPRESENTATION_ANGLE_TOL:
 
-                    template[9] = site.specie
+                    representation[9] = site.specie
 
-                if angle_between(oxy_1_oop, site.coords - oxy_1.coords) > math.pi - TEMPLATE_ANGLE_TOL:
+                if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
+                        > math.pi - REPRESENTATION_ANGLE_TOL:
 
-                    template[10] = site.specie
+                    representation[10] = site.specie
 
-                if angle_between(oxy_2_oop, site.coords - oxy_2.coords) < TEMPLATE_ANGLE_TOL:
+                if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
+                        < REPRESENTATION_ANGLE_TOL:
 
-                    template[11] = site.specie
+                    representation[11] = site.specie
 
-                if angle_between(oxy_2_oop, site.coords - oxy_2.coords) > math.pi - TEMPLATE_ANGLE_TOL:
+                if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
+                        > math.pi - REPRESENTATION_ANGLE_TOL:
 
-                    template[12] = site.specie
+                    representation[12] = site.specie
 
-            self._template = template
+            self._representation = representation
 
-            if len(template) != len(self.sites):
-                raise ValueError("Template creation failed!")
+            if len(representation) != len(self.sites):
+                raise ValueError("Failed to create dimer representation.")
 
-        return self._template
+        return self._representation
 
     def get_dimer_molecule(self):
 
@@ -618,8 +629,8 @@ def test_script(structure_file):
     cat = LiRichCathode.from_file(structure_file)
 
     print(cat)
-    site_index = int(input("Please give the site around which you would like to "
-                       "study O-O dimers: "))
+    site_index = int(input("Please give the site around which you would like "
+                           "to study O-O dimers: "))
 
     dimers = cat.find_oxygen_dimers(site_index)
 
@@ -662,14 +673,15 @@ def angle_between(v1, v2):
 #                      [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
 #                      [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
 
+
 def permute(iterable, permutation):
 
     if len(iterable) != len(permutation):
         raise ValueError("Length of list does not match permutation length!")
 
-    if len(set([i for i in range(1, len(iterable)+1)]).intersection(permutation)) \
-        != len(permutation):
+    permutation_numbers = set([i for i in range(1, len(iterable)+1)])
 
+    if len(permutation_numbers.intersection(permutation)) != len(permutation):
         raise ValueError("Permutation is ill-defined.")
 
     return [iterable[index - 1] for index in permutation]
