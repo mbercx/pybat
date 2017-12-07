@@ -21,7 +21,7 @@ def main():
 @main.group(context_settings=CONTEXT_SETTINGS)
 def define():
     """
-    Set up calculations.
+    Define a structural change.
 
     """
     pass

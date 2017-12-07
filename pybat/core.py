@@ -89,6 +89,10 @@ class Cathode(Structure):
 
         return self._cation_configuration
 
+    @cation_configuration.setter
+    def cation_configuration(self, configuration):
+        self._cation_configuration = configuration
+
     @property
     def voronoi(self):
         """
@@ -104,6 +108,10 @@ class Cathode(Structure):
             return self._voronoi
         else:
             return self._voronoi
+
+    @voronoi.setter
+    def voronoi(self, voronoi_container):
+        self._voronoi = voronoi_container
 
     def remove_cations(self, sites=None):
         """
@@ -207,6 +215,27 @@ class Cathode(Structure):
         :return:
         """
         pass
+
+    @classmethod
+    def from_structure(cls, structure):
+
+        return cls.from_sites(structure.sites)
+
+    def as_dict(self, verbosity=1, fmt=None, **kwargs):
+
+        d = super(Cathode, self).as_dict(verbosity=verbosity,
+                                         fmt=fmt, **kwargs)
+
+        d["cation_configuration"] = self.cation_configuration
+        d["voronoi"] = self.voronoi.as_dict()
+
+    @classmethod
+    def from_dict(cls, d, fmt=None):
+
+        structure = super(cls).from_dict(d)
+        cathode = cls.from_structure(structure)
+        cathode.cation_configuration = d["cation_configuration"]
+        cathode.voronoi = DetailedVoronoiContainer.from_dict(d["voronoi"])
 
 
 class LiRichCathode(Cathode):
