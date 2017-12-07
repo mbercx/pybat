@@ -5,9 +5,10 @@ import itertools
 import numpy as np
 import math
 
+import json
 from monty.json import MSONable
 
-from pymatgen.core import Structure, Element, Molecule, Site
+from pymatgen.core import Structure, Element, Molecule, Site, PeriodicSite
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 
@@ -220,12 +221,30 @@ class Cathode(Structure):
 
         return cls.from_sites(structure.sites)
 
+    @classmethod
+    def from_str(cls, input_string, fmt, primitive=False, sort=False,
+                 merge_tol=0.0):
+        if fmt is not "json":
+            return super(Cathode, cls).from_str(input_string, fmt, primitive, sort,
+                                           merge_tol)
+        else:
+            d = json.loads(input_string)
+            return cls.from_dict(d)
+
     def as_dict(self, verbosity=1, fmt=None, **kwargs):
 
         d = super(Cathode, self).as_dict(verbosity=verbosity,
                                          fmt=fmt, **kwargs)
 
-        d["cation_configuration"] = self.cation_configuration
+        d["cation_configuration"] = [cation.as_dict() for cation
+                                     in self.cation_configuration]
+
+        # Note The voronoi decomposition can unfortunately not be MSONabled,
+        # because of a recursion issue where the as_dict method of the
+        # DetailedVoronoiContainer uses the as_dict() method from the structure
+        # it is based on (infinite recursion).
+
+        # TODO Add voronoi decomposition, by adding the dictionary components manually
 
         return d
 
@@ -234,14 +253,11 @@ class Cathode(Structure):
 
         structure = super(cls).from_dict(d)
         cathode = cls.from_structure(structure)
-        cathode.cation_configuration = d["cation_configuration"]
+        cation_configuration = d.get("cation_configuration", None)
 
-        # Note The voronoi decomposition can unfortunately not be MSONabled,
-        # because of a recursion issue where the as_dict method of the
-        # DetailedVoronoiContainer uses the as_dict() method from the structure
-        # it is based on (infinite recursion).
-
-        # TODO Add voronoi decomposition, by adding the dictionary components manually
+        if cation_configuration is not None:
+            cathode.cation_configuration = [PeriodicSite.from_dict(cation) for
+                                            cation in cation_configuration]
 
         return cathode
 
