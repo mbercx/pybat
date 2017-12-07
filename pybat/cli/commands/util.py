@@ -10,6 +10,7 @@ Utility command for the pybat package.
 
 """
 
+
 def show_path(directory, filename):
     """
     Show the final migration for a NEB calculation.
@@ -33,6 +34,7 @@ def conventional_structure(structure_file, fmt="cif"):
 
     Args:
         structure_file:
+        fmt:
 
     Returns:
 
@@ -42,6 +44,7 @@ def conventional_structure(structure_file, fmt="cif"):
 
     conv_structure_file = structure_file.split(".")[0] + "_conv" + "." + fmt
     spg.get_conventional_standard_structure().to(fmt, conv_structure_file)
+
 
 def make_supercell(structure_file, supercell, fmt="cif"):
     """
@@ -61,6 +64,6 @@ def make_supercell(structure_file, supercell, fmt="cif"):
     structure.make_supercell(supercell_list)
 
     super_structure_file = structure_file.split(".")[0] + "_" + supercell\
-                           + "." + fmt
-    structure.to(fmt, super_structure_file)
+        + "." + fmt
 
+    structure.to(fmt, super_structure_file)
