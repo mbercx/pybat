@@ -45,7 +45,7 @@ def migration(structure_file, provide_coords, write_cif):
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--dimer_indices", "-i", default=(0,0))
+@click.option("--dimer_indices", "-i", default=(0, 0))
 @click.option("--distance", "-d", default=float(0))
 @click.option("--remove_cations", "-R", is_flag=True)
 def dimer(structure_file, dimer_indices, distance, remove_cations):
@@ -114,7 +114,8 @@ def transition(directory, is_migration, hse):
     set_up_transition(directory=directory,
                       initial_structure=initial_structure,
                       final_structure=final_structure,
-                      is_migration=is_migration)
+                      is_migration=is_migration,
+                      hse_calculation=hse)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -141,9 +142,9 @@ def neb(directory, nimages, is_migration, hse):
     Returns:
 
     """
-    from pybat.cli.commands.setup import set_up_NEB
+    from pybat.cli.commands.setup import set_up_neb
 
-    set_up_NEB(directory=directory,
+    set_up_neb(directory=directory,
                nimages=nimages,
                is_migration=is_migration,
                hse_calculation=hse)
@@ -156,6 +157,7 @@ def util():
 
     """
     pass
+
 
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
@@ -173,8 +175,8 @@ def showpath(directory, filename):
 
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--format", "-F", default="cif")
-def conv(structure_file, format):
+@click.option("--file_format", "-F", default="cif")
+def conv(structure_file, file_format):
     """
     Convert a structure into the conventional unit cell.
 
@@ -182,13 +184,14 @@ def conv(structure_file, format):
     from pybat.cli.commands.util import conventional_structure
 
     conventional_structure(structure_file=structure_file,
-                           fmt=format)
+                           fmt=file_format)
+
 
 @util.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("supercell", nargs=1)
+@click.argument("cell", nargs=1)
 @click.argument("structure_file", nargs=1)
-@click.option("--format", "-F", default="cif")
-def super(supercell, structure_file, format):
+@click.option("--file_format", "-F", default="cif")
+def supercell(cell, structure_file, file_format):
     """
     Convert a structure to a supercell.
 
@@ -196,8 +199,8 @@ def super(supercell, structure_file, format):
     from pybat.cli.commands.util import make_supercell
 
     make_supercell(structure_file=structure_file,
-                   supercell=supercell,
-                   fmt=format)
+                   supercell=cell,
+                   fmt=file_format)
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -240,6 +243,7 @@ def voltage():
     """
     pass
     # TODO
+
 
 @main.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file")
