@@ -674,7 +674,7 @@ class Dimer(MSONable):
             d = json.loads(input_string)
             return cls.from_dict(d)
         else:
-            raise NotImplementedError('Only json formats have been '
+            raise NotImplementedError('Only json format has been '
                                       'implemented.')
 
     @classmethod
