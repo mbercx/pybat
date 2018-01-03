@@ -9,75 +9,40 @@ interface.
 """
 
 
-def define_migration(structure_file, provide_coords=False, write_cif=False):
+def define_migration(structure_file, write_cif=False):
     """
     This script allows the user to define a migration in a structure.
 
-    As a first implementation, the script will simply start from the fully
-    lithiated cathode structure and then the user can specify with cation
-    site should migrate to which other one. The script then removes the atom
-    which occupies the site to which the cation migrates. After this, the user
-    can still remove other atoms as desired.
-
-    A second addition is the possibility of choosing the final migration
-    coordinates, in case the final site is not among the sites of the
-    structure.
+    The user has to identify the site that is migrating, as well as provide the
+    coordinates to which the site will migrate.
 
     """
-    final_structure = Structure.from_file(structure_file)
+    initial_structure = Structure.from_file(structure_file)
+    final_structure = initial_structure.copy()
 
-    # Ask the user for the migration sites and the other sites which are to be
-    # removed
+    # Ask the user for the migration site
     print("")
-    print(final_structure)
+    print(initial_structure)
     print("")
     migration_site_index = int(input("Please provide the index of the "
                                      "migrating cation:\n"))
-    if provide_coords:
-        final_coords = input("Please provide the final fractional coordinates "
-                             "of the migrating site:\n")
-        final_coords = [float(number) for number
-                        in list(final_coords.split(" "))]
-    else:
-        print("")
-        final_site_index = int(input("Please provide the index of the site to "
-                                     "which the cation is migrating:\n"))
-    print("")
-    remove_site_indices = input("Provide addition site indices to remove:\n")
+    migration_species = initial_structure.sites[migration_site_index].specie
 
-    # A bit of processing
-    if remove_site_indices == "":
-        remove_site_indices = []
-    else:
-        remove_site_indices = [int(number) for number in
-                               list(remove_site_indices.split(" "))]
+    # Ask the user for the final coordinates of the migrating ion
+    final_coords = input("Please provide the final fractional coordinates "
+                         "of the migrating site:\n")
+    final_coords = [float(number) for number
+                    in list(final_coords.split(" "))]
 
-    migration_species = final_structure.sites[migration_site_index].specie
+    # Remove the original site from the final structure
+    final_structure.remove_sites([migration_site_index])
 
-    initial_structure = final_structure.copy()
-    if provide_coords:
-        # Add the final position of the migrating ion
-        final_structure.append(migration_species, final_coords,
-                               properties=final_structure.sites[
-                                    migration_site_index].properties)
-    else:
-        # Replace the final migration site by the migrating species
-        final_structure.replace(final_site_index, migration_species,
-                                properties=final_structure.sites[
-                                    migration_site_index].properties)
-
-    # Remove the original site from the final structure, as well as the other
-    # sites which are to be removed.
-    final_structure.remove_sites([migration_site_index] + remove_site_indices)
-
-    if provide_coords:
-        # Remove the other sites as determined by the user
-        initial_structure.remove_sites(remove_site_indices)
-    else:
-        # Remove the final site from the initial structure, as well as the
-        # other sites which are to be removed.
-        initial_structure.remove_sites([final_site_index] +
-                                       remove_site_indices)
+    # Add the final position of the migrating ion
+    final_structure.insert(i=migration_site_index,
+                           species=migration_species,
+                           coords=final_coords,
+                           properties=final_structure.sites[
+                                migration_site_index].properties)
 
     # Write out the initial and final structures
     initial_structure.to("json", "init.json")
