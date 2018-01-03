@@ -126,9 +126,8 @@ def set_up_neb(directory, nimages=8, is_migration=False,
         host_charge_density = Chgcar.from_file(os.path.join(directory, "host"))
         host_potential = ChgcarPotential(host_charge_density)
 
-        migration_site_index = initial_structure.sites.index(
-            find_migrating_ion(initial_structure, final_structure)
-        )
+        migration_site_index = find_migrating_ion(initial_structure,
+                                                  final_structure)
 
         neb = NEBPathfinder(start_struct=initial_structure,
                             end_struct=final_structure,
@@ -204,6 +203,9 @@ def find_migrating_ion(initial_structure, final_structure):
     considering the distance that the sites have moved. The site whose
     coordinates have changed the most is considered to be the migrating ion.
 
+    Note that the site indices of the initial and final structure have to
+    correspond for the algorithm to work.
+
     Args:
         initial_structure:
         final_structure:
@@ -225,10 +227,11 @@ def find_migrating_ion(initial_structure, final_structure):
 
     for site_pair in zip(initial_structure.sites, final_structure.sites):
 
+        # TODO This definition of distance is inadequate, i.e. if the site has crossed into another unit cell, the distance will be very big. This can be fixed by using the nearest image!
         distance = np.linalg.norm(site_pair[0].coords - site_pair[1].coords)
 
         if distance > max_distance:
             max_distance = distance
             migrating_site = site_pair[0]
 
-    return migrating_site
+    return initial_structure.sites.index(migrating_site)
