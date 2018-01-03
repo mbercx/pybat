@@ -86,9 +86,8 @@ def set_up_transition(directory, initial_structure, final_structure,
     # calculation for the charge density, used to find a better initial pathway
     if is_migration:
 
-        migration_site_index = initial_structure.sites.index(
-            find_migrating_ion(initial_structure, final_structure)
-        )
+        migration_site_index = find_migrating_ion(initial_structure,
+                                                  final_structure)
 
         host_structure = initial_structure.copy()
         host_structure.remove_sites([migration_site_index])
