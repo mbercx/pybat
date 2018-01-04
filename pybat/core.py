@@ -243,15 +243,8 @@ class Cathode(Structure):
         Returns:
             (str) if filename is None. None otherwise.
 
-        Args:
-            fmt:
-            filename:
-            **kwargs:
-
-        Returns:
-            (str) if filename is None. None otherwise.
-
         """
+
         if fmt in ["cif", "poscar"] or fnmatch(filename, "*.cif*") \
             or fnmatch(filename, "POSCAR"):
 
@@ -269,8 +262,6 @@ class Cathode(Structure):
         else:
             raise NotImplementedError("Only json, cif or VASP POSCAR formats "
                                       "are currently supported.")
-
-
 
     @classmethod
     def from_structure(cls, structure):
@@ -314,8 +305,6 @@ class Cathode(Structure):
         if cation_configuration is not None:
             cathode.cation_configuration = [PeriodicSite.from_dict(cation) for
                                             cation in cation_configuration]
-        else:
-            print("No cation configuration extracted from file.")
 
         return cathode
 
