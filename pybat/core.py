@@ -8,6 +8,7 @@ import numpy as np
 
 from monty.io import zopen
 from monty.json import MSONable
+from fnmatch import fnmatch
 
 from pymatgen.core import Structure, Element, Molecule, Site, PeriodicSite
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
@@ -119,6 +120,10 @@ class Cathode(Structure):
         Remove the cations from the cathode, i.e. delithiate the structure in
         case Li is the cation of the cathode.
 
+        Note that this does not remove the sites from the pymatgen Structure.
+        The cation_configuration of the Cathode is simply adjusted by removing
+        the requested cations from this List.
+
         :return:
         """
 
@@ -217,6 +222,56 @@ class Cathode(Structure):
         """
         pass
 
+    def to(self, fmt=None, filename=None, **kwargs):
+        """
+        Outputs the structure to a file or string.
+
+        Overwritten from IStructure in order to consider the cation
+        configuration for .cif and VASP POSCAR files. For .json formats the
+        as_dict method successfully stores the cation configuration. Importing
+        the Cathode object from .cif or POSCAR files
+
+        Args:
+            fmt (str): Format to output to. Defaults to JSON unless filename
+                is provided. If fmt is specifies, it overrides whatever the
+                filename is. Options include "cif", "poscar", "cssr", "json".
+                Non-case sensitive.
+            filename (str): If provided, output will be written to a file. If
+                fmt is not specified, the format is determined from the
+                filename. Defaults is None, i.e. string output.
+
+        Returns:
+            (str) if filename is None. None otherwise.
+
+        Args:
+            fmt:
+            filename:
+            **kwargs:
+
+        Returns:
+            (str) if filename is None. None otherwise.
+
+        """
+        if fmt in ["cif", "poscar"] or fnmatch(filename, "*.cif*") \
+            or fnmatch(filename, "POSCAR"):
+
+            structure = self.copy()
+            for cation_site in self.cation_sites:
+                if cation_site not in self.cation_configuration:
+                    structure.remove(cation_site)
+
+            super(Cathode, structure).to(fmt=fmt, filename=filename, **kwargs)
+
+        elif fmt == "json" or fnmatch(filename, "*.json*"):
+
+            super(Cathode, self).to(fmt=fmt, filename=filename, **kwargs)
+
+        else:
+            raise NotImplementedError("Only json, cif or VASP POSCAR formats "
+                                      "are currently supported.")
+
+
+
     @classmethod
     def from_structure(cls, structure):
 
@@ -259,6 +314,8 @@ class Cathode(Structure):
         if cation_configuration is not None:
             cathode.cation_configuration = [PeriodicSite.from_dict(cation) for
                                             cation in cation_configuration]
+        else:
+            print("No cation configuration extracted from file.")
 
         return cathode
 
@@ -356,7 +413,11 @@ class LiRichCathode(Cathode):
         A script that distills the non-equivalent oxygen dimers around a site
         index.
 
+        In case no site index is provided, the method will loop over all sites
+        which do not contain oxygen or a cation.
+
         Returns:
+            List of pybat.Dimer objects
 
         """
 
