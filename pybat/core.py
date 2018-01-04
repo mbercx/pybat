@@ -52,8 +52,6 @@ class Cathode(Structure):
     """
     A class representing a cathode material in a battery.
 
-    The Cathode starts in a completely discharged state, i.e. with all cations
-    present.
     """
     def __init__(self, lattice, species, coords, validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -344,7 +342,7 @@ class LiRichCathode(Cathode):
             neighbor["index"] for neighbor
             in self.voronoi.neighbors(site_index, VORONOI_DIST_FACTOR,
                                       VORONOI_ANG_FACTOR)
-            if self.sites[neighbor["index"]].specie == Element["O"]
+            if self.sites[neighbor["index"]].species_string == "O"
         ]
 
         if len(oxygen_neighbors_indices) <= 1:
@@ -546,7 +544,7 @@ class Dimer(MSONable):
             # Find the center of the oxygen sites
             oxygen_sites = []
             for site in self.sites:
-                if site.specie == Element("O"):
+                if site.species_string == "O":
                     oxygen_sites.append(site)
 
             (distance, oxygen_image) = oxygen_sites[0].distance_and_image(
@@ -586,10 +584,10 @@ class Dimer(MSONable):
 
             # The representation is defined as a dictionary between site
             # numbers and dimer environment sites
-            representation = {1:oxy_1.specie,
-                              2:oxy_2.specie,
-                              3:shared_neighbor_3.specie,
-                              4:shared_neighbor_4.specie}
+            representation = {1:oxy_1.species_and_occu,
+                              2:oxy_2.species_and_occu,
+                              3:shared_neighbor_3.species_and_occu,
+                              4:shared_neighbor_4.species_and_occu}
 
             # TODO Find a cleaner way of assigning representation positions
 
@@ -603,25 +601,25 @@ class Dimer(MSONable):
                         - (shared_neighbor_4.coords - oxy_1.coords)
                         - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    representation[5] = site.specie
+                    representation[5] = site.species_and_occu
 
                 if np.linalg.norm(oxy_1.coords
                         - (shared_neighbor_3.coords - oxy_1.coords)
                         - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    representation[6] = site.specie
+                    representation[6] = site.species_and_occu
 
                 if np.linalg.norm(oxy_2.coords
                         - (shared_neighbor_4.coords - oxy_2.coords)
                         - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    representation[7] = site.specie
+                    representation[7] = site.species_and_occu
 
                 if np.linalg.norm(oxy_2.coords
                         - (shared_neighbor_3.coords - oxy_2.coords)\
                         - site.coords) < REPRESENTATION_DIST_TOL:
 
-                    representation[8] = site.specie
+                    representation[8] = site.species_and_occu
 
                 # Find the sites which are out of plane
                 oxy_1_oop = np.cross(
@@ -636,22 +634,22 @@ class Dimer(MSONable):
                 if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
                         < REPRESENTATION_ANGLE_TOL:
 
-                    representation[9] = site.specie
+                    representation[9] = site.species_and_occu
 
                 if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
                         > math.pi - REPRESENTATION_ANGLE_TOL:
 
-                    representation[10] = site.specie
+                    representation[10] = site.species_and_occu
 
                 if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
                         < REPRESENTATION_ANGLE_TOL:
 
-                    representation[11] = site.specie
+                    representation[11] = site.species_and_occu
 
                 if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
                         > math.pi - REPRESENTATION_ANGLE_TOL:
 
-                    representation[12] = site.specie
+                    representation[12] = site.species_and_occu
 
             self._representation = representation
 
@@ -672,7 +670,8 @@ class Dimer(MSONable):
             image_cart_coords = \
                 site.coords - np.dot(jimage, self.cathode.lattice.matrix)
 
-            molecule_sites.append(Site(site.specie, image_cart_coords))
+            molecule_sites.append(Site(site.species_and_occu,
+                                       image_cart_coords))
 
         return Molecule.from_sites(molecule_sites)
 
