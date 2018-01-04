@@ -537,17 +537,13 @@ class Dimer(MSONable):
                            in dimer_environment_indices]
 
             # Replace all the sites which are not in the cation
-            # configuration by sites with a Berkelium element
+            # configuration by sites with a site with occupancy zero
             # TODO Unpythonic -> fix with list comprehension
             for i, site in enumerate(self._sites):
                 if site.species_string in CATIONS and site not in \
                         self.cathode.cation_configuration:
                     self._sites[i] = PeriodicSite(
-                        # TODO Fix pymatgen XYZ class
-                        # The original plan was to use a site with
-                        # Composition 0, but the visualization script fails
-                        # because the XYZ class uses site.specie
-                        Composition({"Bk": 1}),
+                        Composition({"": 0}),
                         site.frac_coords, site.lattice
                     )
 
@@ -701,8 +697,12 @@ class Dimer(MSONable):
 
         """
 
-        # Turn the structure into a molecule
-        dimer_environment_molecule = self.get_dimer_molecule()
+        # Turn the structure into a molecule, removing the sites with zero
+        # occupancy
+        dimer_environment_molecule = Molecule.from_sites(
+            [site for site in self.get_dimer_molecule().sites
+            if not site.species_and_occu == Composition({"":0})]
+        )
 
         if filename is None:
             filename = str(self.cathode.composition).replace(" ", "") + "_" \
