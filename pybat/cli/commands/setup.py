@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import shutil
 
 from pybat.core import LiRichCathode
 from pybat.sets import PybatRelaxSet, PybatNEBSet
@@ -96,7 +97,8 @@ def transition(directory, initial_structure, final_structure,
                                potcar_functional=DFT_FUNCTIONAL)
         host_scf.write_input(os.path.join(neb_dir, "host"))
 
-def dimers(structure_file):
+
+def dimers(structure_file, dimer_distance=1.4, hse_calculation=False):
     """
 
     Args:
@@ -112,11 +114,35 @@ def dimers(structure_file):
     # Find the non-equivalent dimers
     dimers = cathode.find_noneq_dimers()
 
-    # Write the
-
+    # Set up the geometry optimization calculations for the various dimers
     for dimer in dimers:
 
+        # Set up the dimer directory
+        dimer_directory = "".join(str(dimer.indices[0]) + "_"
+                                  + str(dimer.indices[1]))
 
+        os.mkdir(dimer_directory)
+        initial_dir = os.path.join(dimer_directory, "initial")
+        os.mkdir(initial_dir)
+        final_dir = os.path.join(dimer_directory, "final")
+        os.mkdir(final_dir)
+
+        # Copy the structure into the 'initial' directory
+        shutil.copy(structure_file, os.path.join(initial_dir,
+                                                 "structure.json"))
+
+        # Set up the dimer structure, i.e. move the oxygen pair closer together
+        dimer_structure = cathode.copy()
+        dimer_structure.change_site_distance(site_indices=dimer.indices,
+                                             distance=dimer_distance)
+
+        # Set up the geometry optimization for the dimer structure
+        dimer_optimization = PybatRelaxSet(structure=dimer_structure,
+                                           potcar_functional=DFT_FUNCTIONAL,
+                                           hse_calculation=hse_calculation)
+
+        # Write the calculation files to the 'final' directory
+        dimer_optimization.write_input(final_dir)
 
 
 def neb(directory, nimages=8, is_migration=False,
@@ -144,7 +170,7 @@ def neb(directory, nimages=8, is_migration=False,
         # In case the required output files are not present, check to see if
         # the structure is present in a json format
         initial_structure = Structure.from_file(os.path.join(initial_dir,
-                                                             "initial.json"))
+                                                             "structure.json"))
 
     final_structure = Structure.from_file(os.path.join(final_dir,
                                                        "CONTCAR"))
