@@ -100,11 +100,18 @@ def transition(directory, initial_structure, final_structure,
 
 def dimers(structure_file, dimer_distance=1.4, hse_calculation=False):
     """
+    Set up the geometric optimizations for the non-equivalent dimer formations
+    in a Li-Rich cathode material.
 
     Args:
-        structure_file:
-
-    Returns:
+        structure_file (str): Structure file of the cathode material. Note
+            that the structure file should be a json format file that is
+            derived from the Cathode class, i.e. it should contain the cation
+            configuration of the structure.
+        dimer_distance (float): Final distance in angstroms between the oxygen
+            atoms in oxygen pair.
+        hse_calculation (bool): True if the geometry optimization should be
+            done using the hybrid functional HSE06.
 
     """
 
@@ -127,7 +134,11 @@ def dimers(structure_file, dimer_distance=1.4, hse_calculation=False):
         final_dir = os.path.join(dimer_directory, "final")
         os.mkdir(final_dir)
 
-        # Copy the structure into the 'initial' directory
+        # Write the molecule representing the dimer to the dimer directory
+        dimer.visualize_dimer_environment(os.path.join(dimer_directory,
+                                                       "dimer.xyz"))
+
+        # Copy the original structure into the 'initial' directory
         shutil.copy(structure_file, os.path.join(initial_dir,
                                                  "structure.json"))
 
@@ -135,6 +146,8 @@ def dimers(structure_file, dimer_distance=1.4, hse_calculation=False):
         dimer_structure = cathode.copy()
         dimer_structure.change_site_distance(site_indices=dimer.indices,
                                              distance=dimer_distance)
+        if hse_calculation:
+            raise NotImplementedError("HSE06 calculation not implemented yet.")
 
         # Set up the geometry optimization for the dimer structure
         dimer_optimization = PybatRelaxSet(structure=dimer_structure,
