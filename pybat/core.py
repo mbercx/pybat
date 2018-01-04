@@ -10,7 +10,8 @@ from monty.io import zopen
 from monty.json import MSONable
 from fnmatch import fnmatch
 
-from pymatgen.core import Structure, Element, Molecule, Site, PeriodicSite
+from pymatgen.core import Structure, Element, Composition, Molecule, Site, \
+    PeriodicSite
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 
@@ -20,7 +21,7 @@ battery cathodes
 
 """
 
-# TODO Currently, the dimers are defined by their indices. This is a consequence of the fact that the DetailedVoronoiContainer expects indices for its neighbour method. Frankly, I would prefer sites as the basis of the dimer definition as well as it's environment.
+# TODO Currently, the dimers are defined by their indices. This is a consequence of the fact that the DetailedVoronoiContainer expects indices for its neighbor method. Frankly, I would prefer sites as the basis of the dimer definition as well as it's environment.
 
 # Values for determining the neighbors of a site in a voronoi decomposition
 VORONOI_DIST_FACTOR = 1.3
@@ -29,7 +30,7 @@ VORONOI_ANG_FACTOR = 0.7
 # Tuple of possible cations. This idea should work rather well, considering
 # the fact that these cation elements rarely serve another purpose than being
 # a cation.
-CATIONS = (Element("Li"), Element("Na"), Element("Mg"))
+CATIONS = ("Li", "Na", "Mg")
 
 # Tolerance for the representation determination. This can be pretty big, since
 # the dimer structure is known.
@@ -76,7 +77,7 @@ class Cathode(Structure):
         Returns:
 
         """
-        return [site for site in self.sites if site.specie in CATIONS]
+        return [site for site in self.sites if site.species_string in CATIONS]
 
     @property
     def cation_configuration(self):
@@ -136,7 +137,7 @@ class Cathode(Structure):
         else:
             for site in sites:
                 # Check if the site provided corresponds to a cation site
-                if site.specie not in CATIONS:
+                if site.species_string not in CATIONS:
                     raise IOError("Provided indices do not all correspond to "
                                   "a cation site!")
                 else:
@@ -393,7 +394,7 @@ class LiRichCathode(Cathode):
         dimer_environment = Dimer(self, dimer_indices).sites
 
         remove_sites = [site for site in dimer_environment
-                        if site.specie in CATIONS]
+                        if site.species_string in CATIONS]
 
         self.remove_cations(remove_sites)
 
@@ -414,11 +415,11 @@ class LiRichCathode(Cathode):
 
         if site_index is None:
 
-            ignore = set(CATIONS).union((Element("O"),))
+            ignore = set(CATIONS).union(("O",))
 
             transition_metal_indices = [index for index in
                                         range(len(self.sites))
-                                        if self.sites[index].specie
+                                        if self.sites[index].species_string
                                         not in ignore]
 
             for index in transition_metal_indices:
