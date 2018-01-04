@@ -1,6 +1,7 @@
 import numpy as np
 import os
 
+from pybat.core import LiRichCathode
 from pybat.sets import PybatRelaxSet, PybatNEBSet
 
 from pymatgen.core import Structure
@@ -15,7 +16,7 @@ Setup scripts for the calculations.
 DFT_FUNCTIONAL = "PBE_54"
 
 
-def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
+def relax(structure_file, calculation_dir, hse_calculation=False):
     """
     Set up a standard relaxation of a structure.
 
@@ -44,8 +45,8 @@ def set_up_relaxation(structure_file, calculation_dir, hse_calculation=False):
     geo_optimization.write_input(calculation_dir)
 
 
-def set_up_transition(directory, initial_structure, final_structure,
-                      is_migration=False, hse_calculation=False):
+def transition(directory, initial_structure, final_structure,
+               is_migration=False, hse_calculation=False):
     """
     This script will set up the geometry optimizations for the initial and
     final structures.
@@ -95,28 +96,58 @@ def set_up_transition(directory, initial_structure, final_structure,
                                potcar_functional=DFT_FUNCTIONAL)
         host_scf.write_input(os.path.join(neb_dir, "host"))
 
+def dimers(structure_file):
+    """
 
-def set_up_neb(directory, nimages=8, is_migration=False,
-               hse_calculation=False):
+    Args:
+        structure_file:
+
+    Returns:
+
+    """
+
+    # Load the cathode structure
+    cathode = LiRichCathode.from_file(structure_file)
+
+    # Find the non-equivalent dimers
+    dimers = cathode.find_noneq_dimers()
+
+    # Write the
+
+    for dimer in dimers:
+
+
+
+
+def neb(directory, nimages=8, is_migration=False,
+        hse_calculation=False):
     """
     Set up the NEB calculation from the initial and final structures.
 
     """
     directory = os.path.abspath(directory)
 
-    # Extract the optimized initial and final geometry
+    # Extract the optimized initial and final geometries
     initial_dir = os.path.join(directory, "initial")
     final_dir = os.path.join(directory, "final")
 
-    initial_structure = Structure.from_file(os.path.join(initial_dir,
-                                                         "CONTCAR"))
+    try:
+        initial_structure = Structure.from_file(os.path.join(initial_dir,
+                                                             "CONTCAR"))
+
+        # Add the magnetic configuration to the initial structure
+        initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
+        initial_magmom = [site["tot"] for site in initial_out.magnetization]
+        initial_structure.add_site_property("magmom", initial_magmom)
+
+    except FileNotFoundError:
+        # In case the required output files are not present, check to see if
+        # the structure is present in a json format
+        initial_structure = Structure.from_file(os.path.join(initial_dir,
+                                                             "initial.json"))
+
     final_structure = Structure.from_file(os.path.join(final_dir,
                                                        "CONTCAR"))
-
-    # Add the magnetic configuration to the initial structure
-    initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
-    initial_magmom = [site["tot"] for site in initial_out.magnetization]
-    initial_structure.add_site_property("magmom", initial_magmom)
 
     # In case the transition is a migration
     if is_migration:

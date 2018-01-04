@@ -76,11 +76,11 @@ def relax(structure_file, calculation_dir, hse):
     """
     Set up a geometry optimization for a structure.
     """
-    from pybat.cli.commands.setup import set_up_relaxation
+    from pybat.cli.commands.setup import relax
 
-    set_up_relaxation(structure_file=structure_file,
-                      calculation_dir=calculation_dir,
-                      hse_calculation=hse)
+    relax(structure_file=structure_file,
+          calculation_dir=calculation_dir,
+          hse_calculation=hse)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -104,16 +104,28 @@ def transition(directory, is_migration, hse):
     """
 
     from pybat.cli.commands.setup import find_transition_structures
-    from pybat.cli.commands.setup import set_up_transition
+    from pybat.cli.commands.setup import transition
 
     (initial_structure,
      final_structure) = find_transition_structures(directory)
 
-    set_up_transition(directory=directory,
-                      initial_structure=initial_structure,
-                      final_structure=final_structure,
-                      is_migration=is_migration,
-                      hse_calculation=hse)
+    transition(directory=directory,
+               initial_structure=initial_structure,
+               final_structure=final_structure,
+               is_migration=is_migration,
+               hse_calculation=hse)
+
+@setup.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+def dimers(structure_file):
+    """
+    Set up the dimer formation calculations for all nonequivalent dimers. Will
+    start from the initial cathode structure and set up the geometry
+    optimizations for the various dimer formations in a structure, each in its
+    own directory. From there the 'setup neb' command can be used to calculate
+    the reaction barrier.
+    """
+
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -140,12 +152,12 @@ def neb(directory, nimages, is_migration, hse):
     Returns:
 
     """
-    from pybat.cli.commands.setup import set_up_neb
+    from pybat.cli.commands.setup import neb
 
-    set_up_neb(directory=directory,
-               nimages=nimages,
-               is_migration=is_migration,
-               hse_calculation=hse)
+    neb(directory=directory,
+        nimages=nimages,
+        is_migration=is_migration,
+        hse_calculation=hse)
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
