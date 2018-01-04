@@ -212,14 +212,16 @@ def get():
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
-def structure(directory):
+@click.option("--write_cif", "-w", is_flag=True)
+def structure(directory, write_cif):
     """
     Obtain the structure with its magnetic configuration.
 
     """
     from pybat.cli.commands.get import get_structure
 
-    get_structure(directory=directory)
+    get_structure(directory=directory,
+                  write_cif=write_cif)
 
 
 @get.command(context_settings=CONTEXT_SETTINGS)

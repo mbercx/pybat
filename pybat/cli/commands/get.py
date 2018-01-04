@@ -9,7 +9,7 @@ from pymatgen.analysis.transition_state import NEBAnalysis
 LI_ENERGY = -1.89
 
 
-def get_structure(directory):
+def get_structure(directory, write_cif=False):
     """
     Construct a .json file with the structure and magnetic moment from the
     output of a VASP calculation, i.e. the CONTCAR and OUTCAR file.
@@ -28,6 +28,9 @@ def get_structure(directory):
 
     structure.add_site_property("magmom", magmom)
     structure.to("json", "structure.json")
+
+    if write_cif:
+        structure.to("cif", "structure.cif")
 
 
 def get_barrier(directory):
