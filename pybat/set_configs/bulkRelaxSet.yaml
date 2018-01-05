@@ -8,7 +8,7 @@ INCAR:
   ISIF: 3
   ISMEAR: 0
   ISPIN: 2
-  LCHARG: true
+  LCHARG: false
   LREAL: AUTO
   LWAVE: false
   MAGMOM: 0
