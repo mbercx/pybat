@@ -1,0 +1,7 @@
+# HSE06 calculation settings
+INCAR:
+  AEXX: 0.25
+  ALGO: All
+  HFSCREEN: 0.2
+  LHFCALC: true
+  TIME: 0.4

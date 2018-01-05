@@ -3,26 +3,36 @@ import os
 import shutil
 
 from pybat.core import LiRichCathode
-from pybat.sets import PybatRelaxSet, PybatNEBSet
+from pybat.sets import bulkRelaxSet, PybatRelaxSet, PybatNEBSet
+
+from monty.serialization import loadfn
 
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
 from pymatgen.io.vasp.outputs import Chgcar, Outcar
-from pymatgen.io.vasp.sets import MPRelaxSet, MPHSERelaxSet, MPStaticSet
+from pymatgen.io.vasp.sets import MPStaticSet
 
 """
 Setup scripts for the calculations.
 """
 
+MODULE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          "../../set_configs")
+
 DFT_FUNCTIONAL = "PBE_54"
 
 
-def relax(structure_file, calculation_dir, hse_calculation=False):
+def _load_yaml_config(filename):
+    config = loadfn(os.path.join(MODULE_DIR, "%s.yaml" % filename))
+    return config
+
+
+def relax(structure_file, calculation_dir="",
+          is_metal=False, hse_calc=False):
     """
     Set up a standard relaxation of a structure.
 
     """
-    user_incar_settings = {"ISMEAR": 0}
 
     structure_file = os.path.abspath(structure_file)
     structure = Structure.from_file(structure_file)
@@ -33,16 +43,40 @@ def relax(structure_file, calculation_dir, hse_calculation=False):
     if "magmom" not in structure.site_properties.keys():
         structure.add_site_property("magmom", [0] * len(structure.sites))
 
-    if hse_calculation:
-        geo_optimization = MPHSERelaxSet(structure=structure,
-                                         potcar_functional=DFT_FUNCTIONAL,
-                                         user_incar_settings={"EDIFFG": -0.01})
+    # Set up the calculation
+
+    user_incar_settings = {}
+
+    if hse_calc:
+
+        hse_config = _load_yaml_config("HSESet")
+        user_incar_settings.update(hse_config["INCAR"])
+
+        if calculation_dir == "":
+            # Set up the calculation directory
+            current_dir = os.path.dirname(".")
+            calculation_dir = os.path.join(current_dir, "hse_relax")
 
     else:
-        geo_optimization = MPRelaxSet(structure=structure,
-                                      potcar_functional=DFT_FUNCTIONAL,
-                                      user_incar_settings=user_incar_settings)
 
+        dftu_config = _load_yaml_config("DFTUSet")
+        user_incar_settings.update(dftu_config["INCAR"])
+
+        if calculation_dir == "":
+            # Set up the calculation directory
+            current_dir = os.path.dirname(".")
+            calculation_dir = os.path.join(current_dir, "bulk", "dftu_relax")
+
+    # For metals, add some Methfessel Paxton smearing
+    if is_metal:
+        user_incar_settings = {"ISMEAR": 1, "SIGMA": 0.2}
+
+    # Set up the geometry optimization
+    geo_optimization = bulkRelaxSet(structure=structure,
+                                    user_incar_settings=user_incar_settings,
+                                    potcar_functional=DFT_FUNCTIONAL)
+
+    # Write the input files to the geo optimization directory
     geo_optimization.write_input(calculation_dir)
 
 

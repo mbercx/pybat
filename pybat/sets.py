@@ -23,6 +23,19 @@ def _load_yaml_config(fname):
     return config
 
 
+class bulkRelaxSet(DictSet):
+    """
+    VASP input set for the bulk relaxation.
+
+    """
+    CONFIG = _load_yaml_config("bulkRelaxSet")
+
+    def __init__(self, structure, **kwargs):
+        super(bulkRelaxSet, self).__init__(
+            structure, bulkRelaxSet.CONFIG, **kwargs)
+        self.kwargs = kwargs
+
+
 class PybatRelaxSet(DictSet):
     """
     Subclass of the MITNEBSet, with specific settings for migration
