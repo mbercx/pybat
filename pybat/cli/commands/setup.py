@@ -2,6 +2,8 @@ import numpy as np
 import os
 import shutil
 
+import pdb
+
 from pybat.core import LiRichCathode
 from pybat.sets import bulkRelaxSet, PybatRelaxSet, PybatNEBSet
 
@@ -36,7 +38,6 @@ def relax(structure_file, calculation_dir="",
 
     structure_file = os.path.abspath(structure_file)
     structure = Structure.from_file(structure_file)
-    calculation_dir = os.path.abspath(calculation_dir)
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.
@@ -65,11 +66,11 @@ def relax(structure_file, calculation_dir="",
         if calculation_dir == "":
             # Set up the calculation directory
             current_dir = os.path.dirname(".")
-            calculation_dir = os.path.join(current_dir, "bulk", "dftu_relax")
+            calculation_dir = os.path.join(current_dir, "dftu_relax")
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
-        user_incar_settings = {"ISMEAR": 1, "SIGMA": 0.2}
+        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
 
     # Set up the geometry optimization
     geo_optimization = bulkRelaxSet(structure=structure,
