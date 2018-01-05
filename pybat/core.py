@@ -347,6 +347,8 @@ class LiRichCathode(Cathode):
             if self.sites[neighbor["index"]].species_string == "O"
         ]
 
+        #pdb.set_trace()
+
         if len(oxygen_neighbors_indices) <= 1:
             raise ValueError("Provided site does not have two oxygen "
                              "neighbours.\n")
@@ -375,8 +377,14 @@ class LiRichCathode(Cathode):
                 set(oxygen_a_neighbors).intersection(oxygen_b_neighbors)
             )
 
-            if len(shared_neighbours) == 2:
+            # TODO Fix this condition for smaller unit cells!
+            if len(shared_neighbours) >= 2:
                 oxygen_dimers.append(oxygen_pair)
+
+        if len(oxygen_dimers) > 12:
+            raise Warning("Found more than 12 oxygen pairs around a single "
+                          "site. This can be caused by the use of a small "
+                          "unit cell. Results may not be useful.")
 
         return oxygen_dimers
 
