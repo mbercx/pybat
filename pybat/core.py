@@ -57,7 +57,7 @@ class Cathode(Structure):
     """
     def __init__(self, lattice, species, coords, validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
-                 site_properties=None):
+                 site_properties=None, cation_configuration=None):
 
         super(Cathode, self).__init__(
             lattice=lattice, species=species, coords=coords,
@@ -66,7 +66,14 @@ class Cathode(Structure):
             site_properties=site_properties
         )
 
-        self._cation_configuration = self.cation_sites
+        if cation_configuration is None:
+            self._cation_configuration = [ index for index
+                                           in range(len(self.sites))
+                                           if self.sites[index].species_string
+                                           in CATIONS ]
+        else:
+            self._cation_configuration = cation_configuration
+
         self._voronoi = None
 
     @property
