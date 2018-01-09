@@ -294,6 +294,18 @@ class Cathode(Structure):
             raise NotImplementedError("Only json, cif or VASP POSCAR formats "
                                       "are currently supported.")
 
+    def copy(self):
+        """
+        Convenience method to get a copy of the cathode.
+
+        Returns:
+            A copy of the Cathode.
+        """
+
+        copy = self.__class__.from_sites(self)
+        copy.cation_configuration = self.cation_configuration
+        return copy
+
     def as_structure(self):
         """
         Return the structure as a pymatgen.core.Structure, with the cation
