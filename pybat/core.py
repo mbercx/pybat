@@ -398,7 +398,7 @@ class LiRichCathode(Cathode):
                              "neighbours.\n")
 
         # Find all oxygen neighbour combinations that can form dimers. This
-        # means they are not opposites on the site's octahedron.
+        # means they are not opposites on the site's octahedron environment.
         oxygen_dimers = []
         oxygen_combinations = itertools.combinations(
             oxygen_neighbors_indices, 2
@@ -406,15 +406,22 @@ class LiRichCathode(Cathode):
 
         for oxygen_pair in oxygen_combinations:
 
-            site = self.sites(site_index)
-            oxygen_site_A = self.sites(oxygen_pair[0])
-            oxygen_site_B = self.sites(oxygen_pair[1])
+            site = self.sites[site_index]
+            oxygen_site_A = self.sites[oxygen_pair[0]]
+            oxygen_site_B = self.sites[oxygen_pair[1]]
 
             oxygen_image_A = site.distance_and_image(oxygen_site_A)[1]
             oxygen_image_B = site.distance_and_image(oxygen_site_B)[1]
 
-            oxygen_vector_A = oxygen_image_A.coords - site.coords
-            oxygen_vector_B = oxygen_image_B.coords - site.coords
+            image_A_cart_coords = oxygen_site_A.coords\
+                                  + np.dot(oxygen_image_A,
+                                           self.lattice.matrix)
+            image_B_cart_coords = oxygen_site_B.coords \
+                                  + np.dot(oxygen_image_B,
+                                           self.lattice.matrix)
+
+            oxygen_vector_A = image_A_cart_coords - site.coords
+            oxygen_vector_B = image_B_cart_coords - site.coords
 
             if angle_between(oxygen_vector_A, oxygen_vector_B) < \
                     OXYGEN_ANGLE_TOL:
@@ -568,6 +575,11 @@ class Dimer(MSONable):
             # sorted in such a way that the oxygen indices come first,
             # followed by the indices of the shared neighbors.
             # TODO This can be done better. Really.
+            # TODO Fix issue for small unit cells
+            # The issue for small unit cells is that the oxygen atoms have
+            # more shared neighbors than two according to the voronoi
+            # decomposition, which messes up the assignment of the
+            # environment atoms in the representation. This needs to be fixed.
             shared_neighbors = tuple(
                 set(oxygen_a_neighbors).intersection(oxygen_b_neighbors)
             )
@@ -744,7 +756,7 @@ class Dimer(MSONable):
 
         """
 
-        # Turn the structure into a molecule, removing the sites with zero
+        # Turn the structure into a molecule, ignoring the sites with zero
         # occupancy
         dimer_environment_molecule = Molecule.from_sites(
             [site for site in self.get_dimer_molecule().sites
