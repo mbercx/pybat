@@ -78,13 +78,7 @@ class Cathode(Structure):
             site_properties=site_properties
         )
 
-        if cation_configuration is None:
-            self._cation_configuration = [ index for index
-                                           in range(len(self.sites))
-                                           if self.sites[index].species_string
-                                           in CATIONS ]
-        else:
-            self._cation_configuration = cation_configuration
+        self._cation_configuration = cation_configuration
 
         self._voronoi = None
 
@@ -107,7 +101,13 @@ class Cathode(Structure):
         Returns:
 
         """
+        if self._cation_configuration is None:
+            self._cation_configuration = [ index for index
+                                           in range(len(self.sites))
+                                           if self.sites[index].species_string
+                                           in CATIONS ]
 
+        # noinspection PyTypeChecker
         return [self.sites[index] for index in self._cation_configuration]
 
     @cation_configuration.setter
@@ -306,7 +306,6 @@ class Cathode(Structure):
             self.cation_configuration
         )
 
-
     @classmethod
     def from_structure(cls, structure):
 
@@ -344,6 +343,7 @@ class Cathode(Structure):
 
         structure = super(Cathode, cls).from_dict(d)
         cathode = cls.from_structure(structure)
+
         cation_configuration = d.get("cation_configuration", None)
 
         if cation_configuration is not None:
@@ -360,13 +360,14 @@ class LiRichCathode(Cathode):
     """
     def __init__(self, lattice, species, coords, validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
-                 site_properties=None):
+                 site_properties=None, cation_configuration=None):
 
         super(LiRichCathode, self).__init__(
             lattice=lattice, species=species, coords=coords,
             validate_proximity=validate_proximity, to_unit_cell=to_unit_cell,
             coords_are_cartesian=coords_are_cartesian,
-            site_properties=site_properties
+            site_properties=site_properties,
+            cation_configuration=cation_configuration
         )
 
     def find_oxygen_dimers(self, site_index):
