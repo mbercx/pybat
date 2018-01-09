@@ -769,7 +769,7 @@ class Dimer(MSONable):
             filename = str(self.cathode.composition).replace(" ", "") + "_" \
                        + str(self.indices[0]) + "_" + str(self.indices[1])
 
-        dimer_environment_molecule.to("xyz", filename + ".xyz")
+        dimer_environment_molecule.to("xyz", filename)
 
     # TODO Check if MSONable methods need to be implemented
 
