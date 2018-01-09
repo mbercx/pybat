@@ -29,8 +29,8 @@ battery cathodes
 VORONOI_DIST_FACTOR = 1.3
 VORONOI_ANG_FACTOR = 0.7
 
-# Tuple of possible cations. This idea should work rather well, considering
-# the fact that these cation elements rarely serve another purpose than being
+# Tuple of possible cations. This idea should work fine, considering the
+# fact that these cation elements rarely serve another purpose than being
 # a cation.
 CATIONS = ("Li", "Na", "Mg")
 
@@ -52,7 +52,13 @@ SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
 
 class Cathode(Structure):
     """
-    A class representing a cathode material in a battery.
+    A class representing a cathode material in a battery. The main idea of
+    this class is to keep track of the original cation sites by considering
+    the cation configuration as a list of site indices which are occupied by
+    a cation. This is important to make sure that the voronoi decomposition
+    is successful, and hence interesting if we want to look at coordinations
+    and neighbors. Another advantage is that we can consider the empty
+    cation sites for final positions of transition metal migrations.
 
     """
     def __init__(self, lattice, species, coords, validate_proximity=False,
@@ -143,10 +149,8 @@ class Cathode(Structure):
         the requested cations from this List.
 
         Args:
-            sites: List of sites which are to be removed.
+            sites: List of pymatgen.core.Sites which are to be removed.
 
-
-        :return:
         """
 
         # If no indices are given
