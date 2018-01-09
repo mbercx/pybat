@@ -95,18 +95,14 @@ class Cathode(Structure):
         Returns:
 
         """
-        # TODO Change cation_configuration storage
-        # Currently there is a problem with the way the cation configuration
-        #  is stored. E.g. if you set a cation configuration and then change
-        #  the site properties, the cation configuration sites are not
-        # updated. Perhaps storing the cation_configuration as a list of
-        # site indices, but making the IO Site-based might be the best
-        # solution
 
         return [self.sites[index] for index in self._cation_configuration]
 
     @cation_configuration.setter
     def cation_configuration(self, configuration):
+
+        # TODO Add checks
+
         if all([isinstance(item, int) for item in configuration]):
             self._cation_configuration = configuration
         elif all([isinstance(item, Site) for item in configuration]):
@@ -114,6 +110,9 @@ class Cathode(Structure):
                                           in range(len(self.sites))
                                           if self.sites[index]
                                           in configuration]
+        else:
+            raise TypeError("Cation configurations should be a List of "
+                            "indices or sites.")
 
     @property
     def voronoi(self):
