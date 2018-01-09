@@ -4,7 +4,7 @@ import shutil
 
 import pdb
 
-from pybat.core import LiRichCathode
+from pybat.core import Cathode, LiRichCathode
 from pybat.sets import bulkRelaxSet, PybatRelaxSet, PybatNEBSet
 
 from monty.serialization import loadfn
@@ -32,12 +32,12 @@ def _load_yaml_config(filename):
 def relax(structure_file, calculation_dir="",
           is_metal=False, hse_calc=False):
     """
-    Set up a standard relaxation of a structure.
+    Set up a standard relaxation of a Cathode structure.
 
     """
 
     structure_file = os.path.abspath(structure_file)
-    structure = Structure.from_file(structure_file)
+    structure = Cathode.from_file(structure_file)
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.

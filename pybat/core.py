@@ -66,7 +66,7 @@ class Cathode(Structure):
             site_properties=site_properties
         )
 
-        self._cation_configuration = None
+        self._cation_configuration = self.cation_sites
         self._voronoi = None
 
     @property
@@ -88,8 +88,13 @@ class Cathode(Structure):
         Returns:
 
         """
-        if self._cation_configuration is None:
-            self._cation_configuration = self.cation_sites
+        # TODO Change cation_configuration storage
+        # Currently there is a problem with the way the cation configuration
+        #  is stored. E.g. if you set a cation configuration and then change
+        #  the site properties, the cation configuration sites are not
+        # updated. Perhaps storing the cation_configuration as a list of
+        # site indices, but making the IO Site-based might be the best
+        # solution
 
         return self._cation_configuration
 
@@ -124,6 +129,10 @@ class Cathode(Structure):
         Note that this does not remove the sites from the pymatgen Structure.
         The cation_configuration of the Cathode is simply adjusted by removing
         the requested cations from this List.
+
+        Args:
+            sites: List of sites which are to be removed.
+
 
         :return:
         """
