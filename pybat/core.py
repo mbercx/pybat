@@ -34,8 +34,14 @@ VORONOI_ANG_FACTOR = 0.7
 # a cation.
 CATIONS = ("Li", "Na", "Mg")
 
+# Tolerance for determining whether two oxygens are on opposite sides of an
+# octahedron. If the angle between the two vectors connecting the site and
+# the corresponding oxygens is larger than this value, the oxygens are
+# considered to be opposites.
+OXYGEN_ANGLE_TOL = math.pi*9/10
+
 # Tolerance for the representation determination. This can be pretty big, since
-# the dimer structure is known.
+# the dimer environment structure is known.
 REPRESENTATION_DIST_TOL = 5e-1
 REPRESENTATION_ANGLE_TOL = 2e-1
 
@@ -390,7 +396,8 @@ class LiRichCathode(Cathode):
             raise ValueError("Provided site does not have two oxygen "
                              "neighbours.\n")
 
-        # Find all oxygen neighbour combinations that share another neighbour
+        # Find all oxygen neighbour combinations that can form dimers. This
+        # means they are not opposites on the site's octahedron.
         oxygen_dimers = []
         oxygen_combinations = itertools.combinations(
             oxygen_neighbors_indices, 2
@@ -398,24 +405,18 @@ class LiRichCathode(Cathode):
 
         for oxygen_pair in oxygen_combinations:
 
-            oxygen_a_neighbors = [
-                neighbor["index"] for neighbor
-                in self.voronoi.neighbors(oxygen_pair[0], VORONOI_DIST_FACTOR,
-                                          VORONOI_ANG_FACTOR)
-            ]
-            oxygen_b_neighbors = [
-                neighbor["index"] for neighbor
-                in self.voronoi.neighbors(oxygen_pair[1], VORONOI_DIST_FACTOR,
-                                          VORONOI_ANG_FACTOR)
-            ]
+            site = self.sites(site_index)
+            oxygen_site_A = self.sites(oxygen_pair[0])
+            oxygen_site_B = self.sites(oxygen_pair[1])
 
-            # Check how many neighbours the oxygen have in common
-            shared_neighbours = list(
-                set(oxygen_a_neighbors).intersection(oxygen_b_neighbors)
-            )
+            oxygen_image_A = site.distance_and_image(oxygen_site_A)[1]
+            oxygen_image_B = site.distance_and_image(oxygen_site_B)[1]
 
-            # TODO Fix this condition for smaller unit cells!
-            if len(shared_neighbours) >= 2:
+            oxygen_vector_A = oxygen_image_A.coords - site.coords
+            oxygen_vector_B = oxygen_image_B.coords - site.coords
+
+            if angle_between(oxygen_vector_A, oxygen_vector_B) < \
+                    OXYGEN_ANGLE_TOL:
                 oxygen_dimers.append(oxygen_pair)
 
         if len(oxygen_dimers) > 12:
