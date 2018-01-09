@@ -157,15 +157,25 @@ def dimers(structure_file, dimer_distance=1.4,
     # Find the non-equivalent dimers
     dimers = cathode.find_noneq_dimers()
 
+    user_incar_settings = {}
+
+    # TODO Revise the necessity of PybatRelaxSet
+    # Add the standard Methfessel-Paxton smearing for metals
+    if is_metal:
+        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+
     # Set up the geometry optimization for the initial structure
     try:
         os.mkdir("initial")
     except FileExistsError:
         pass
 
-    initial_optimization = PybatRelaxSet(structure=cathode.as_structure(),
-                                         potcar_functional=DFT_FUNCTIONAL,
-                                         hse_calculation=hse_calculation)
+    initial_optimization = PybatRelaxSet(
+        structure=cathode.as_structure(),
+        potcar_functional=DFT_FUNCTIONAL,
+        hse_calculation=hse_calculation,
+        user_incar_settings=user_incar_settings
+    )
 
     initial_optimization.write_input("initial")
 
@@ -198,7 +208,8 @@ def dimers(structure_file, dimer_distance=1.4,
         dimer_optimization = PybatRelaxSet(
             structure=dimer_structure.as_structure(),
             potcar_functional=DFT_FUNCTIONAL,
-            hse_calculation=hse_calculation
+            hse_calculation=hse_calculation,
+            user_incar_settings=user_incar_settings
         )
 
         # Write the calculation files to the 'final' directory
