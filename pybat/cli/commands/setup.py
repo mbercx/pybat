@@ -37,7 +37,7 @@ def relax(structure_file, calculation_dir="",
     """
 
     structure_file = os.path.abspath(structure_file)
-    structure = Cathode.from_file(structure_file)
+    structure = Cathode.from_file(structure_file).as_structure()
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.
