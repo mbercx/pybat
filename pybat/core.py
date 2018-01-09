@@ -103,11 +103,17 @@ class Cathode(Structure):
         # site indices, but making the IO Site-based might be the best
         # solution
 
-        return self._cation_configuration
+        return [self.sites[index] for index in self._cation_configuration]
 
     @cation_configuration.setter
     def cation_configuration(self, configuration):
-        self._cation_configuration = configuration
+        if all([isinstance(item, int) for item in configuration]):
+            self._cation_configuration = configuration
+        elif all([isinstance(item, Site) for item in configuration]):
+            self._cation_configuration = [index for index
+                                          in range(len(self.sites))
+                                          if self.sites[index]
+                                          in configuration]
 
     @property
     def voronoi(self):
