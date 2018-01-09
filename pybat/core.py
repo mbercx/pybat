@@ -258,10 +258,7 @@ class Cathode(Structure):
         if fmt in ["cif", "poscar"] or fnmatch(filename, "*.cif*") \
             or fnmatch(filename, "POSCAR"):
 
-            structure = self.copy()
-            for cation_site in self.cation_sites:
-                if cation_site not in self.cation_configuration:
-                    structure.remove(cation_site)
+            structure = self.as_structure()
 
             super(Cathode, structure).to(fmt=fmt, filename=filename, **kwargs)
 
@@ -272,6 +269,21 @@ class Cathode(Structure):
         else:
             raise NotImplementedError("Only json, cif or VASP POSCAR formats "
                                       "are currently supported.")
+
+    def as_structure(self):
+        """
+        Return the structure as a pymatgen.core.Structure, with the cation
+        configuration as stored in the cation_configuration property.
+
+        Returns:
+
+        """
+
+        return Structure.from_sites(
+            [site for site in self.sites if site not in self.cation_sites] +
+            self.cation_configuration
+        )
+
 
     @classmethod
     def from_structure(cls, structure):
