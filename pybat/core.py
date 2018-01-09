@@ -261,12 +261,14 @@ class Cathode(Structure):
         Overwritten from IStructure in order to consider the cation
         configuration for .cif and VASP POSCAR files. For .json formats the
         as_dict method successfully stores the cation configuration. Importing
-        the Cathode object from .cif or POSCAR files
+        the Cathode object from .cif or POSCAR files written from the
+        Cathode in such a way will lose the sites which are not in the
+        cation configuration.
 
         Args:
             fmt (str): Format to output to. Defaults to JSON unless filename
                 is provided. If fmt is specifies, it overrides whatever the
-                filename is. Options include "cif", "poscar", "cssr", "json".
+                filename is. Options include "cif", "poscar", "json".
                 Non-case sensitive.
             filename (str): If provided, output will be written to a file. If
                 fmt is not specified, the format is determined from the
@@ -282,7 +284,7 @@ class Cathode(Structure):
 
             structure = self.as_structure()
 
-            super(Cathode, structure).to(fmt=fmt, filename=filename, **kwargs)
+            structure.to(fmt=fmt, filename=filename, **kwargs)
 
         elif fmt == "json" or fnmatch(filename, "*.json*"):
 
