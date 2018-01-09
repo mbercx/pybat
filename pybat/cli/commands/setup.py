@@ -156,26 +156,35 @@ def dimers(structure_file, dimer_distance=1.4, hse_calculation=False):
     # Find the non-equivalent dimers
     dimers = cathode.find_noneq_dimers()
 
+    # Set up the geometry optimization for the initial structure
+    try:
+        os.mkdir("initial")
+    except FileExistsError:
+        pass
+
+    initial_optimization = PybatRelaxSet(structure=cathode.as_structure(),
+                                         potcar_functional=DFT_FUNCTIONAL,
+                                         hse_calculation=hse_calculation)
+
+    initial_optimization.write_input("initial")
+
     # Set up the geometry optimization calculations for the various dimers
     for dimer in dimers:
 
         # Set up the dimer directory
         dimer_directory = "".join(str(dimer.indices[0]) + "_"
                                   + str(dimer.indices[1]))
-
-        os.mkdir(dimer_directory)
-        initial_dir = os.path.join(dimer_directory, "initial")
-        os.mkdir(initial_dir)
         final_dir = os.path.join(dimer_directory, "final")
-        os.mkdir(final_dir)
+
+        try:
+            os.mkdir(dimer_directory)
+            os.mkdir(final_dir)
+        except FileExistsError:
+            pass
 
         # Write the molecule representing the dimer to the dimer directory
         dimer.visualize_dimer_environment(os.path.join(dimer_directory,
                                                        "dimer.xyz"))
-
-        # Copy the original structure into the 'initial' directory
-        shutil.copy(structure_file, os.path.join(initial_dir,
-                                                 "structure.json"))
 
         # Set up the dimer structure, i.e. move the oxygen pair closer together
         dimer_structure = cathode.copy()
@@ -185,9 +194,11 @@ def dimers(structure_file, dimer_distance=1.4, hse_calculation=False):
             raise NotImplementedError("HSE06 calculation not implemented yet.")
 
         # Set up the geometry optimization for the dimer structure
-        dimer_optimization = PybatRelaxSet(structure=dimer_structure,
-                                           potcar_functional=DFT_FUNCTIONAL,
-                                           hse_calculation=hse_calculation)
+        dimer_optimization = PybatRelaxSet(
+            structure=dimer_structure.as_structure(),
+            potcar_functional=DFT_FUNCTIONAL,
+            hse_calculation=hse_calculation
+        )
 
         # Write the calculation files to the 'final' directory
         dimer_optimization.write_input(final_dir)

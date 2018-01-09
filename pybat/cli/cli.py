@@ -122,15 +122,15 @@ def transition(directory, is_migration, hse):
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("dimer_distance", "-d", default=1.4)
+@click.option("dimer_distance", "-D", default=1.4)
 @click.option("hse_calculation", "-H", is_flag=True)
 def dimers(structure_file, dimer_distance, hse_calculation):
     """
     Set up the dimer formation calculations for all nonequivalent dimers. Will
     start from the initial cathode structure and set up the geometry
     optimizations for the various dimer formations in a structure, each in its
-    own directory. Once these are complete, the 'setup neb' command can be used
-    to calculate the reaction barrier.
+    own directory. Will also set up a geometry optimization for the initial
+    structure in the directory 'initial'.
     """
     from pybat.cli.commands.setup import dimers
 
