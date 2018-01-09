@@ -30,7 +30,7 @@ def _load_yaml_config(filename):
 
 
 def relax(structure_file, calculation_dir="",
-          is_metal=False, hse_calc=False):
+          is_metal=False, hse_calculation=False):
     """
     Set up a standard relaxation of a Cathode structure.
 
@@ -48,7 +48,7 @@ def relax(structure_file, calculation_dir="",
 
     user_incar_settings = {}
 
-    if hse_calc:
+    if hse_calculation:
 
         hse_config = _load_yaml_config("HSESet")
         user_incar_settings.update(hse_config["INCAR"])
@@ -133,7 +133,8 @@ def transition(directory, initial_structure, final_structure,
         host_scf.write_input(os.path.join(neb_dir, "host"))
 
 
-def dimers(structure_file, dimer_distance=1.4, hse_calculation=False):
+def dimers(structure_file, dimer_distance=1.4,
+           is_metal=False, hse_calculation=False):
     """
     Set up the geometric optimizations for the non-equivalent dimer formations
     in a Li-Rich cathode material.

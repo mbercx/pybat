@@ -74,9 +74,9 @@ def setup():
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
-                   "smearing.")
-@click.option("--hse_calc", "-H", is_flag=True)
-def relax(structure_file, calculation_dir, is_metal, hse_calc):
+                   "smearing of 0.2 eV.")
+@click.option("--hse_calculation", "-H", is_flag=True)
+def relax(structure_file, calculation_dir, is_metal, hse_calculation):
     """
     Set up a geometry optimization for a structure.
     """
@@ -85,7 +85,7 @@ def relax(structure_file, calculation_dir, is_metal, hse_calc):
     relax(structure_file=structure_file,
           calculation_dir=calculation_dir,
           is_metal=is_metal,
-          hse_calc=hse_calc)
+          hse_calculation=hse_calculation)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -101,8 +101,8 @@ def relax(structure_file, calculation_dir, is_metal, hse_calc):
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
-@click.option("--hse", "-H", is_flag=True)
-def transition(directory, is_migration, hse):
+@click.option("--hse_calculation", "-H", is_flag=True)
+def transition(directory, is_migration, hse_calculation):
     """
     Set up a the geometry optimizations for the initial and final state of a
     transition.
@@ -118,13 +118,18 @@ def transition(directory, is_migration, hse):
                initial_structure=initial_structure,
                final_structure=final_structure,
                is_migration=is_migration,
-               hse_calculation=hse)
+               hse_calculation=hse_calculation)
+
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("dimer_distance", "-D", default=1.4)
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
 @click.option("hse_calculation", "-H", is_flag=True)
-def dimers(structure_file, dimer_distance, hse_calculation):
+def dimers(structure_file, dimer_distance, is_metal, hse_calculation):
     """
     Set up the dimer formation calculations for all nonequivalent dimers. Will
     start from the initial cathode structure and set up the geometry
@@ -136,6 +141,7 @@ def dimers(structure_file, dimer_distance, hse_calculation):
 
     dimers(structure_file=structure_file,
            dimer_distance=dimer_distance,
+           is_metal=is_metal,
            hse_calculation=hse_calculation)
 
 
@@ -154,8 +160,8 @@ def dimers(structure_file, dimer_distance, hse_calculation):
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
-@click.option("--hse", "-H", is_flag=True)
-def neb(directory, nimages, is_migration, hse):
+@click.option("--hse_calculation", "-H", is_flag=True)
+def neb(directory, nimages, is_migration, hse_calculation):
     """
     Set up the Nudged Elastic Band calculation based on the output in the
     initial and final directory.
@@ -168,7 +174,7 @@ def neb(directory, nimages, is_migration, hse):
     neb(directory=directory,
         nimages=nimages,
         is_migration=is_migration,
-        hse_calculation=hse)
+        hse_calculation=hse_calculation)
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
