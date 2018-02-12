@@ -98,7 +98,7 @@ def relax(structure_file, calculation_dir, is_metal, hse_calculation):
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-@click.option("--is_migration", "-m", is_flag=True,
+@click.option("--is_migration", "-M", is_flag=True,
               help="Flag to designate the transition as a migration. "
                    "Activating this flag means that a static calculation will "
                    "be set up to determine the charge density of the host "
