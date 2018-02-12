@@ -67,7 +67,8 @@ class Cathode(Structure):
     cation sites for final positions of transition metal migrations.
 
     """
-    def __init__(self, lattice, species, coords, validate_proximity=False,
+    def __init__(self, lattice, species, coords, charge=None,
+                 validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
                  site_properties=None, cation_configuration=None):
 
@@ -372,7 +373,8 @@ class LiRichCathode(Cathode):
     A class representing a Li-rich cathode material.
 
     """
-    def __init__(self, lattice, species, coords, validate_proximity=False,
+    def __init__(self, lattice, species, coords, charge=None,
+                 validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
                  site_properties=None, cation_configuration=None):
 
