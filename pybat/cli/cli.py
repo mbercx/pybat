@@ -94,6 +94,10 @@ def relax(structure_file, calculation_dir, is_metal, hse_calculation):
                    "first step in the transition path determination. Note "
                    "that this directory has to contain the structure files "
                    "for the initial and final state. ")
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
 @click.option("--is_migration", "-m", is_flag=True,
               help="Flag to designate the transition as a migration. "
                    "Activating this flag means that a static calculation will "
@@ -102,7 +106,7 @@ def relax(structure_file, calculation_dir, is_metal, hse_calculation):
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
 @click.option("--hse_calculation", "-H", is_flag=True)
-def transition(directory, is_migration, hse_calculation):
+def transition(directory, is_metal, is_migration, hse_calculation):
     """
     Set up a the geometry optimizations for the initial and final state of a
     transition.
@@ -117,6 +121,7 @@ def transition(directory, is_migration, hse_calculation):
     transition(directory=directory,
                initial_structure=initial_structure,
                final_structure=final_structure,
+               is_metal=is_metal,
                is_migration=is_migration,
                hse_calculation=hse_calculation)
 

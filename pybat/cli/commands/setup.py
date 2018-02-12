@@ -81,7 +81,7 @@ def relax(structure_file, calculation_dir="",
     geo_optimization.write_input(calculation_dir)
 
 
-def transition(directory, initial_structure, final_structure,
+def transition(directory, initial_structure, final_structure, is_metal=False,
                is_migration=False, hse_calculation=False):
     """
     This script will set up the geometry optimizations for the initial and
@@ -103,14 +103,28 @@ def transition(directory, initial_structure, final_structure,
         final_structure.add_site_property("magmom",
                                           [0] * len(initial_structure.sites))
 
-    # Set up the initial and final optimization calculations
-    initial_optimization = PybatRelaxSet(structure=initial_structure,
-                                         potcar_functional=DFT_FUNCTIONAL,
-                                         hse_calculation=hse_calculation)
+    # Set up the calculations
 
-    final_optimization = PybatRelaxSet(structure=final_structure,
-                                       potcar_functional=DFT_FUNCTIONAL,
-                                       hse_calculation=hse_calculation)
+    user_incar_settings = {}
+
+    # For metals, add some Methfessel Paxton smearing
+    if is_metal:
+        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+
+    # Set up the initial and final optimization calculations
+    initial_optimization = PybatRelaxSet(
+        structure=initial_structure,
+        potcar_functional=DFT_FUNCTIONAL,
+        hse_calculation=hse_calculation,
+        user_incar_settings=user_incar_settings
+    )
+
+    final_optimization = PybatRelaxSet(
+        structure=final_structure,
+        potcar_functional=DFT_FUNCTIONAL,
+        hse_calculation=hse_calculation,
+        user_incar_settings=user_incar_settings
+    )
 
     # Set up the root directory for the neb calculation
     neb_dir = os.path.abspath(directory)
