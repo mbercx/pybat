@@ -90,7 +90,7 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
 
     dimer_structure_file = structure_file.split(".")[0] + "_dimer_init" \
         + ".json"
-    cathode.to(dimer_structure_file)
+    cathode.to("json", dimer_structure_file)
 
     cathode.change_site_distance(dimer_indices, distance)
 
