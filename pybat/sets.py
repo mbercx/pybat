@@ -85,7 +85,7 @@ class PybatNEBSet(PybatRelaxSet):
 
         # NEB specific defaults
         defaults = {'IMAGES': len(structures) - 2, 'IBRION': 1, 'ISYM': 0,
-                    'LCHARG': False}
+                    'LCHARG': False, 'LCLIMB': True}
         self._config_dict["INCAR"].update(defaults)
 
     @property
