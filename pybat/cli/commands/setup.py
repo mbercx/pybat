@@ -230,7 +230,7 @@ def dimers(structure_file, dimer_distance=1.4,
         dimer_optimization.write_input(final_dir)
 
 
-def neb(directory, nimages=8, is_migration=False,
+def neb(directory, nimages=8, is_metal=False, is_migration=False,
         hse_calculation=False):
     """
     Set up the NEB calculation from the initial and final structures.
@@ -281,9 +281,16 @@ def neb(directory, nimages=8, is_migration=False,
     else:
         # Linearly interpolate the initial and final structures
         images = initial_structure.interpolate(end_structure=final_structure,
-                                               nimages=nimages)
+                                               nimages=nimages+1)
 
-    neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL)
+    user_incar_settings = {}
+
+    # Add the standard Methfessel-Paxton smearing for metals
+    if is_metal:
+        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+
+    neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL,
+                                  user_incar_settings=user_incar_settings)
 
     # Set up the NEB calculation
     neb_calculation.write_input(directory)

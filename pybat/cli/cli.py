@@ -158,6 +158,10 @@ def dimers(structure_file, dimer_distance, is_metal, hse_calculation):
                    "for the initial and final state.")
 @click.option("--nimages", "-n", default=8,
               help="Number of images.")
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
 @click.option("--is_migration", "-m", is_flag=True,
               help="Flag to designate the transition as a migration. "
                    "Activating this flag means that a static calculation will "
@@ -166,7 +170,7 @@ def dimers(structure_file, dimer_distance, is_metal, hse_calculation):
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
 @click.option("--hse_calculation", "-H", is_flag=True)
-def neb(directory, nimages, is_migration, hse_calculation):
+def neb(directory, nimages, is_metal, is_migration, hse_calculation):
     """
     Set up the Nudged Elastic Band calculation based on the output in the
     initial and final directory.
@@ -178,6 +182,7 @@ def neb(directory, nimages, is_migration, hse_calculation):
 
     neb(directory=directory,
         nimages=nimages,
+        is_metal=is_metal,
         is_migration=is_migration,
         hse_calculation=hse_calculation)
 
