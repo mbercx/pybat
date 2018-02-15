@@ -42,7 +42,8 @@ def get_barrier(directory):
     Returns:
 
     """
-    neb = NEBAnalysis.from_dir(directory)
+    neb = NEBAnalysis.from_dir(directory, relaxation_dirs=('initial',
+                                                           'final'))
     neb.get_plot().show()
 
 
