@@ -70,7 +70,8 @@ def setup():
 @setup.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--calculation_dir", "-d", default="",
-              help="The directory in which to set up the calculation.")
+              help="The directory in which to set up the calculation. "
+                   "Default is FUNCTIONAL_relax.")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "

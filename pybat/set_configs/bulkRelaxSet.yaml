@@ -8,6 +8,7 @@ INCAR:
   ISIF: 3
   ISMEAR: 0
   ISPIN: 2
+  LASPH: true
   LCHARG: false
   LREAL: AUTO
   LWAVE: false

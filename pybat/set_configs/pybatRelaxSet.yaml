@@ -11,6 +11,7 @@ INCAR:
   ISIF: 2
   ISMEAR: 0
   ISPIN: 2
+  LASPH: true
   LDAU: true
   LDAUJ:
     F:

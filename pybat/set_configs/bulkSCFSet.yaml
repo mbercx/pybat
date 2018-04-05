@@ -5,6 +5,7 @@ INCAR:
   ENCUT: 500
   ISMEAR: -5
   ISPIN: 2
+  LASPH: true
   LCHARG: false
   LREAL: AUTO
   LWAVE: false
