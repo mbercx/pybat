@@ -10,6 +10,7 @@ INCAR:
   ISPIN: 2
   LASPH: true
   LCHARG: false
+  LORBIT: 11
   LREAL: AUTO
   LWAVE: false
   MAGMOM: 0
