@@ -1,5 +1,6 @@
 
 import os
+import pdb
 
 from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Outcar
@@ -26,7 +27,16 @@ def get_structure(directory, write_cif=False):
 
     magmom = [site["tot"] for site in out.magnetization]
 
-    structure.add_site_property("magmom", magmom)
+    # Add the magnetic moments to the Structure
+    try:
+        structure.add_site_property("magmom", magmom)
+    except ValueError:
+        # If something goes wrong in assigning the magnetic moments,
+        # give the user a warning and assign magnetic moment zero to all sites.
+        print("WARNING: Could not assign the magnetic moments found in the "
+              "OUTCAR file. They may be missing.")
+        structure.add_site_property("magmom", len(structure.sites)*[0])
+
     structure.to("json", "structure.json")
 
     if write_cif:
