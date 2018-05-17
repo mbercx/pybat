@@ -303,11 +303,14 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
 ###########
 
 
-def find_transition_structures(directory, initial_contains="init",
-                               final_contains="final"):
+def find_transition_structures(directory, initial_contains="init.json",
+                               final_contains="final.json"):
     """
     Find the initial and final structures for a transition from the files in a
     directory.
+
+    The function demands .json type files, in order to include the magnetic
+    moments.
 
     Args:
         directory:
