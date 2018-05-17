@@ -111,6 +111,8 @@ def transition(directory, initial_structure, final_structure, is_metal=False,
     if is_metal:
         user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
 
+    # TODO Switch to new sets!
+
     # Set up the initial and final optimization calculations
     initial_optimization = PybatRelaxSet(
         structure=initial_structure,

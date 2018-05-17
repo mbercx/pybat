@@ -27,6 +27,7 @@ INCAR:
       Co: 0
       Cr: 0
       Fe: 0
+      Ir: 0
       Mn: 0
       Mo: 0
       Ni: 0
@@ -46,6 +47,7 @@ INCAR:
       Co: 2
       Cr: 2
       Fe: 2
+      Ir: 2
       Mn: 2
       Mo: 2
       Ni: 2
@@ -66,6 +68,7 @@ INCAR:
       Co: 3.32
       Cr: 3.7
       Fe: 5.3
+      Ir: 4.0
       Mn: 3.9
       Mo: 4.38
       Ni: 6.2
