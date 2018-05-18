@@ -206,8 +206,6 @@ class Cathode(Structure):
         site_a = self.sites[site_indices[0]]
         site_b = self.sites[site_indices[1]]
 
-        pdb.set_trace()
-
         # Find the distance between the sites, as well as the image of site B
         # closest to site A
         (original_distance, closest_image_b) = site_a.distance_and_image(
