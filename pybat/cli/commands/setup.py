@@ -190,12 +190,23 @@ def dimers(structure_file, dimer_distance=1.4,
     # Find the non-equivalent dimers
     dimers = cathode.find_noneq_dimers()
 
-    user_incar_settings = {}
+    # Set up the calculations
+    user_incar_settings = {"ISIF": 2}
 
-    # TODO Revise the necessity of PybatRelaxSet
     # Add the standard Methfessel-Paxton smearing for metals
     if is_metal:
         user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+
+    # Load the correct INCAR settings for the chosen functional
+    if hse_calculation:
+
+        hse_config = _load_yaml_config("HSESet")
+        user_incar_settings.update(hse_config["INCAR"])
+
+    else:
+
+        dftu_config = _load_yaml_config("DFTUSet")
+        user_incar_settings.update(dftu_config["INCAR"])
 
     # Set up the geometry optimization for the initial structure
     try:
@@ -203,10 +214,9 @@ def dimers(structure_file, dimer_distance=1.4,
     except FileExistsError:
         pass
 
-    initial_optimization = PybatRelaxSet(
+    initial_optimization = bulkRelaxSet(
         structure=cathode.as_structure(),
         potcar_functional=DFT_FUNCTIONAL,
-        hse_calculation=hse_calculation,
         user_incar_settings=user_incar_settings
     )
 
@@ -238,10 +248,9 @@ def dimers(structure_file, dimer_distance=1.4,
             raise NotImplementedError("HSE06 calculation not implemented yet.")
 
         # Set up the geometry optimization for the dimer structure
-        dimer_optimization = PybatRelaxSet(
+        dimer_optimization = bulkRelaxSet(
             structure=dimer_structure.as_structure(),
             potcar_functional=DFT_FUNCTIONAL,
-            hse_calculation=hse_calculation,
             user_incar_settings=user_incar_settings
         )
 
