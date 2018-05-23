@@ -45,6 +45,7 @@ def relax(structure_file, calculation_dir="",
 
     """
 
+    # Import the structure as a Cathode instance from the structure file
     structure_file = os.path.abspath(structure_file)
     structure = Cathode.from_file(structure_file).as_structure()
 
@@ -114,26 +115,33 @@ def transition(directory, initial_structure, final_structure, is_metal=False,
 
     # Set up the calculations
 
-    user_incar_settings = {}
+    user_incar_settings = {"ISIF": 2}
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
         user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
 
-    # TODO Switch to new sets!
+    # Load the correct INCAR settings for the chosen functional
+    if hse_calculation:
+
+        hse_config = _load_yaml_config("HSESet")
+        user_incar_settings.update(hse_config["INCAR"])
+
+    else:
+
+        dftu_config = _load_yaml_config("DFTUSet")
+        user_incar_settings.update(dftu_config["INCAR"])
 
     # Set up the initial and final optimization calculations
-    initial_optimization = PybatRelaxSet(
+    initial_optimization = bulkRelaxSet(
         structure=initial_structure,
         potcar_functional=DFT_FUNCTIONAL,
-        hse_calculation=hse_calculation,
         user_incar_settings=user_incar_settings
     )
 
-    final_optimization = PybatRelaxSet(
+    final_optimization = bulkRelaxSet(
         structure=final_structure,
         potcar_functional=DFT_FUNCTIONAL,
-        hse_calculation=hse_calculation,
         user_incar_settings=user_incar_settings
     )
 
