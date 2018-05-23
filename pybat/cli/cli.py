@@ -17,6 +17,10 @@ def main():
     """
     pass
 
+##########
+# DEFINE #
+##########
+
 
 @main.group(context_settings=CONTEXT_SETTINGS)
 def define():
@@ -57,6 +61,10 @@ def dimer(structure_file, dimer_indices, distance, remove_cations):
                  dimer_indices=dimer_indices,
                  distance=distance,
                  remove_cations=remove_cations)
+
+#########
+# SETUP #
+#########
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -187,6 +195,10 @@ def neb(directory, nimages, is_metal, is_migration, hse_calculation):
         is_migration=is_migration,
         hse_calculation=hse_calculation)
 
+###########
+# UTILITY #
+###########
+
 
 @main.group(context_settings=CONTEXT_SETTINGS)
 def util():
@@ -226,6 +238,20 @@ def conv(structure_file, file_format):
 
 
 @util.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--file_format", "-F", default="cif")
+def prim(structure_file, file_format):
+    """
+    Convert a structure into the primitive unit cell.
+
+    """
+    from pybat.cli.commands.util import primitive_structure
+
+    primitive_structure(structure_file=structure_file,
+                        fmt=file_format)
+
+
+@util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("cell", nargs=1)
 @click.argument("structure_file", nargs=1)
 @click.option("--file_format", "-F", default="cif")
@@ -239,6 +265,10 @@ def supercell(cell, structure_file, file_format):
     make_supercell(structure_file=structure_file,
                    supercell=cell,
                    fmt=file_format)
+
+#######
+# GET #
+#######
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
