@@ -202,6 +202,7 @@ class Cathode(Structure):
         Returns:
 
         """
+        pdb.set_trace()
 
         site_a = self.sites[site_indices[0]]
         site_b = self.sites[site_indices[1]]

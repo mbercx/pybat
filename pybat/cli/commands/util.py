@@ -46,6 +46,23 @@ def conventional_structure(structure_file, fmt="cif"):
     spg.get_conventional_standard_structure().to(fmt, conv_structure_file)
 
 
+def primitive_structure(structure_file, fmt="cif"):
+    """
+
+    Args:
+        structure_file:
+        fmt:
+
+    Returns:
+
+    """
+    structure = Structure.from_file(structure_file)
+    spg = SpacegroupAnalyzer(structure)
+
+    prim_structure_file = structure_file.split(".")[0] + "_conv" + "." + fmt
+    spg.get_primitive_standard_structure().to(fmt, prim_structure_file)
+
+
 def make_supercell(structure_file, supercell, fmt="cif"):
     """
 
