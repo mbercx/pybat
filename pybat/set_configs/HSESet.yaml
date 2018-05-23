@@ -5,3 +5,4 @@ INCAR:
   HFSCREEN: 0.2
   LHFCALC: true
   TIME: 0.4
+  PRECFOCK: Fast
