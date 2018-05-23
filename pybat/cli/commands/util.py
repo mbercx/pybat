@@ -1,14 +1,22 @@
-
-import os
+# Encoding: UTF-8
+# Copyright (c) Marnik Bercx, University of Antwerp
+# Distributed under the terms of the MIT License
 
 from pymatgen.core import Structure
 from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 """
-Utility command for the pybat package.
+Utility commands for the pybat package.
 
 """
+
+__author__ = "Marnik Bercx"
+__copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
+__version__ = "0.1"
+__maintainer__ = "Marnik Bercx"
+__email__ = "marnik.bercx@uantwerpen.be"
+__date__ = "May 2018"
 
 
 def show_path(directory, filename):

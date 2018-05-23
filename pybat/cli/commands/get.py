@@ -1,10 +1,24 @@
+# Encoding: UTF-8
+# Copyright (c) Marnik Bercx, University of Antwerp
+# Distributed under the terms of the MIT License
 
 import os
-import pdb
 
 from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.analysis.transition_state import NEBAnalysis
+
+"""
+Set of scripts used to extract information from VASP output files for analysis.
+
+"""
+
+__author__ = "Marnik Bercx"
+__copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
+__version__ = "0.1"
+__maintainer__ = "Marnik Bercx"
+__email__ = "marnik.bercx@uantwerpen.be"
+__date__ = "May 2018"
 
 # Total Energy per Li of metallic lithium
 LI_ENERGY = -1.89

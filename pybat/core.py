@@ -1,4 +1,6 @@
-# Encoding: utf-8
+# Encoding: UTF-8
+# Copyright (c) Marnik Bercx, University of Antwerp
+# Distributed under the terms of the MIT License
 
 import itertools
 import math
@@ -12,16 +14,23 @@ from monty.io import zopen
 from monty.json import MSONable
 from fnmatch import fnmatch
 
-from pymatgen.core import Structure, Element, Composition, Molecule, Site, \
+from pymatgen.core import Structure, Composition, Molecule, Site, \
     PeriodicSite
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 
 """
 Module that contains tools to represent and calculate the properties of
-battery cathodes
+battery cathodes.
 
 """
+
+__author__ = "Marnik Bercx"
+__copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
+__version__ = "0.1"
+__maintainer__ = "Marnik Bercx"
+__email__ = "marnik.bercx@uantwerpen.be"
+__date__ = "May 2018"
 
 # TODO Currently, the dimers are defined by their indices. This is a consequence of the fact that the DetailedVoronoiContainer expects indices for its neighbor method. Frankly, I would prefer sites as the basis of the dimer definition as well as it's environment.
 

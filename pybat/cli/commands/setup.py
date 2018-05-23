@@ -1,8 +1,9 @@
+# Encoding: UTF-8
+# Copyright (c) Marnik Bercx, University of Antwerp
+# Distributed under the terms of the MIT License
+
 import numpy as np
 import os
-import shutil
-
-import pdb
 
 from pybat.core import Cathode, LiRichCathode
 from pybat.sets import bulkRelaxSet, PybatRelaxSet, PybatNEBSet
@@ -16,7 +17,15 @@ from pymatgen.io.vasp.sets import MPStaticSet
 
 """
 Setup scripts for the calculations.
+
 """
+
+__author__ = "Marnik Bercx"
+__copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
+__version__ = "0.1"
+__maintainer__ = "Marnik Bercx"
+__email__ = "marnik.bercx@uantwerpen.be"
+__date__ = "May 2018"
 
 MODULE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           "../../set_configs")
