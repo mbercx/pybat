@@ -117,7 +117,6 @@ class Cathode(Structure):
                                            if self.sites[index].species_string
                                            in CATIONS ]
 
-        # noinspection PyTypeChecker
         return [self.sites[index] for index in self._cation_configuration]
 
     @cation_configuration.setter
@@ -315,6 +314,46 @@ class Cathode(Structure):
         copy = self.__class__.from_sites(self)
         copy.cation_configuration = self.cation_configuration
         return copy
+
+    def make_supercell(self, scaling_matrix, to_unit_cell=True):
+        """
+        Overwritten from Structure in order to also properly adjust the cation
+        configuration.
+
+        Args:
+            scaling_matrix:
+            to_unit_cell:
+
+        Returns:
+
+        """
+
+        current_cathode = self.copy()
+
+        super(Cathode, self).make_supercell(scaling_matrix=scaling_matrix,
+                                            to_unit_cell=to_unit_cell)
+
+        cation_configuration = current_cathode.cation_configuration
+
+        # Add cation sites which correspond to the original cation
+        # configuration to the supercell cation configuration.
+        for site in self.cation_sites:
+
+            # Create a periodic site of the cation site in the original lattice
+            psite = PeriodicSite(atoms_n_occu=site.species_and_occu,
+                                 lattice=current_cathode.lattice,
+                                 coords=site.coords,
+                                 coords_are_cartesian=True)
+
+            # Check if this periodic site is an image of one of the sites in
+            #  the original cation configuration.
+
+            for cation_site in current_cathode.cation_configuration:
+                if psite.is_periodic_image(cation_site):
+                    cation_configuration.append(psite)
+
+        self.cation_configuration = cation_configuration
+
 
     def as_structure(self):
         """
@@ -595,6 +634,8 @@ class Dimer(MSONable):
                                                   VORONOI_DIST_FACTOR,
                                                   VORONOI_ANG_FACTOR)
             ]
+
+
 
             # Determine the indices of the oxygen environment. The indices are
             # sorted in such a way that the oxygen indices come first,
