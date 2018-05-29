@@ -184,12 +184,12 @@ class Cathode(Structure):
             if site in self.cation_sites:
                 if site in self.cation_configuration:
                     row = [str(i), vesta_index, site.species_string]
-                    vesta_index = + 1
+                    vesta_index += 1
                 else:
-                    row = [str(i), vesta_index, "Vac"]
+                    row = [str(i), "-", "Vac"]
             else:
                 row = [str(i), vesta_index, site.species_string]
-                vesta_index = + 1
+                vesta_index += 1
             row.extend([to_s(j) for j in site.frac_coords])
             for k in keys:
                 row.append(props[k][i])
@@ -415,8 +415,8 @@ class Cathode(Structure):
         """
 
         return Structure.from_sites(
-            [site for site in self.sites if site not in self.cation_sites] +
-            self.cation_configuration
+            [site for site in self.sites if site not in self.cation_sites or
+             site in self.cation_configuration]
         )
 
     @classmethod
