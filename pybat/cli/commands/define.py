@@ -27,7 +27,7 @@ def define_migration(structure_file, write_cif=False):
     coordinates to which the site will migrate.
 
     """
-    initial_structure = Structure.from_file(structure_file)
+    initial_structure = Cathode.from_file(structure_file)
     final_structure = initial_structure.copy()
 
     # Ask the user for the migration site
