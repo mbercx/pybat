@@ -47,7 +47,7 @@ CATIONS = ("Li", "Na", "Mg")
 # octahedron. If the angle between the two vectors connecting the site and
 # the corresponding oxygens is larger than this value, the oxygens are
 # considered to be opposites.
-OXYGEN_ANGLE_TOL = math.pi*9/10
+OXYGEN_ANGLE_TOL = math.pi * 9 / 10
 
 # Tolerance for the representation determination. This can be pretty big, since
 # the dimer environment structure is known.
@@ -76,6 +76,7 @@ class Cathode(Structure):
     cation sites for final positions of transition metal migrations.
 
     """
+
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -112,10 +113,10 @@ class Cathode(Structure):
 
         """
         if self._cation_configuration is None:
-            self._cation_configuration = [ index for index
-                                           in range(len(self.sites))
-                                           if self.sites[index].species_string
-                                           in CATIONS ]
+            self._cation_configuration = [index for index
+                                          in range(len(self.sites))
+                                          if self.sites[index].species_string
+                                          in CATIONS]
 
         return [self.sites[index] for index in self._cation_configuration]
 
@@ -153,6 +154,53 @@ class Cathode(Structure):
     @voronoi.setter
     def voronoi(self, voronoi_container):
         self._voronoi = voronoi_container
+
+    def __str__(self):
+        """
+        Overwritten string representation, in order to provide information
+        about the cation configuration, as well as the VESTA index, which
+        is useful when defining structural changes.
+
+        """
+        outs = ["Full Formula ({s})".format(s=self.composition.formula),
+                "Reduced Formula: {}"
+                    .format(self.composition.reduced_formula)]
+        to_s = lambda x: "%0.6f" % x
+        outs.append("abc   : " + " ".join([to_s(i).rjust(10)
+                                           for i in self.lattice.abc]))
+        outs.append("angles: " + " ".join([to_s(i).rjust(10)
+                                           for i in self.lattice.angles]))
+        if self._charge:
+            if self._charge >= 0:
+                outs.append("Overall Charge: +{}".format(self._charge))
+            else:
+                outs.append("Overall Charge: -{}".format(self._charge))
+        outs.append("Sites ({i})".format(i=len(self)))
+        data = []
+        props = self.site_properties
+        keys = sorted(props.keys())
+        vesta_index = 1
+        for i, site in enumerate(self):
+            if site in self.cation_sites:
+                if site in self.cation_configuration:
+                    row = [str(i), vesta_index, site.species_string]
+                    vesta_index = + 1
+                else:
+                    row = [str(i), vesta_index, "Vac"]
+            else:
+                row = [str(i), vesta_index, site.species_string]
+                vesta_index = + 1
+            row.extend([to_s(j) for j in site.frac_coords])
+            for k in keys:
+                row.append(props[k][i])
+            data.append(row)
+
+        from tabulate import tabulate
+        outs.append(tabulate(data, headers=["#", "#VESTA","SP", "a", "b",
+                                            "c"] +
+                                           keys,
+                             ))
+        return "\n".join(outs)
 
     def remove_cations(self, sites=None):
         """
@@ -233,10 +281,10 @@ class Cathode(Structure):
         site_move_distance = (original_distance - distance) / 2
 
         # Calculate the new cartesian coordinates of the sites
-        new_site_a_coords = site_a.coords + site_move_distance\
-            * connection_vector
-        new_site_b_coords = site_b.coords - site_move_distance\
-            * connection_vector
+        new_site_a_coords = site_a.coords + site_move_distance \
+                                            * connection_vector
+        new_site_b_coords = site_b.coords - site_move_distance \
+                                            * connection_vector
 
         # Change the sites in the structure
         self.replace(i=site_indices[0], species=site_a.species_string,
@@ -289,7 +337,7 @@ class Cathode(Structure):
         """
 
         if fmt in ["cif", "poscar"] or fnmatch(filename, "*.cif*") \
-            or fnmatch(filename, "POSCAR"):
+                or fnmatch(filename, "POSCAR"):
 
             structure = self.as_structure()
 
@@ -336,7 +384,7 @@ class Cathode(Structure):
 
         cation_configuration = []
 
-        #pdb.set_trace()
+        # pdb.set_trace()
 
         # Add cation sites which correspond to the original cation
         # configuration to the supercell cation configuration.
@@ -356,7 +404,6 @@ class Cathode(Structure):
                     cation_configuration.append(site)
 
         self.cation_configuration = cation_configuration.copy()
-
 
     def as_structure(self):
         """
@@ -424,6 +471,7 @@ class LiRichCathode(Cathode):
     A class representing a Li-rich cathode material.
 
     """
+
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -458,7 +506,7 @@ class LiRichCathode(Cathode):
             if self.sites[neighbor["index"]].species_string == "O"
         ]
 
-        #pdb.set_trace()
+        # pdb.set_trace()
 
         if len(oxygen_neighbors_indices) <= 1:
             raise ValueError("Provided site does not have two oxygen "
@@ -480,7 +528,7 @@ class LiRichCathode(Cathode):
             oxygen_image_A = site.distance_and_image(oxygen_site_A)[1]
             oxygen_image_B = site.distance_and_image(oxygen_site_B)[1]
 
-            image_A_cart_coords = oxygen_site_A.coords\
+            image_A_cart_coords = oxygen_site_A.coords \
                                   + np.dot(oxygen_image_A,
                                            self.lattice.matrix)
             image_B_cart_coords = oxygen_site_B.coords \
@@ -563,6 +611,7 @@ class LiRichCathode(Cathode):
 
         return noneq_dimers
 
+
 # TODO Currently the whole dimer representation only works for the O-O
 # dimers in the O3 stacking. Allowing for different oxygen frameworks will
 # require some more possible representations. One way is to figure out the
@@ -615,7 +664,6 @@ class Dimer(MSONable):
 
             if [self.representation[index] for index in range(1, 13)] == \
                     [other.representation[key] for key in permutation]:
-
                 is_equal = True
 
         return is_equal
@@ -646,8 +694,6 @@ class Dimer(MSONable):
                                                   VORONOI_ANG_FACTOR)
             ]
 
-
-
             # Determine the indices of the oxygen environment. The indices are
             # sorted in such a way that the oxygen indices come first,
             # followed by the indices of the shared neighbors.
@@ -666,7 +712,7 @@ class Dimer(MSONable):
             other_neighbors = tuple(other_neighbors)
 
             dimer_environment_indices = self._indices + shared_neighbors \
-                + other_neighbors
+                                        + other_neighbors
 
             # Recover the corresponding sites
             self._sites = [self.cathode.sites[index] for index
@@ -700,7 +746,8 @@ class Dimer(MSONable):
                 oxygen_sites[1])
 
             image_cart_coords = oxygen_sites[1].coords \
-                + np.dot(oxygen_image, self.cathode.lattice.matrix)
+                                + np.dot(oxygen_image,
+                                         self.cathode.lattice.matrix)
 
             self._center = (oxygen_sites[0].coords + image_cart_coords) / 2
 
@@ -733,10 +780,10 @@ class Dimer(MSONable):
 
             # The representation is defined as a dictionary between site
             # numbers and dimer environment sites
-            representation = {1:oxy_1.species_and_occu,
-                              2:oxy_2.species_and_occu,
-                              3:shared_neighbor_3.species_and_occu,
-                              4:shared_neighbor_4.species_and_occu}
+            representation = {1: oxy_1.species_and_occu,
+                              2: oxy_2.species_and_occu,
+                              3: shared_neighbor_3.species_and_occu,
+                              4: shared_neighbor_4.species_and_occu}
 
             # TODO Find a cleaner way of assigning representation positions
 
@@ -747,27 +794,27 @@ class Dimer(MSONable):
                 # Find the sites which are in the plane of the oxygens and
                 # their shared neighbors.
                 if np.linalg.norm(oxy_1.coords
-                        - (shared_neighbor_4.coords - oxy_1.coords)
-                        - site.coords) < REPRESENTATION_DIST_TOL:
-
+                                          - (
+                                    shared_neighbor_4.coords - oxy_1.coords)
+                                          - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[5] = site.species_and_occu
 
                 if np.linalg.norm(oxy_1.coords
-                        - (shared_neighbor_3.coords - oxy_1.coords)
-                        - site.coords) < REPRESENTATION_DIST_TOL:
-
+                                          - (
+                                    shared_neighbor_3.coords - oxy_1.coords)
+                                          - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[6] = site.species_and_occu
 
                 if np.linalg.norm(oxy_2.coords
-                        - (shared_neighbor_4.coords - oxy_2.coords)
-                        - site.coords) < REPRESENTATION_DIST_TOL:
-
+                                          - (
+                                    shared_neighbor_4.coords - oxy_2.coords)
+                                          - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[7] = site.species_and_occu
 
                 if np.linalg.norm(oxy_2.coords
-                        - (shared_neighbor_3.coords - oxy_2.coords)\
-                        - site.coords) < REPRESENTATION_DIST_TOL:
-
+                                          - (
+                                    shared_neighbor_3.coords - oxy_2.coords) \
+                                          - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[8] = site.species_and_occu
 
                 # Find the sites which are out of plane
@@ -782,22 +829,18 @@ class Dimer(MSONable):
 
                 if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
                         < REPRESENTATION_ANGLE_TOL:
-
                     representation[9] = site.species_and_occu
 
                 if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
                         > math.pi - REPRESENTATION_ANGLE_TOL:
-
                     representation[10] = site.species_and_occu
 
                 if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
                         < REPRESENTATION_ANGLE_TOL:
-
                     representation[11] = site.species_and_occu
 
                 if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
                         > math.pi - REPRESENTATION_ANGLE_TOL:
-
                     representation[12] = site.species_and_occu
 
             self._representation = representation
@@ -812,7 +855,6 @@ class Dimer(MSONable):
         molecule_sites = []
 
         for site in self.sites:
-
             (distance, jimage) = site.distance_and_image_from_frac_coords(
                 self.cathode.lattice.get_fractional_coords(self.center))
 
@@ -837,7 +879,7 @@ class Dimer(MSONable):
         # occupancy
         dimer_environment_molecule = Molecule.from_sites(
             [site for site in self.get_dimer_molecule().sites
-            if not site.species_and_occu == Composition({"":0})]
+             if not site.species_and_occu == Composition({"": 0})]
         )
 
         if filename is None:
@@ -859,6 +901,7 @@ class Dimer(MSONable):
         else:
             raise NotImplementedError("Currently only json format is "
                                       "supported.")
+
     @classmethod
     def from_str(cls, input_string, fmt="json"):
         """
@@ -888,7 +931,6 @@ class Dimer(MSONable):
 
         return cls.from_str(contents)
 
-
     def as_dict(self):
 
         d = {}
@@ -906,7 +948,6 @@ class Dimer(MSONable):
 
 
 def test_script(structure_file):
-
     cat = LiRichCathode.from_file(structure_file)
 
     print(cat)
@@ -939,6 +980,7 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
+
 # def rotation_matrix(axis, theta):
 #     """
 #     Return the rotation matrix associated with clockwise rotation about
@@ -956,11 +998,10 @@ def angle_between(v1, v2):
 
 
 def permute(iterable, permutation):
-
     if len(iterable) != len(permutation):
         raise ValueError("Length of list does not match permutation length!")
 
-    permutation_numbers = set([i for i in range(1, len(iterable)+1)])
+    permutation_numbers = set([i for i in range(1, len(iterable) + 1)])
 
     if len(permutation_numbers.intersection(permutation)) != len(permutation):
         raise ValueError("Permutation is ill-defined.")
