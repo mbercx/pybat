@@ -362,13 +362,13 @@ def find_transition_structures(directory, initial_contains="init.json",
             final_structure_file = os.path.join(directory, item)
 
     if initial_structure_file:
-        initial_structure = Structure.from_file(initial_structure_file)
+        initial_structure = Cathode.from_file(initial_structure_file)
     else:
         raise FileNotFoundError("No suitably named initial structure file in "
                                 "directory.")
 
     if final_structure_file:
-        final_structure = Structure.from_file(final_structure_file)
+        final_structure = Cathode.from_file(final_structure_file)
     else:
         raise FileNotFoundError("No suitably named final structure file in "
                                 "directory.")
