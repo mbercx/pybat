@@ -563,6 +563,14 @@ class LiRichCathode(Cathode):
 
         return noneq_dimers
 
+# TODO Currently the whole dimer representation only works for the O-O
+# dimers in the O3 stacking. Allowing for different oxygen frameworks will
+# require some more possible representations. One way is to figure out the
+# structure of the molecule and set up the representation for each
+# structure, but I think it would pay off to think if there isn't some
+# better way of checking the equivalency of dimer environments. Moreover,
+# we should probably first test to see if considering only the immediate
+# environment is sufficient.
 
 class Dimer(MSONable):
     """
