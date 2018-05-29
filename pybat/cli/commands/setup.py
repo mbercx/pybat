@@ -107,7 +107,7 @@ def transition(directory, initial_structure, final_structure, is_metal=False,
     # sure it is zero for the calculations.
     if "magmom" not in initial_structure.site_properties.keys():
         initial_structure.add_site_property("magmom",
-                                            [0]*len(initial_structure.sites))
+                                            [0] * len(initial_structure.sites))
 
     if "magmom" not in final_structure.site_properties.keys():
         final_structure.add_site_property("magmom",
@@ -155,7 +155,6 @@ def transition(directory, initial_structure, final_structure, is_metal=False,
     # If the transition is a migration of an atom in the structure, set up the
     # calculation for the charge density, used to find a better initial pathway
     if is_migration:
-
         migration_site_index = find_migrating_ion(initial_structure,
                                                   final_structure)
 
@@ -309,7 +308,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
     else:
         # Linearly interpolate the initial and final structures
         images = initial_structure.interpolate(end_structure=final_structure,
-                                               nimages=nimages+1)
+                                               nimages=nimages + 1)
 
     user_incar_settings = {}
 
@@ -325,6 +324,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
 
     # Make a file to visualize the transition
     neb_calculation.visualize_transition()
+
 
 ###########
 # UTILITY #
@@ -362,13 +362,15 @@ def find_transition_structures(directory, initial_contains="init.json",
             final_structure_file = os.path.join(directory, item)
 
     if initial_structure_file:
-        initial_structure = Cathode.from_file(initial_structure_file)
+        initial_structure = Cathode.from_file(
+            initial_structure_file).as_structure()
     else:
         raise FileNotFoundError("No suitably named initial structure file in "
                                 "directory.")
 
     if final_structure_file:
-        final_structure = Cathode.from_file(final_structure_file)
+        final_structure = Cathode.from_file(
+            final_structure_file).as_structure()
     else:
         raise FileNotFoundError("No suitably named final structure file in "
                                 "directory.")
