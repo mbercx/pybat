@@ -328,12 +328,15 @@ class Cathode(Structure):
 
         """
 
-        current_cathode = self.copy()
+        current_cation_configuration = self.cation_configuration.copy()
+        current_lattice = self.lattice.copy()
 
         super(Cathode, self).make_supercell(scaling_matrix=scaling_matrix,
                                             to_unit_cell=to_unit_cell)
 
-        cation_configuration = current_cathode.cation_configuration
+        cation_configuration = []
+
+        #pdb.set_trace()
 
         # Add cation sites which correspond to the original cation
         # configuration to the supercell cation configuration.
@@ -341,18 +344,18 @@ class Cathode(Structure):
 
             # Create a periodic site of the cation site in the original lattice
             psite = PeriodicSite(atoms_n_occu=site.species_and_occu,
-                                 lattice=current_cathode.lattice,
+                                 lattice=current_lattice,
                                  coords=site.coords,
                                  coords_are_cartesian=True)
 
             # Check if this periodic site is an image of one of the sites in
             #  the original cation configuration.
 
-            for cation_site in current_cathode.cation_configuration:
+            for cation_site in current_cation_configuration:
                 if psite.is_periodic_image(cation_site):
-                    cation_configuration.append(psite)
+                    cation_configuration.append(site)
 
-        self.cation_configuration = cation_configuration
+        self.cation_configuration = cation_configuration.copy()
 
 
     def as_structure(self):
