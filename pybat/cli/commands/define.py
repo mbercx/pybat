@@ -121,8 +121,9 @@ def define_migration(structure_file, write_cif=False):
 
     # Write the structures to a cif format if requested
     if write_cif:
-        cathode.to("cif", current_dir + initial_structure_file + ".cif")
-        final_structure.to("cif", current_dir + final_structure_file + ".cif")
+        cathode.to("cif", current_dir + "/" + initial_structure_file + ".cif")
+        final_structure.to("cif",
+                           current_dir + "/" + final_structure_file + ".cif")
 
 
 def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
@@ -166,16 +167,20 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     current_dir = os.getcwd()
 
     # Set up the filenames
-    initial_structure_file = ".".join(structure_file.split("/")[-1].split(".")[0:-1]) + \
+    initial_structure_file = ".".join(
+        structure_file.split("/")[-1].split(".")[0:-1]) + \
                              "_dimer_init"
-    dimer_structure_file = ".".join(structure_file.split("/")[-1].split(".")[0:-1]) + \
+    dimer_structure_file = ".".join(
+        structure_file.split("/")[-1].split(".")[0:-1]) + \
                            "_dimer_final"
 
     # Write out the initial and final structures
-    cathode.to("json", current_dir + initial_structure_file + ".json")
-    dimer_structure.to("json", current_dir + dimer_structure_file + ".json")
+    cathode.to("json", current_dir + "/" + initial_structure_file + ".json")
+    dimer_structure.to("json",
+                       current_dir + "/" + dimer_structure_file + ".json")
 
     # Write the structures to a cif format if requested
     if write_cif:
-        cathode.to("cif", current_dir + initial_structure_file + ".cif")
-        dimer_structure.to("cif", current_dir + dimer_structure_file + ".cif")
+        cathode.to("cif", current_dir + "/" + initial_structure_file + ".cif")
+        dimer_structure.to("cif",
+                           current_dir + "/" + dimer_structure_file + ".cif")
