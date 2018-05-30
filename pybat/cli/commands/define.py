@@ -59,7 +59,7 @@ def define_migration(structure_file, write_cif=False):
     if len(final_coords) == 1:
 
         # Grab the required information about the final site
-        final_site_index = final_coords[0]
+        final_site_index = int(final_coords[0])
         final_site = cathode.sites[final_site_index]
         final_coords = final_site.frac_coords
         final_species = final_site.specie
@@ -79,7 +79,7 @@ def define_migration(structure_file, write_cif=False):
         # Do the opposite for the final site
         final_structure.replace(i=final_site_index,
                                 species=final_species,
-                                coords=migration_site.coords,
+                                coords=migration_site.frac_coords,
                                 properties=final_site.properties)
 
     # In case of a set of fractional coordinates as input
