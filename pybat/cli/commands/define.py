@@ -106,8 +106,9 @@ def define_migration(structure_file, write_cif=False):
                                migration_site_index].properties)
 
     # Set up the filenames
-    initial_structure_file = "".join(structure_file.split(".")[0:-1]) + "_init"
-    final_structure_file = "".join(structure_file.split(".")[0:-1]) + "_final"
+    initial_structure_file = ".".join(structure_file.split(".")[0:-1]) + \
+                             "_init"
+    final_structure_file = ".".join(structure_file.split(".")[0:-1]) + "_final"
 
     # Write out the initial and final structures
     cathode.to("json", initial_structure_file + ".json")
@@ -158,9 +159,9 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     dimer_structure.change_site_distance(dimer_indices, distance)
 
     # Set up the filenames
-    initial_structure_file = "".join(structure_file.split(".")[0:-1]) + \
+    initial_structure_file = ".".join(structure_file.split(".")[0:-1]) + \
                              "_dimer_init"
-    dimer_structure_file = "".join(structure_file.split(".")[0:-1]) + \
+    dimer_structure_file = ".".join(structure_file.split(".")[0:-1]) + \
                            "_dimer_final"
 
     # Write out the initial and final structures
