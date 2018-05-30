@@ -139,13 +139,11 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
         dimer_indices = input("Please provide the two indices of the elements "
                               "that need to form a dimer, separated by a "
                               "space (Note: Not the VESTA indices!): ")
-        print("")
 
         dimer_indices = tuple([int(number) for number in
                                list(dimer_indices.split(" "))])
 
     if distance == 0:
-        print("")
         distance = input("Please provide the final distance between the atoms "
                          "in the dimer: ")
         print("")
