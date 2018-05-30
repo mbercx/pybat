@@ -116,8 +116,8 @@ def define_migration(structure_file, write_cif=False):
                                     0:-1]) + "_final"
 
     # Write out the initial and final structures
-    cathode.to("json", current_dir + initial_structure_file + ".json")
-    final_structure.to("json", current_dir + final_structure_file + ".json")
+    cathode.to("json", current_dir + "/" + initial_structure_file + ".json")
+    final_structure.to("json", current_dir + "/" + final_structure_file + ".json")
 
     # Write the structures to a cif format if requested
     if write_cif:
