@@ -165,8 +165,8 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
                            "_dimer_final"
 
     # Write out the initial and final structures
-    cathode.to("json", initial_structure_file + "json")
-    dimer_structure.to("json", dimer_structure_file + "json")
+    cathode.to("json", initial_structure_file + ".json")
+    dimer_structure.to("json", dimer_structure_file + ".json")
 
     # Write the structures to a cif format if requested
     if write_cif:
