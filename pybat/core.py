@@ -64,6 +64,10 @@ SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
                          [2, 1, 3, 4, 7, 8, 5, 6, 12, 11, 10, 9],
                          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
 
+# TODO After some consideration, I think it's perfectly possible to revamp
+# the Cathode object by simply using Structure with empty sites. This would
+# remove the need for many of the method overrides of the class, and frankly
+#  makes more sense.
 
 class Cathode(Structure):
     """
