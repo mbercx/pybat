@@ -24,7 +24,7 @@ def define_migration(structure_file, write_cif=False):
     This script allows the user to define a migration in a structure.
 
     The user has to identify the site that is migrating, as well as provide the
-    coordinates to which the site will migrate.
+    coordinates to which the site will migrate, or an empty site.
 
     """
     cathode = Cathode.from_file(structure_file)
@@ -105,8 +105,8 @@ def define_migration(structure_file, write_cif=False):
                            properties=final_structure.sites[
                                migration_site_index].properties)
 
+    # Set up the filenames
     initial_structure_file = "".join(structure_file.split(".")[0:-1]) + "_init"
-
     final_structure_file = "".join(structure_file.split(".")[0:-1]) + "_final"
 
     # Write out the initial and final structures
@@ -120,7 +120,7 @@ def define_migration(structure_file, write_cif=False):
 
 
 def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
-                 remove_cations=False):
+                 remove_cations=False, write_cif=False):
     """
     Define a dimerization of oxygen in a structure.
 
@@ -138,7 +138,8 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
         print("")
         dimer_indices = input("Please provide the two indices of the elements "
                               "that need to form a dimer, separated by a "
-                              "space: \n")
+                              "space (Note: Not the VESTA indices!): ")
+        print("")
 
         dimer_indices = tuple([int(number) for number in
                                list(dimer_indices.split(" "))])
@@ -146,19 +147,29 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     if distance == 0:
         print("")
         distance = input("Please provide the final distance between the atoms "
-                         "in the dimer: \n")
+                         "in the dimer: ")
+        print("")
         distance = float(distance)
 
     if remove_cations:
         # Remove the cations around the oxygen dimer
         cathode.remove_dimer_cations(dimer_indices)
 
-    dimer_structure_file = structure_file.split(".")[0] + "_dimer_init" \
-                           + ".json"
-    cathode.to("json", dimer_structure_file)
+    # Change the distance between the oxygen atoms for the dimer structure
+    dimer_structure = cathode.copy()
+    dimer_structure.change_site_distance(dimer_indices, distance)
 
-    cathode.change_site_distance(dimer_indices, distance)
+    # Set up the filenames
+    initial_structure_file = "".join(structure_file.split(".")[0:-1]) + \
+                             "_dimer_init"
+    dimer_structure_file = "".join(structure_file.split(".")[0:-1]) + \
+                           "_dimer_final"
 
-    dimer_structure_file = structure_file.split(".")[0] + "_dimer_final" \
-                           + ".json"
-    cathode.to("json", dimer_structure_file)
+    # Write out the initial and final structures
+    cathode.to("json", initial_structure_file + "json")
+    dimer_structure.to("json", dimer_structure_file + "json")
+
+    # Write the structures to a cif format if requested
+    if write_cif:
+        cathode.to("cif", initial_structure_file + ".cif")
+        dimer_structure.to("cif", dimer_structure_file + ".cif")
