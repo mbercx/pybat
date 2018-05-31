@@ -45,7 +45,7 @@ def define_migration(structure_file, write_cif=False):
     migration_species = migration_site.species_and_occu
 
     # Check if the site to which the ion should migrate is actually occupied
-    if migration_site == Composition():
+    if migration_species == Composition():
         raise ValueError("Chosen site is vacant.")
 
     # Ask the user for the final coordinates of the migrating ion
