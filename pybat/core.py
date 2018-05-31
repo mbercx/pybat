@@ -118,7 +118,7 @@ class Cathode(Structure):
         elif all([isinstance(item, Site) for item in configuration]):
             for catsite in configuration:
                 for i, site in enumerate(self):
-                    if np.linalg.norm(site.coords - catsite.coords) < 0.05:
+                    if np.linalg.norm(site.distance(catsite)) < 0.05:
                         self.replace(i, catsite.specie,
                                      properties={"magmom": 0})
 
@@ -190,6 +190,18 @@ class Cathode(Structure):
     @voronoi.setter
     def voronoi(self, voronoi_container):
         self._voronoi = voronoi_container
+
+    def add_cations(self, sites=None):
+        """
+
+
+        Args:
+            sites:
+
+        Returns:
+
+        """
+        raise NotImplementedError
 
     def remove_cations(self, sites=None):
         """
@@ -289,6 +301,25 @@ class Cathode(Structure):
 
         """
 
+        new_cathode = Cathode.from_file(contcar_file)
+
+        # Update the lattice
+        self.modify_lattice(new_cathode.lattice)
+
+        # Update the coordinates of the occupied sites.
+        new_index = 0
+        for i, site in enumerate(self):
+
+            # If the site is not empty
+            if site.species_and_occu != Composition():
+
+                new_site = new_cathode.sites[new_index]
+                # Update the site coordinates
+                self.replace(i, species=new_site.species_and_occu,
+                             coords=new_site.frac_coords)
+                new_index += 1
+
+
 
 
     def find_cation_configurations(self):
@@ -315,16 +346,30 @@ class Cathode(Structure):
         """
         raise NotImplementedError
 
-    def as_structure(self):
+    def as_ordered_structure(self):
         """
-        Return the structure as a pymatgen.core.Structure.
+        Return the structure as a pymatgen.core.Structure, removing the
+        unoccupied sites. This is because many of the IO methods of pymatgen
+        run into issues due to the empty occupancies.
 
         Returns:
             pymatgen.core.Structure
 
         """
 
-        return Structure.from_sites(self.sites)
+        return Structure.from_sites(
+            [site for site in self.sites
+             if site.species_and_occu != Composition()]
+        )
+
+    def to(self, fmt=None, filename=None, **kwargs):
+
+        if fmt == "poscar":
+            structure = self.as_structure()
+            structure.to(fmt, filename, **kwargs)
+
+        else:
+            super(Cathode, self).to(fmt, filename, **kwargs)
 
     @classmethod
     def from_structure(cls, structure):
