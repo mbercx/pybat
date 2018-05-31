@@ -6,16 +6,13 @@ import itertools
 import math
 import json
 
-import pdb
-
 import numpy as np
 
 from monty.io import zopen
 from monty.json import MSONable
-from fnmatch import fnmatch
 
 from pymatgen.core import Structure, Composition, Molecule, Site, \
-    PeriodicSite
+    PeriodicSite, Element
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 
@@ -64,6 +61,7 @@ SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
                          [2, 1, 3, 4, 7, 8, 5, 6, 12, 11, 10, 9],
                          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
 
+
 # TODO After some consideration, I think it's perfectly possible to revamp
 # the Cathode object by simply using Structure with empty sites. This would
 # remove the need for many of the method overrides of the class, and frankly
@@ -84,7 +82,7 @@ class Cathode(Structure):
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
-                 site_properties=None, cation_configuration=None):
+                 site_properties=None):
 
         super(Cathode, self).__init__(
             lattice=lattice, species=species, coords=coords,
@@ -93,12 +91,10 @@ class Cathode(Structure):
             site_properties=site_properties
         )
 
-        self._cation_configuration = cation_configuration
-
         self._voronoi = None
 
     @property
-    def cation_sites(self):
+    def cation_configuration(self):
         """
         A list of all sites which correspond to cations in the Cathode.
 
@@ -107,38 +103,31 @@ class Cathode(Structure):
         """
         return [site for site in self.sites if site.species_string in CATIONS]
 
-    @property
-    def cation_configuration(self):
-        """
-        The configuration of the cations present in the Cathode, i.e. the
-        sites of all the present cations.
-
-        Returns:
-
-        """
-        if self._cation_configuration is None:
-            self._cation_configuration = [index for index
-                                          in range(len(self.sites))
-                                          if self.sites[index].species_string
-                                          in CATIONS]
-
-        return [self.sites[index] for index in self._cation_configuration]
-
     @cation_configuration.setter
     def cation_configuration(self, configuration):
 
         # TODO Add checks
 
-        if all([isinstance(item, int) for item in configuration]):
-            self._cation_configuration = configuration
+        # Remove all cations
+        for cation in [cat for cat in CATIONS if Element[cat] in set(
+                self.composition.keys())]:
+            self.replace_species({cation: {cation: 0}})
+
+        if isinstance(configuration, dict):
+            for cation in configuration.keys():
+                for index in configuration[cation]:
+                    self.replace(index, cation, properties={"magmom": 0})
+
         elif all([isinstance(item, Site) for item in configuration]):
-            self._cation_configuration = [index for index
-                                          in range(len(self.sites))
-                                          if self.sites[index]
-                                          in configuration]
+            for catsite in configuration:
+                for i, site in enumerate(self):
+                    if all(site.frac_coords == catsite.frac_coords):
+                        self.replace(i, catsite.specie,
+                                     properties={"magmom": 0})
+
         else:
-            raise TypeError("Cation configurations should be a List of "
-                            "indices or sites.")
+            raise TypeError("Cation configurations should be a dictionary or "
+                            "list of sites.")
 
     @property
     def voronoi(self):
@@ -185,25 +174,23 @@ class Cathode(Structure):
         keys = sorted(props.keys())
         vesta_index = 1
         for i, site in enumerate(self):
-            if site in self.cation_sites:
-                if site in self.cation_configuration:
-                    row = [str(i), vesta_index, site.species_string]
-                    vesta_index += 1
-                else:
-                    row = [str(i), "-", "Vac"]
+            if site.species_and_occu.num_atoms == 0:
+                row = [str(i), "-", "Vac"]
+
             else:
                 row = [str(i), vesta_index, site.species_string]
                 vesta_index += 1
+
             row.extend([to_s(j) for j in site.frac_coords])
             for k in keys:
                 row.append(props[k][i])
             data.append(row)
 
         from tabulate import tabulate
-        outs.append(tabulate(data, headers=["#", "#VESTA","SP", "a", "b",
-                                            "c"] +
-                                           keys,
-                             ))
+        outs.append(
+            tabulate(data,
+                     headers=["#", "#VESTA", "SP", "a", "b", "c"] + keys,
+                     ))
         return "\n".join(outs)
 
     def remove_cations(self, sites=None):
@@ -223,7 +210,7 @@ class Cathode(Structure):
         # If no indices are given
         if sites is None:
             # Remove all the cations
-            self._cation_configuration = []
+            self.cation_configuration = []
 
         # Else remove the requested sites from the cation configuration
         else:
@@ -234,9 +221,13 @@ class Cathode(Structure):
                                   "a cation site!")
                 else:
                     # Remove the cation site
-                    try:
-                        self._cation_configuration.remove(site)
-                    except ValueError:
+                    if site in self.cation_configuration:
+                        cat_conf = self.cation_configuration.copy()
+                        cat_conf.remove(site)
+
+                        self.cation_configuration = cat_conf
+
+                    else:
                         raise Warning("Requested site not found in cation "
                                       "configuration.")
 
@@ -301,6 +292,19 @@ class Cathode(Structure):
                      coords_are_cartesian=True,
                      properties=site_b.properties)
 
+    def update_site_coords(self, contcar_file):
+        """
+        Based on the CONTCAR of a geometry optimization, update the site
+        coordinates that were optimized.
+
+        Args:
+            contcar_file:
+
+        Returns:
+
+        """
+        raise NotImplementedError
+
     def set_to_high_spin(self):
         """
 
@@ -315,100 +319,6 @@ class Cathode(Structure):
         """
         pass
 
-    def to(self, fmt=None, filename=None, **kwargs):
-        """
-        Outputs the structure to a file or string.
-
-        Overwritten from IStructure in order to consider the cation
-        configuration for .cif and VASP POSCAR files. For .json formats the
-        as_dict method successfully stores the cation configuration. Importing
-        the Cathode object from .cif or POSCAR files written from the
-        Cathode in such a way will lose the sites which are not in the
-        cation configuration.
-
-        Args:
-            fmt (str): Format to output to. Defaults to JSON unless filename
-                is provided. If fmt is specifies, it overrides whatever the
-                filename is. Options include "cif", "poscar", "json".
-                Non-case sensitive.
-            filename (str): If provided, output will be written to a file. If
-                fmt is not specified, the format is determined from the
-                filename. Defaults is None, i.e. string output.
-
-        Returns:
-            (str) if filename is None. None otherwise.
-
-        """
-
-        if fmt in ["cif", "poscar"] or fnmatch(filename, "*.cif*") \
-                or fnmatch(filename, "POSCAR"):
-
-            structure = self.as_structure()
-
-            structure.to(fmt=fmt, filename=filename, **kwargs)
-
-        elif fmt == "json" or fnmatch(filename, "*.json*"):
-
-            super(Cathode, self).to(fmt=fmt, filename=filename, **kwargs)
-
-        else:
-            raise NotImplementedError("Only json, cif or VASP POSCAR formats "
-                                      "are currently supported.")
-
-    def copy(self):
-        """
-        Convenience method to get a copy of the cathode.
-
-        Returns:
-            A copy of the Cathode.
-        """
-
-        copy = self.__class__.from_sites(self)
-        copy.cation_configuration = self.cation_configuration
-        return copy
-
-    def make_supercell(self, scaling_matrix, to_unit_cell=True):
-        """
-        Overwritten from Structure in order to also properly adjust the cation
-        configuration.
-
-        Args:
-            scaling_matrix:
-            to_unit_cell:
-
-        Returns:
-
-        """
-
-        current_cation_configuration = self.cation_configuration.copy()
-        current_lattice = self.lattice.copy()
-
-        super(Cathode, self).make_supercell(scaling_matrix=scaling_matrix,
-                                            to_unit_cell=to_unit_cell)
-
-        cation_configuration = []
-
-        # pdb.set_trace()
-
-        # Add cation sites which correspond to the original cation
-        # configuration to the supercell cation configuration.
-        for site in self.cation_sites:
-
-            # Create a periodic site of the cation site in the original lattice
-            psite = PeriodicSite(atoms_n_occu=site.species_and_occu,
-                                 lattice=current_lattice,
-                                 coords=site.coords,
-                                 coords_are_cartesian=True)
-
-            # Check if this periodic site is an image of one of the sites in
-            #  the original cation configuration.
-
-            for cation_site in current_cation_configuration:
-                if psite.is_periodic_image(cation_site):
-                    cation_configuration.append(site)
-
-        self.cation_configuration = cation_configuration.copy()
-
     def as_structure(self):
         """
         Return the structure as a pymatgen.core.Structure, with the cation
@@ -418,10 +328,7 @@ class Cathode(Structure):
 
         """
 
-        return Structure.from_sites(
-            [site for site in self.sites if site not in self.cation_sites or
-             site in self.cation_configuration]
-        )
+        return Structure.from_sites(self.sites)
 
     @classmethod
     def from_structure(cls, structure):
@@ -485,8 +392,7 @@ class LiRichCathode(Cathode):
             lattice=lattice, species=species, coords=coords,
             validate_proximity=validate_proximity, to_unit_cell=to_unit_cell,
             coords_are_cartesian=coords_are_cartesian,
-            site_properties=site_properties,
-            cation_configuration=cation_configuration
+            site_properties=site_properties
         )
 
     def find_oxygen_dimers(self, site_index):
@@ -722,17 +628,6 @@ class Dimer(MSONable):
             self._sites = [self.cathode.sites[index] for index
                            in dimer_environment_indices]
 
-            # Replace all the sites which are not in the cation
-            # configuration by sites with a site with occupancy zero
-            # TODO Unpythonic -> fix with list comprehension
-            for i, site in enumerate(self._sites):
-                if site.species_string in CATIONS and site not in \
-                        self.cathode.cation_configuration:
-                    self._sites[i] = PeriodicSite(
-                        Composition({"": 0}),
-                        site.frac_coords, site.lattice
-                    )
-
         return self._sites
 
     @property
@@ -888,7 +783,8 @@ class Dimer(MSONable):
 
         if filename is None:
             filename = str(self.cathode.composition).replace(" ", "") + "_" \
-                       + str(self.indices[0]) + "_" + str(self.indices[1])
+                       + str(self.indices[0]) + "_" + str(
+                self.indices[1]) + ".xyz"
 
         dimer_environment_molecule.to("xyz", filename)
 
