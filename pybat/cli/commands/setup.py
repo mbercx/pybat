@@ -47,7 +47,7 @@ def relax(structure_file, calculation_dir="",
 
     # Import the structure as a Cathode instance from the structure file
     structure_file = os.path.abspath(structure_file)
-    structure = Cathode.from_file(structure_file).as_structure()
+    structure = Cathode.from_file(structure_file).as_ordered_structure()
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.
@@ -363,14 +363,14 @@ def find_transition_structures(directory, initial_contains="init.json",
 
     if initial_structure_file:
         initial_structure = Cathode.from_file(
-            initial_structure_file).as_structure()
+            initial_structure_file).as_ordered_structure()
     else:
         raise FileNotFoundError("No suitably named initial structure file in "
                                 "directory.")
 
     if final_structure_file:
         final_structure = Cathode.from_file(
-            final_structure_file).as_structure()
+            final_structure_file).as_ordered_structure()
     else:
         raise FileNotFoundError("No suitably named final structure file in "
                                 "directory.")

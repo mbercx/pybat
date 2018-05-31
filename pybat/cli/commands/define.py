@@ -5,7 +5,7 @@
 import os
 
 from pybat.core import Cathode
-from pymatgen.core import Structure
+from pymatgen.core import Structure, Composition
 
 """
 Set of scripts used to define structural changes easily using the command line
@@ -42,11 +42,10 @@ def define_migration(structure_file, write_cif=False):
     print("")
 
     migration_site = cathode.sites[migration_site_index]
-    migration_species = migration_site.specie
+    migration_species = migration_site.species_and_occu
 
     # Check if the site to which the ion should migrate is actually occupied
-    if migration_site in cathode.cation_sites and migration_site not in \
-            cathode.cation_configuration:
+    if migration_site == Composition():
         raise ValueError("Chosen site is vacant.")
 
     # Ask the user for the final coordinates of the migrating ion
@@ -64,11 +63,10 @@ def define_migration(structure_file, write_cif=False):
         final_site_index = int(final_coords[0])
         final_site = cathode.sites[final_site_index]
         final_coords = final_site.frac_coords
-        final_species = final_site.specie
+        final_species = final_site.species_and_occu
 
         # Check if site is occupied
-        if final_site not in cathode.cation_sites or final_site in \
-                cathode.cation_configuration:
+        if final_species != Composition():
             raise ValueError("Chosen final site is not vacant.")
 
         # Change the coordinates of the migration site with the ones of
@@ -95,7 +93,7 @@ def define_migration(structure_file, write_cif=False):
                                     migration_site_index].properties)
 
     else:
-        raise IOError("Input is incorrect.")
+        raise IOError("Provided input is incorrect.")
 
     # Replace the
     final_structure.remove_sites([migration_site_index])
