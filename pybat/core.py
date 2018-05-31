@@ -62,20 +62,16 @@ SYMMETRY_PERMUTATIONS = [[1, 2, 4, 3, 6, 5, 8, 7, 9, 10, 11, 12],
                          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
 
 
-# TODO After some consideration, I think it's perfectly possible to revamp
-# the Cathode object by simply using Structure with empty sites. This would
-# remove the need for many of the method overrides of the class, and frankly
-#  makes more sense.
-
 class Cathode(Structure):
     """
-    A class representing a cathode material in a battery. The main idea of
-    this class is to keep track of the original cation sites by considering
-    the cation configuration as a list of site indices which are occupied by
-    a cation. This is important to make sure that the voronoi decomposition
-    is successful, and hence interesting if we want to look at coordinations
-    and neighbors. Another advantage is that we can consider the empty
-    cation sites for final positions of transition metal migrations.
+    A class representing a cathode material in a battery.
+
+    The main idea of this class is to keep track of the original sites by
+    using sites with empty Compositions. This is important to make sure that
+    the voronoi decomposition is successful, and hence interesting if we
+    want to look at coordinations and neighbors. Another advantage is that
+    we can consider the empty cation sites for final positions of transition
+    metal migrations.
 
     """
 
@@ -113,6 +109,7 @@ class Cathode(Structure):
                 self.composition.keys())]:
             self.replace_species({cation: {cation: 0}})
 
+        # Add the cation sites
         if isinstance(configuration, dict):
             for cation in configuration.keys():
                 for index in configuration[cation]:
@@ -126,27 +123,9 @@ class Cathode(Structure):
                                      properties={"magmom": 0})
 
         else:
-            raise TypeError("Cation configurations should be a dictionary or "
-                            "list of sites.")
-
-    @property
-    def voronoi(self):
-        """
-        ChemEnv voronoi decomposition of the cathode structure.
-
-        Returns:
-            pymatgen.analysis.chemenv.coordination_environments.voronoi.\
-            DetailedVoronoiContainer
-
-        """
-        if self._voronoi is None:
-            self._voronoi = DetailedVoronoiContainer(self)
-
-        return self._voronoi
-
-    @voronoi.setter
-    def voronoi(self, voronoi_container):
-        self._voronoi = voronoi_container
+            raise TypeError("Cation configurations should be a dictionary "
+                            "mapping cations to site indices or a list of "
+                            "sites.")
 
     def __str__(self):
         """
@@ -193,21 +172,41 @@ class Cathode(Structure):
                      ))
         return "\n".join(outs)
 
+    @property
+    def voronoi(self):
+        """
+        ChemEnv voronoi decomposition of the cathode structure.
+
+        Returns:
+            pymatgen.analysis.chemenv.coordination_environments.voronoi.\
+            DetailedVoronoiContainer
+
+        """
+        if self._voronoi is None:
+            self._voronoi = DetailedVoronoiContainer(self)
+
+        return self._voronoi
+
+    @voronoi.setter
+    def voronoi(self, voronoi_container):
+        self._voronoi = voronoi_container
+
     def remove_cations(self, sites=None):
         """
         Remove the cations from the cathode, i.e. delithiate the structure in
         case Li is the cation of the cathode.
 
         Note that this does not remove the sites from the pymatgen Structure.
-        The cation_configuration of the Cathode is simply adjusted by removing
-        the requested cations from this List.
+        The occupancy is simply adjusted to an empty Composition object.
 
         Args:
             sites: List of pymatgen.core.Sites which are to be removed.
 
         """
 
-        # If no indices are given
+        # TODO Add functionality to remove cations based on the site indices
+
+        # If no sites are given
         if sites is None:
             # Remove all the cations
             self.cation_configuration = []
@@ -215,31 +214,14 @@ class Cathode(Structure):
         # Else remove the requested sites from the cation configuration
         else:
             for site in sites:
-                # Check if the site provided corresponds to a cation site
-                if site.species_string not in CATIONS:
-                    raise IOError("Provided indices do not all correspond to "
-                                  "a cation site!")
+                # Check if the provided site corresponds to a cation site
+                if site in self.cation_configuration:
+                    cat_conf = self.cation_configuration.copy()
+                    cat_conf.remove(site)
+                    self.cation_configuration = cat_conf
                 else:
-                    # Remove the cation site
-                    if site in self.cation_configuration:
-                        cat_conf = self.cation_configuration.copy()
-                        cat_conf.remove(site)
-
-                        self.cation_configuration = cat_conf
-
-                    else:
-                        raise Warning("Requested site not found in cation "
-                                      "configuration.")
-
-    def find_cation_configurations(self):
-        """
-        Plan is to find all non-equivalent cation configurations. Is probably
-        already implemented elsewhere.
-
-        Returns:
-
-        """
-        raise NotImplementedError
+                    raise Warning("Requested site not found in cation "
+                                  "configuration.")
 
     def change_site_distance(self, site_indices, distance):
         """
@@ -253,6 +235,8 @@ class Cathode(Structure):
         Returns:
 
         """
+
+        # TODO Add possibility of site_indices simply being the sites
 
         site_a = self.sites[site_indices[0]]
         site_b = self.sites[site_indices[1]]
@@ -295,10 +279,21 @@ class Cathode(Structure):
     def update_site_coords(self, contcar_file):
         """
         Based on the CONTCAR of a geometry optimization, update the site
-        coordinates that were optimized.
+        coordinates that were optimized. Note that this method relies on the
+        cation configuration of the not having changed.
 
         Args:
             contcar_file:
+
+        Returns:
+
+        """
+        raise NotImplementedError
+
+    def find_cation_configurations(self):
+        """
+        Plan is to find all non-equivalent cation configurations. Is probably
+        already implemented elsewhere.
 
         Returns:
 
@@ -310,21 +305,21 @@ class Cathode(Structure):
 
         :return:
         """
-        pass
+        raise NotImplementedError
 
     def set_to_low_spin(self):
         """
 
         :return:
         """
-        pass
+        raise NotImplementedError
 
     def as_structure(self):
         """
-        Return the structure as a pymatgen.core.Structure, with the cation
-        configuration as stored in the cation_configuration property.
+        Return the structure as a pymatgen.core.Structure.
 
         Returns:
+            pymatgen.core.Structure
 
         """
 
@@ -332,49 +327,19 @@ class Cathode(Structure):
 
     @classmethod
     def from_structure(cls, structure):
+        """
+        Initializes a Cathode from a pymatgen.core.Structure.
+
+        Args:
+            structure (pymatgen.core.Structure): Structure from which to
+            initialize the Cathode.
+
+        Returns:
+            pybat.core.Structure
+
+        """
 
         return cls.from_sites(structure.sites)
-
-    @classmethod
-    def from_str(cls, input_string, fmt, primitive=False, sort=False,
-                 merge_tol=0.0):
-        if fmt is not "json":
-            return super(Cathode, cls).from_str(input_string, fmt, primitive,
-                                                sort, merge_tol)
-        else:
-            d = json.loads(input_string)
-            return cls.from_dict(d)
-
-    def as_dict(self, verbosity=1, fmt=None, **kwargs):
-
-        d = super(Cathode, self).as_dict(verbosity=verbosity,
-                                         fmt=fmt, **kwargs)
-
-        d["cation_configuration"] = [cation.as_dict() for cation
-                                     in self.cation_configuration]
-
-        # Note The voronoi decomposition can unfortunately not be MSONabled,
-        # because of a recursion issue where the as_dict method of the
-        # DetailedVoronoiContainer uses the as_dict() method from the structure
-        # it is based on (infinite recursion).
-
-        # TODO Add voronoi decomposition, by adding the dictionary components manually
-
-        return d
-
-    @classmethod
-    def from_dict(cls, d, fmt=None):
-
-        structure = super(Cathode, cls).from_dict(d)
-        cathode = cls.from_structure(structure)
-
-        cation_configuration = d.get("cation_configuration", None)
-
-        if cation_configuration is not None:
-            cathode.cation_configuration = [PeriodicSite.from_dict(cation) for
-                                            cation in cation_configuration]
-
-        return cathode
 
 
 class LiRichCathode(Cathode):
@@ -386,7 +351,7 @@ class LiRichCathode(Cathode):
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
-                 site_properties=None, cation_configuration=None):
+                 site_properties=None):
 
         super(LiRichCathode, self).__init__(
             lattice=lattice, species=species, coords=coords,
