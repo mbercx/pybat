@@ -118,7 +118,7 @@ class Cathode(Structure):
         elif all([isinstance(item, Site) for item in configuration]):
             for catsite in configuration:
                 for i, site in enumerate(self):
-                    if all(site.frac_coords == catsite.frac_coords):
+                    if np.linalg.norm(site.coords - catsite.coords) < 0.05:
                         self.replace(i, catsite.specie,
                                      properties={"magmom": 0})
 
@@ -288,7 +288,8 @@ class Cathode(Structure):
         Returns:
 
         """
-        raise NotImplementedError
+
+
 
     def find_cation_configurations(self):
         """
