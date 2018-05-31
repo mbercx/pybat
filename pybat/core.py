@@ -5,6 +5,7 @@
 import itertools
 import math
 import json
+import os
 
 import numpy as np
 
@@ -15,6 +16,7 @@ from pymatgen.core import Structure, Composition, Molecule, Site, \
     PeriodicSite, Element
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
+from pymatgen.io.vasp.outputs import Outcar
 
 """
 Module that contains tools to represent and calculate the properties of
@@ -201,7 +203,24 @@ class Cathode(Structure):
         Returns:
 
         """
-        raise NotImplementedError
+
+        # Add the cation sites
+        if isinstance(sites, dict):
+            for cation in sites.keys():
+                for index in sites[cation]:
+                    self.replace(index, cation, properties={"magmom": 0})
+
+        elif all([isinstance(item, Site) for item in sites]):
+            for catsite in sites:
+                for i, site in enumerate(self):
+                    if np.linalg.norm(site.distance(catsite)) < 0.05:
+                        self.replace(i, catsite.specie,
+                                     properties={"magmom": 0})
+
+        else:
+            raise TypeError("Cation configurations should be a dictionary "
+                            "mapping cations to site indices or a list of "
+                            "sites.")
 
     def remove_cations(self, sites=None):
         """
@@ -212,19 +231,25 @@ class Cathode(Structure):
         The occupancy is simply adjusted to an empty Composition object.
 
         Args:
-            sites: List of pymatgen.core.Sites which are to be removed.
+            sites: List of indices
+            List of pymatgen.core.Sites which are to be removed.
 
         """
 
-        # TODO Add functionality to remove cations based on the site indices
+        #TODO add checks
 
         # If no sites are given
         if sites is None:
             # Remove all the cations
             self.cation_configuration = []
 
-        # Else remove the requested sites from the cation configuration
-        else:
+        # If a List of integers is given
+        elif all([isinstance(item, int) for item in sites]):
+            for index in sites:
+                self.replace(index, Composition(), properties={"magmom": 0})
+
+        # If a List of sites is given
+        elif all([isinstance(item, Site) for item in sites]):
             for site in sites:
                 # Check if the provided site corresponds to a cation site
                 if site in self.cation_configuration:
@@ -234,6 +259,8 @@ class Cathode(Structure):
                 else:
                     raise Warning("Requested site not found in cation "
                                   "configuration.")
+        else:
+            raise IOError("Incorrect site input.")
 
     def change_site_distance(self, site_indices, distance):
         """
@@ -288,11 +315,12 @@ class Cathode(Structure):
                      coords_are_cartesian=True,
                      properties=site_b.properties)
 
-    def update_site_coords(self, contcar_file):
+    def update_sites(self, directory):
         """
-        Based on the CONTCAR of a geometry optimization, update the site
-        coordinates that were optimized. Note that this method relies on the
-        cation configuration of the not having changed.
+        Based on the CONTCAR and OUTCAR of a geometry optimization, update the
+        site coordinates and magnetic moments that were optimized. Note that
+        this method relies on the cation configuration of the not having
+        changed.
 
         Args:
             contcar_file:
@@ -301,7 +329,11 @@ class Cathode(Structure):
 
         """
 
-        new_cathode = Cathode.from_file(contcar_file)
+        new_cathode = Cathode.from_file(os.path.join(directory, "CONTCAR"))
+
+        out = Outcar(os.path.join(directory, "OUTCAR"))
+        magmom = [site["tot"] for site in out.magnetization]
+        new_cathode.add_site_property("magmom", magmom)
 
         # Update the lattice
         self.modify_lattice(new_cathode.lattice)
@@ -316,10 +348,9 @@ class Cathode(Structure):
                 new_site = new_cathode.sites[new_index]
                 # Update the site coordinates
                 self.replace(i, species=new_site.species_and_occu,
-                             coords=new_site.frac_coords)
+                             coords=new_site.frac_coords,
+                             properties=new_site.properties)
                 new_index += 1
-
-
 
 
     def find_cation_configurations(self):
