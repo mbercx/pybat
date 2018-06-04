@@ -236,7 +236,7 @@ class Cathode(Structure):
 
         """
 
-        #TODO add checks
+        # TODO add checks
 
         # If no sites are given
         if sites is None:
@@ -344,14 +344,12 @@ class Cathode(Structure):
 
             # If the site is not empty
             if site.species_and_occu != Composition():
-
                 new_site = new_cathode.sites[new_index]
                 # Update the site coordinates
                 self.replace(i, species=new_site.species_and_occu,
                              coords=new_site.frac_coords,
                              properties=new_site.properties)
                 new_index += 1
-
 
     def find_cation_configurations(self):
         """
@@ -824,9 +822,10 @@ class Dimer(MSONable):
         )
 
         if filename is None:
-            filename = str(self.cathode.composition).replace(" ", "") + "_" \
-                       + str(self.indices[0]) + "_" + str(
-                self.indices[1]) + ".xyz"
+            filename = str(self.cathode.composition.reduced_composition
+                           ).replace(" ", "") + "_" \
+                       + str(self.indices[0]) + "_" + str(self.indices[1]) \
+                       + ".xyz"
 
         dimer_environment_molecule.to("xyz", filename)
 
