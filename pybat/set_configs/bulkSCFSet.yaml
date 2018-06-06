@@ -1,6 +1,6 @@
 # Standard SCF calculation settjngs
 INCAR:
-  ALGO: Fast
+  ALGO: Normal
   EDIFF: 1.0e-04
   ENCUT: 500
   ISMEAR: -5
