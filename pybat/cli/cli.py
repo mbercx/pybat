@@ -326,6 +326,16 @@ def voltage():
     pass
     # TODO
 
+@get.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".")
+def endiff(directory):
+    """
+    Calculate the energy difference for a transition.
+    """
+    from pybat.cli.commands.get import get_endiff
+
+    get_endiff(directory)
+
 
 @main.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file")

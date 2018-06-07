@@ -85,3 +85,23 @@ def get_voltage(directory, calculation="relax", functional=None):
 
     """
     pass
+
+
+def get_endiff(directory):
+    """
+    Calculate the energy difference for a transition in a directory.
+
+    Args:
+        directory:
+
+    Returns:
+
+    """
+    initial_outcar = Outcar(os.path.join(directory, "initial", "OUTCAR"))
+    final_outcar = Outcar(os.path.join(directory, "final", "OUTCAR"))
+
+    initial_energy = initial_outcar.final_energy
+    final_energy = final_outcar.final_energy
+
+    print("The energy difference is: ", end="")
+    print(str(final_energy-initial_energy) + " eV")
