@@ -80,7 +80,7 @@ def relax(structure_file, calculation_dir="",
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
-        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
 
     # Set up the geometry optimization
     geo_optimization = bulkRelaxSet(structure=structure,
@@ -119,7 +119,7 @@ def transition(directory, initial_structure, final_structure, is_metal=False,
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
-        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
 
     # Load the correct INCAR settings for the chosen functional
     if hse_calculation:
@@ -194,7 +194,7 @@ def dimers(structure_file, dimer_distance=1.4,
 
     # Add the standard Methfessel-Paxton smearing for metals
     if is_metal:
-        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
 
     # Load the correct INCAR settings for the chosen functional
     if hse_calculation:
@@ -314,7 +314,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
 
     # Add the standard Methfessel-Paxton smearing for metals
     if is_metal:
-        user_incar_settings.update({"ISMEAR": 1, "SIGMA": 0.2})
+        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
 
     neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL,
                                   user_incar_settings=user_incar_settings)
