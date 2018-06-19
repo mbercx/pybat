@@ -8,7 +8,9 @@ setup(
         "pymatgen",
         "numpy",
         "scipy",
-        "click"
+        "click",
+        "fireworks",
+        "custodian"
     ],
     entry_points='''
         [console_scripts]
