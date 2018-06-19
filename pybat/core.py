@@ -7,6 +7,8 @@ import math
 import json
 import os
 
+# This is a useless comment
+
 import numpy as np
 
 from monty.io import zopen
