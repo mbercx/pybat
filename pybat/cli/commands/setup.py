@@ -6,8 +6,10 @@ import numpy as np
 import os
 import shutil
 
+import pdb
+
 from pybat.core import Cathode, LiRichCathode
-from pybat.sets import bulkRelaxSet, PybatRelaxSet, PybatNEBSet
+from pybat.sets import bulkRelaxSet, PybatNEBSet
 
 from monty.serialization import loadfn
 
@@ -162,20 +164,31 @@ def transition(directory, is_metal=False, is_migration=False,
     # If requested, set up the initial structure optimization calculation
     if optimize_initial:
         initial_optimization = bulkRelaxSet(
-            structure=initial_cathode,
+            structure=initial_cathode.as_ordered_structure(),
             potcar_functional=DFT_FUNCTIONAL,
             user_incar_settings=user_incar_settings
         )
         initial_optimization.write_input(os.path.join(directory, "initial"))
+        initial_cathode.to("json", os.path.join(directory, "initial",
+                                                "initial_cathode.json"))
+    else:
+        os.makedirs(os.path.join(directory, "initial"), exist_ok = True)
+        initial_cathode.to("json", os.path.join(directory, "initial",
+                                                "final_cathode.json"))
 
     # Set up the final structure optimization calculation
     final_optimization = bulkRelaxSet(
-        structure=final_cathode,
+        structure=final_cathode.as_ordered_structure(),
         potcar_functional=DFT_FUNCTIONAL,
         user_incar_settings=user_incar_settings
     )
 
     final_optimization.write_input(os.path.join(directory, "final"))
+
+    # Write the initial structure of the final Cathode to the optimization
+    # directory
+    final_cathode.to("json", os.path.join(directory, "final",
+                                          "initial_cathode.json"))
 
     # If the transition is a migration of an atom in the structure, set up the
     # calculation for the charge density, used to find a better initial pathway
@@ -295,6 +308,13 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
     final_dir = os.path.join(directory, "final")
 
     try:
+        # Check to see if the final_cathode structure is present
+        initial_structure = Structure.from_file(
+            os.path.join(initial_dir, "final_cathode.json")
+        )
+    except FileNotFoundError:
+        # In case the required json file is not present, check to see if
+        # there is VASP output which can be used
         initial_structure = Structure.from_file(os.path.join(initial_dir,
                                                              "CONTCAR"))
 
@@ -302,12 +322,11 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
         initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
         initial_magmom = [site["tot"] for site in initial_out.magnetization]
         initial_structure.add_site_property("magmom", initial_magmom)
-
-    except FileNotFoundError:
-        # In case the required output files are not present, check to see if
-        # the structure is present in a json format
         initial_structure = Structure.from_file(os.path.join(initial_dir,
                                                              "structure.json"))
+    else:
+        raise FileNotFoundError("Could not find required structure "
+                                "information in " + initial_dir + ".")
 
     final_structure = Structure.from_file(os.path.join(final_dir,
                                                        "CONTCAR"))
@@ -381,10 +400,12 @@ def find_transition_cathodes(directory, initial_contains="init.json",
 
     for item in os.listdir(directory):
 
-        if initial_contains in item and os.path.isfile(item):
+        if initial_contains in item \
+                and os.path.isfile(os.path.join(directory, item)):
             initial_structure_file = os.path.join(directory, item)
 
-        if final_contains in item and os.path.isfile(item):
+        if final_contains in item \
+                and os.path.isfile(os.path.join(directory, item)):
             final_structure_file = os.path.join(directory, item)
 
     if initial_structure_file:
