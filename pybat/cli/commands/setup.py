@@ -109,9 +109,8 @@ def relax(structure_file, calculation_dir="",
                 os.path.join(calculation_dir, "initial_cathode.json"))
 
 
-def transition(directory, initial_structure, final_structure, is_metal=False,
-               is_migration=False, hse_calculation=False,
-               optimize_initial=False):
+def transition(directory, is_metal=False, is_migration=False,
+               hse_calculation=False, optimize_initial=False):
     """
     This script will set up the geometry optimizations for a transition
     structure, i.e. using ISIF = 2. It is assumed that the initial structure
@@ -124,6 +123,8 @@ def transition(directory, initial_structure, final_structure, is_metal=False,
     estimated path for the nudged elastic band calculations.
 
     """
+    (initial_structure, final_structure) = find_transition_structures(
+        directory)
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.
