@@ -122,6 +122,7 @@ def define_migration(structure_file, write_cif=False):
 
     # Set up the migration directory
     migration_dir = os.path.join(os.getcwd(), "migration_" + migration_id)
+    os.mkdir(migration_dir)
 
 
     # Set up the filenames
