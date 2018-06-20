@@ -42,7 +42,8 @@ def _load_yaml_config(filename):
 def relax(structure_file, calculation_dir="",
           is_metal=False, hse_calculation=False):
     """
-    Set up a standard geometry optimization calculation of a Cathode structure.
+    Set up a standard geometry optimization calculation of a Cathode
+    structure. Optimizes both the atomic positions as well as the unit cell.
 
     Args:
         structure_file (str): Path to the Cathode structure file, either
@@ -109,7 +110,8 @@ def relax(structure_file, calculation_dir="",
 
 
 def transition(directory, initial_structure, final_structure, is_metal=False,
-               is_migration=False, hse_calculation=False):
+               is_migration=False, hse_calculation=False,
+               optimize_initial=False):
     """
     This script will set up the geometry optimizations for the initial and
     final structures.
