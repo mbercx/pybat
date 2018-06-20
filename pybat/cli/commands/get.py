@@ -4,6 +4,8 @@
 
 import os
 
+from pybat.core import Cathode
+
 from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.analysis.transition_state import NEBAnalysis
@@ -56,6 +58,30 @@ def get_structure(directory, write_cif=False):
     if write_cif:
         structure.to("cif", "structure.cif")
 
+def get_cathode(directory, write_cif=False):
+    """
+    Construct a .json file of the updated Cathode from a geometry
+    optimization, based on the initial_cathode.json file and the output of a
+    VASP calculation, i.e. the CONTCAR and OUTCAR file. All these files must
+    be present in the directory.
+
+    Args:
+        directory (str): Directory in which the geometry optimization
+        calculation was performed. Must contain the initial_cathode.json,
+        OUTCAR and CONTCAR file.
+
+    Returns:
+
+    """
+    directory = os.path.abspath(directory)
+    cathode = Cathode.from_file(os.path.join(directory,
+                                               "initial_cathode.json"))
+    cathode.update_sites(directory)
+
+    cathode.to("json", "final_cathode.json")
+
+    if write_cif:
+        cathode.to("cif", "final_cathode.cif")
 
 def get_barrier(directory):
     """

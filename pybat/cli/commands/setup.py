@@ -4,6 +4,7 @@
 
 import numpy as np
 import os
+import shutil
 
 from pybat.core import Cathode, LiRichCathode
 from pybat.sets import bulkRelaxSet, PybatRelaxSet, PybatNEBSet
@@ -87,8 +88,10 @@ def relax(structure_file, calculation_dir="",
                                     user_incar_settings=user_incar_settings,
                                     potcar_functional=DFT_FUNCTIONAL)
 
-    # Write the input files to the geo optimization directory
+    # Write the input files to the geometry optimization directory
     geo_optimization.write_input(calculation_dir)
+    shutil.copy(structure_file,
+                os.path.join(calculation_dir, "initial_cathode.json"))
 
 
 def transition(directory, initial_structure, final_structure, is_metal=False,
