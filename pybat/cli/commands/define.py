@@ -4,6 +4,8 @@
 
 import os
 
+from string import ascii_letters
+
 from pybat.core import Cathode
 from pymatgen.core import Structure, Composition
 
@@ -23,16 +25,26 @@ __date__ = "May 2018"
 
 def define_migration(structure_file, write_cif=False):
     """
-    This script allows the user to define a migration in a structure.
+    This script allows the user to define a migration of a cation in a
+    Cathode structure.
 
     The user has to identify the site that is migrating, as well as provide the
-    coordinates to which the site will migrate, or an empty site.
+    fractional coordinates to which the site will migrate, or a vacant site
+    index.
+
+    Args:
+        structure_file (str): Path to the structure file.
+        write_cif (bool): Flag that determines if the initial and final
+        structures should also be written in a cif format.
+
+    Returns:
+        None
 
     """
     cathode = Cathode.from_file(structure_file)
     final_structure = cathode.copy()
 
-    # Ask the user for the migration site
+    # Prompt the user for the migration site
     print("")
     print(cathode)
     print("")
@@ -82,6 +94,8 @@ def define_migration(structure_file, write_cif=False):
                                 coords=migration_site.frac_coords,
                                 properties=final_site.properties)
 
+        migration_id = str(migration_site_index) + "_" + str(final_site_index)
+
     # In case of a set of fractional coordinates as input
     elif len(final_coords) == 3:
 
@@ -91,6 +105,16 @@ def define_migration(structure_file, write_cif=False):
                                 coords=final_coords,
                                 properties=final_structure.sites[
                                     migration_site_index].properties)
+
+        migration_id = str(migration_site_index) + "_a"
+
+        letter_index = 0
+
+        while "migration_" + migration_id in os.listdir(os.getcwd()) and \
+            letter_index < len(ascii_letters):
+            letter_index += 1
+            migration_id = str(migration_site_index) + "_" + \
+                           ascii_letters[letter_index]
 
     else:
         raise IOError("Provided input is incorrect.")
@@ -105,31 +129,49 @@ def define_migration(structure_file, write_cif=False):
                            properties=final_structure.sites[
                                migration_site_index].properties)
 
-    current_dir = os.getcwd()
+    # Set up the migration directory
+    migration_dir = os.path.join(os.getcwd(), "migration_" + migration_id)
+    os.mkdir(migration_dir)
+
 
     # Set up the filenames
     initial_structure_file = ".".join(structure_file.split("/")[-1].split(".")[
-                                      0:-1]) + "_init"
+                                      0:-1]) + "m_" + migration_id + "_init"
     final_structure_file = ".".join(structure_file.split("/")[-1].split(".")[
-                                    0:-1]) + "_final"
+                                    0:-1]) + "m_" + migration_id + "_final"
 
     # Write out the initial and final structures
-    cathode.to("json", current_dir + "/" + initial_structure_file + ".json")
-    final_structure.to("json", current_dir + "/" + final_structure_file + ".json")
+    cathode.to("json", migration_dir + "/" + initial_structure_file + ".json")
+    final_structure.to("json",
+                       migration_dir + "/" + final_structure_file + ".json")
 
     # Write the structures to a cif format if requested
     if write_cif:
-        cathode.to("cif", current_dir + "/" + initial_structure_file + ".cif")
+        cathode.to("cif", migration_dir + "/" + initial_structure_file + ".cif")
         final_structure.to("cif",
-                           current_dir + "/" + final_structure_file + ".cif")
+                           migration_dir + "/" + final_structure_file + ".cif")
 
 
 def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
                  remove_cations=False, write_cif=False):
     """
-    Define a dimerization of oxygen in a structure.
+    Define the formation of an oxygen dimer in a Cathode structure.
+
+    The user has to provide the indices of the oxygen pair that will form
+    the dimer, as well as the final distance between the oxygen atoms.
+
+    Args:
+        structure_file (str): Path to the Cathode structure file.
+        dimer_indices (tuple): Indices of the oxygen sites which are to form a
+        dimer.
+        distance (float): Final distance between the oxygen atoms.
+        remove_cations (bool): Flag that allows the user to remove the
+        cations (Li, Na, ...) around the chosen oxygen pair.
+        write_cif (bool): Flag that indicates that the initial and final
+        structure files should also be written in a cif format.
 
     Returns:
+        None
 
     """
 
@@ -162,23 +204,29 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     dimer_structure = cathode.copy()
     dimer_structure.change_site_distance(dimer_indices, distance)
 
-    current_dir = os.getcwd()
+    # Create the dimer directory
+    dimer_dir = os.path.join(
+        os.getcwd(), "dimer_" + "_".join([str(el) for el in dimer_indices])
+    )
+    os.mkdir(dimer_dir)
 
     # Set up the filenames
     initial_structure_file = ".".join(
-        structure_file.split("/")[-1].split(".")[0:-1]) + \
-                             "_dimer_init"
+        structure_file.split("/")[-1].split(".")[0:-1]) + "_d_" \
+                             + "_".join([str(el) for el in dimer_indices]) \
+                             + "_init"
     dimer_structure_file = ".".join(
-        structure_file.split("/")[-1].split(".")[0:-1]) + \
-                           "_dimer_final"
+        structure_file.split("/")[-1].split(".")[0:-1]) + "_d_" \
+                           + "_".join([str(el) for el in dimer_indices]) \
+                           + "_final"
 
     # Write out the initial and final structures
-    cathode.to("json", current_dir + "/" + initial_structure_file + ".json")
+    cathode.to("json", dimer_dir + "/" + initial_structure_file + ".json")
     dimer_structure.to("json",
-                       current_dir + "/" + dimer_structure_file + ".json")
+                       dimer_dir + "/" + dimer_structure_file + ".json")
 
     # Write the structures to a cif format if requested
     if write_cif:
-        cathode.to("cif", current_dir + "/" + initial_structure_file + ".cif")
+        cathode.to("cif", dimer_dir + "/" + initial_structure_file + ".cif")
         dimer_structure.to("cif",
-                           current_dir + "/" + dimer_structure_file + ".cif")
+                           dimer_dir + "/" + dimer_structure_file + ".cif")
