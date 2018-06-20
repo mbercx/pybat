@@ -29,13 +29,22 @@ def define_migration(structure_file, write_cif=False):
     Cathode structure.
 
     The user has to identify the site that is migrating, as well as provide the
-    coordinates to which the site will migrate, or a vacant site.
+    fractional coordinates to which the site will migrate, or a vacant site
+    index.
+
+    Args:
+        structure_file (str): Path to the structure file.
+        write_cif (bool): Flag that determines if the initial and final
+        structures should also be written in a cif format.
+
+    Returns:
+        None
 
     """
     cathode = Cathode.from_file(structure_file)
     final_structure = cathode.copy()
 
-    # Ask the user for the migration site
+    # Prompt the user for the migration site
     print("")
     print(cathode)
     print("")
@@ -146,14 +155,20 @@ def define_migration(structure_file, write_cif=False):
 def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
                  remove_cations=False, write_cif=False):
     """
-    Define a dimerization of oxygen in a structure.
+    Define the formation of an oxygen dimer in a Cathode structure.
+
+    The user has to provide the indices of the oxygen pair that will form
+    the dimer, as well as the final distance between the oxygen atoms.
 
     Args:
-        structure_file (str):
-        dimer_indices (tuple):
-        distance (float):
-        remove_cations (bool):
-        write_cif (bool):
+        structure_file (str): Path to the Cathode structure file.
+        dimer_indices (tuple): Indices of the oxygen sites which are to form a
+        dimer.
+        distance (float): Final distance between the oxygen atoms.
+        remove_cations (bool): Flag that allows the user to remove the
+        cations (Li, Na, ...) around the chosen oxygen pair.
+        write_cif (bool): Flag that indicates that the initial and final
+        structure files should also be written in a cif format.
 
     Returns:
         None
@@ -190,9 +205,8 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     dimer_structure.change_site_distance(dimer_indices, distance)
 
     # Create the dimer directory
-    current_dir = os.getcwd()
     dimer_dir = os.path.join(
-        current_dir, "dimer_" + "_".join([str(el) for el in dimer_indices])
+        os.getcwd(), "dimer_" + "_".join([str(el) for el in dimer_indices])
     )
     os.mkdir(dimer_dir)
 
