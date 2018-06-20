@@ -308,10 +308,11 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
     final_dir = os.path.join(directory, "final")
 
     try:
-        # Check to see if the final_cathode structure is present
-        initial_structure = Structure.from_file(
+        # Check to see if the initial final_cathode structure is present
+        initial_structure = Cathode.from_file(
             os.path.join(initial_dir, "final_cathode.json")
-        )
+        ).as_ordered_structure()
+
     except FileNotFoundError:
         # In case the required json file is not present, check to see if
         # there is VASP output which can be used
@@ -324,7 +325,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
         initial_structure.add_site_property("magmom", initial_magmom)
         initial_structure = Structure.from_file(os.path.join(initial_dir,
                                                              "structure.json"))
-    else:
+    except:
         raise FileNotFoundError("Could not find required structure "
                                 "information in " + initial_dir + ".")
 
@@ -352,7 +353,8 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
     else:
         # Linearly interpolate the initial and final structures
         images = initial_structure.interpolate(end_structure=final_structure,
-                                               nimages=nimages + 1)
+                                               nimages=nimages + 1,
+                                               interpolate_lattices=True)
 
     user_incar_settings = {}
 
