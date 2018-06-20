@@ -79,7 +79,10 @@ class PybatNEBSet(PybatRelaxSet):
 
     Args:
         \\*\\*kwargs: Other kwargs supported by :class:`DictSet`.
+
     """
+
+    #TODO make this class independent of PyBatRelaxSet
 
     def __init__(self, structures, hse_calculation=False, **kwargs):
         if len(structures) < 3:

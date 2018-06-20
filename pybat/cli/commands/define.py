@@ -7,7 +7,7 @@ import os
 from string import ascii_letters
 
 from pybat.core import Cathode
-from pymatgen.core import Structure, Composition
+from pymatgen.core import Composition
 
 """
 Set of scripts used to define structural changes easily using the command line
@@ -136,9 +136,9 @@ def define_migration(structure_file, write_cif=False):
 
     # Set up the filenames
     initial_structure_file = ".".join(structure_file.split("/")[-1].split(".")[
-                                      0:-1]) + "m_" + migration_id + "_init"
+                                      0:-1]) + "_m_" + migration_id + "_init"
     final_structure_file = ".".join(structure_file.split("/")[-1].split(".")[
-                                    0:-1]) + "m_" + migration_id + "_final"
+                                    0:-1]) + "_m_" + migration_id + "_final"
 
     # Write out the initial and final structures
     cathode.to("json", migration_dir + "/" + initial_structure_file + ".json")

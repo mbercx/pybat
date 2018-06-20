@@ -381,7 +381,7 @@ class Cathode(Structure):
         """
         Return the structure as a pymatgen.core.Structure, removing the
         unoccupied sites. This is because many of the IO methods of pymatgen
-        run into issues due to the empty occupancies.
+        run into issues when empty occupancies are present.
 
         Returns:
             pymatgen.core.Structure
@@ -394,9 +394,24 @@ class Cathode(Structure):
         )
 
     def to(self, fmt=None, filename=None, **kwargs):
+        """
+        Structure method override to solve issue with writing the Cathode to a POSCAR file
+
+        # TODO Figure out what exactly was the problem here again... Should
+        have written this down immediately! I think it had something to do
+        with the order of the Sites changing...
+
+        Args:
+            fmt:
+            filename:
+            **kwargs:
+
+        Returns:
+
+        """
 
         if fmt == "poscar":
-            structure = self.as_structure()
+            structure = self.as_ordered_structure()
             structure.to(fmt, filename, **kwargs)
 
         else:
