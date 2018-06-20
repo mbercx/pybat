@@ -171,7 +171,7 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
         structure files should also be written in a cif format.
 
     Returns:
-        None
+        dimer_dir (str): Path to the dimer directory.
 
     """
 
@@ -230,3 +230,5 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
         cathode.to("cif", dimer_dir + "/" + initial_structure_file + ".cif")
         dimer_structure.to("cif",
                            dimer_dir + "/" + dimer_structure_file + ".cif")
+
+    return dimer_dir

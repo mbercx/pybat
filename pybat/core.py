@@ -905,26 +905,6 @@ class Dimer(MSONable):
                    dimer_indices=d["dimer_indices"])
 
 
-def test_script(structure_file):
-    cat = LiRichCathode.from_file(structure_file)
-
-    print(cat)
-    site_index = int(input("Please give the site around which you would like "
-                           "to study O-O dimers: "))
-
-    dimers = cat.find_oxygen_dimers(site_index)
-
-    print("Oxygen dimers of site")
-    print(dimers)
-
-    for dimer in dimers:
-        print("")
-        print("Dimer")
-        print(dimer)
-        print("")
-        Dimer(cat, dimer).visualize_dimer_environment()
-
-
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)

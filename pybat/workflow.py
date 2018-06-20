@@ -6,7 +6,8 @@ import os
 import subprocess
 import shlex
 
-from pybat.cli.commands.setup import find_transition_cathodes, transition
+from pybat.cli.commands.define import define_dimer
+from pybat.cli.commands.setup import transition
 
 from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, \
@@ -27,8 +28,9 @@ VASP_RUN_SCRIPT = "/user/antwerpen/202/vsc20248/local/scripts/job_workflow.sh"
 VASP_RUN_COMMAND = "mpirun -genv LD_BIND_NOW=1 vasp_std"
 
 # Set up the Launchpad for the workflows
-LAUNCHPAD = LaunchPad(host="ds135179.mlab.com", port=35179, name="quotas",
-                      username="mbercx", password="quotastests")
+LAUNCHPAD = LaunchPad(host="ds247327.mlab.com", port=47327, name="pybat",
+                      username="mbercx", password="li2mno3")
+
 
 def run_vasp(directory):
     """
@@ -76,28 +78,39 @@ def run_custodian(directory):
     c.run()
 
 
-def transition_workflow(directory, is_metal=False, is_migration=False,
-                        hse_calculation=False):
+def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
+                   is_metal=False, hse_calculation=False):
     """
-    Set up a workflow that calculates the geometry of a transition, within a
-    Custodian.
+    Set up a workflow that calculates the thermodynamics for a dimer
+    formation in the current directory.
+
+    Can later be expanded to also include barrier calculation.
 
     Returns:
 
     """
-    # Find the initial and final structures
-    (initial_structure,
-     final_structure) = find_transition_cathodes(directory)
 
-    # Set up the calculation
-    transition(directory=directory,
+    # Let the user define a dimer
+    dimer_dir = define_dimer(structure_file=structure_file,
+                             dimer_indices=dimer_indices,
+                             distance=distance,
+                             write_cif=True)
+
+    # Set up the transition calculation
+    transition(directory=dimer_dir,
                is_metal=is_metal,
-               is_migration=is_migration,
+               is_migration=False,
                hse_calculation=hse_calculation)
 
-    # Run the calculation
+    # Set up the FireTask for the custodian run
+    run_relax = PyTask(func="pybat.workflow.run_custodian",
+                       kwargs={"directory": os.path.join(dimer_dir, "final")})
 
+    relax_firework = Firework(tasks=[run_relax],
+                              name="Dimer Geometry optimization",
+                              spec={"_launch_dir":dimer_dir})
 
+    workflow = Workflow(fireworks=[relax_firework],
+                        name=structure_file + dimer_dir.split("/")[-1])
 
-
-
+    LAUNCHPAD.add_wf(workflow)
