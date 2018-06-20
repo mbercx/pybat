@@ -356,6 +356,8 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
                                                nimages=nimages + 1,
                                                interpolate_lattices=True)
 
+    # TODO Add functionality for NEB calculations with changing lattices
+
     user_incar_settings = {}
 
     # Add the standard Methfessel-Paxton smearing for metals
