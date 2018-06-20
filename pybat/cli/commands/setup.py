@@ -42,7 +42,21 @@ def _load_yaml_config(filename):
 def relax(structure_file, calculation_dir="",
           is_metal=False, hse_calculation=False):
     """
-    Set up a standard relaxation of a Cathode structure.
+    Set up a standard geometry optimization calculation of a Cathode structure.
+
+    Args:
+        structure_file (str): Path to the Cathode structure file, either
+        relative or absolute.
+        calculation_dir (str): Path to the directory in which to set up the
+        VASP calculation.
+        is_metal (bool): Flag that indicates the material being studied is a
+        metal, which changes the smearing from Gaussian to second order
+        Methfessel-Paxton of 0.2 eV.
+        hse_calculation (bool): Flag that indicates that a hybrid HSE06
+        functional should be used for the geometry optimization.
+
+    Returns:
+        None
 
     """
 

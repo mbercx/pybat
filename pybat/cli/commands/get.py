@@ -69,8 +69,11 @@ def get_cathode(directory, write_cif=False):
         directory (str): Directory in which the geometry optimization
         calculation was performed. Must contain the initial_cathode.json,
         OUTCAR and CONTCAR file.
+        write_cif (bool): Flag that determines whether a .cif file of the
+        cathode structure is written to the directory.
 
     Returns:
+        None
 
     """
     directory = os.path.abspath(directory)
@@ -110,7 +113,7 @@ def get_voltage(directory, calculation="relax", functional=None):
     Returns:
 
     """
-    pass
+    raise NotImplementedError
 
 
 def get_endiff(directory):
