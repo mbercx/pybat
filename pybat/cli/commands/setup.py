@@ -203,6 +203,85 @@ def transition(directory, is_metal=False, is_migration=False,
         host_scf.write_input(os.path.join(directory, "host"))
 
 
+def neb(directory, nimages=8, is_metal=False, is_migration=False,
+        hse_calculation=False):
+    """
+    Set up the NEB calculation from the initial and final structures.
+
+    """
+    directory = os.path.abspath(directory)
+
+    # Extract the optimized initial and final geometries
+    initial_dir = os.path.join(directory, "initial")
+    final_dir = os.path.join(directory, "final")
+
+    try:
+        # Check to see if the initial final_cathode structure is present
+        initial_structure = Cathode.from_file(
+            os.path.join(initial_dir, "final_cathode.json")
+        ).as_ordered_structure()
+
+    except FileNotFoundError:
+        # In case the required json file is not present, check to see if
+        # there is VASP output which can be used
+        initial_structure = Structure.from_file(os.path.join(initial_dir,
+                                                             "CONTCAR"))
+
+        # Add the magnetic configuration to the initial structure
+        initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
+        initial_magmom = [site["tot"] for site in initial_out.magnetization]
+        initial_structure.add_site_property("magmom", initial_magmom)
+        initial_structure = Structure.from_file(os.path.join(initial_dir,
+                                                             "structure.json"))
+    except:
+        raise FileNotFoundError("Could not find required structure "
+                                "information in " + initial_dir + ".")
+
+    final_structure = Structure.from_file(os.path.join(final_dir,
+                                                       "CONTCAR"))
+
+    # In case the transition is a migration
+    if is_migration:
+        # Set up the static potential for the Pathfinder from the host charge
+        # density
+        host_charge_density = Chgcar.from_file(os.path.join(directory, "host"))
+        host_potential = ChgcarPotential(host_charge_density)
+
+        migration_site_index = find_migrating_ion(initial_structure,
+                                                  final_structure)
+
+        neb = NEBPathfinder(start_struct=initial_structure,
+                            end_struct=final_structure,
+                            relax_sites=migration_site_index,
+                            v=host_potential)
+
+        images = neb.images
+        neb.plot_images("neb.vasp")
+
+    else:
+        # Linearly interpolate the initial and final structures
+        images = initial_structure.interpolate(end_structure=final_structure,
+                                               nimages=nimages + 1,
+                                               interpolate_lattices=True)
+
+    # TODO Add functionality for NEB calculations with changing lattices
+
+    user_incar_settings = {}
+
+    # Add the standard Methfessel-Paxton smearing for metals
+    if is_metal:
+        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
+
+    neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL,
+                                  user_incar_settings=user_incar_settings)
+
+    # Set up the NEB calculation
+    neb_calculation.write_input(directory)
+
+    # Make a file to visualize the transition
+    neb_calculation.visualize_transition()
+
+
 def dimers(structure_file, dimer_distance=1.4,
            is_metal=False, hse_calculation=False):
     """
@@ -293,85 +372,6 @@ def dimers(structure_file, dimer_distance=1.4,
 
         # Write the calculation files to the 'final' directory
         dimer_optimization.write_input(final_dir)
-
-
-def neb(directory, nimages=8, is_metal=False, is_migration=False,
-        hse_calculation=False):
-    """
-    Set up the NEB calculation from the initial and final structures.
-
-    """
-    directory = os.path.abspath(directory)
-
-    # Extract the optimized initial and final geometries
-    initial_dir = os.path.join(directory, "initial")
-    final_dir = os.path.join(directory, "final")
-
-    try:
-        # Check to see if the initial final_cathode structure is present
-        initial_structure = Cathode.from_file(
-            os.path.join(initial_dir, "final_cathode.json")
-        ).as_ordered_structure()
-
-    except FileNotFoundError:
-        # In case the required json file is not present, check to see if
-        # there is VASP output which can be used
-        initial_structure = Structure.from_file(os.path.join(initial_dir,
-                                                             "CONTCAR"))
-
-        # Add the magnetic configuration to the initial structure
-        initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
-        initial_magmom = [site["tot"] for site in initial_out.magnetization]
-        initial_structure.add_site_property("magmom", initial_magmom)
-        initial_structure = Structure.from_file(os.path.join(initial_dir,
-                                                             "structure.json"))
-    except:
-        raise FileNotFoundError("Could not find required structure "
-                                "information in " + initial_dir + ".")
-
-    final_structure = Structure.from_file(os.path.join(final_dir,
-                                                       "CONTCAR"))
-
-    # In case the transition is a migration
-    if is_migration:
-        # Set up the static potential for the Pathfinder from the host charge
-        # density
-        host_charge_density = Chgcar.from_file(os.path.join(directory, "host"))
-        host_potential = ChgcarPotential(host_charge_density)
-
-        migration_site_index = find_migrating_ion(initial_structure,
-                                                  final_structure)
-
-        neb = NEBPathfinder(start_struct=initial_structure,
-                            end_struct=final_structure,
-                            relax_sites=migration_site_index,
-                            v=host_potential)
-
-        images = neb.images
-        neb.plot_images("neb.vasp")
-
-    else:
-        # Linearly interpolate the initial and final structures
-        images = initial_structure.interpolate(end_structure=final_structure,
-                                               nimages=nimages + 1,
-                                               interpolate_lattices=True)
-
-    # TODO Add functionality for NEB calculations with changing lattices
-
-    user_incar_settings = {}
-
-    # Add the standard Methfessel-Paxton smearing for metals
-    if is_metal:
-        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
-
-    neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL,
-                                  user_incar_settings=user_incar_settings)
-
-    # Set up the NEB calculation
-    neb_calculation.write_input(directory)
-
-    # Make a file to visualize the transition
-    neb_calculation.visualize_transition()
 
 
 ###########
