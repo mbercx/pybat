@@ -171,10 +171,12 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     dimer_structure = cathode.copy()
     dimer_structure.change_site_distance(dimer_indices, distance)
 
+    # Create the dimer directory
     current_dir = os.getcwd()
     dimer_dir = os.path.join(
         current_dir, "dimer_" + "_".join([str(el) for el in dimer_indices])
     )
+    os.mkdir(dimer_dir)
 
     # Set up the filenames
     initial_structure_file = ".".join(
