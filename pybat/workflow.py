@@ -6,7 +6,7 @@ import os
 import subprocess
 import shlex
 
-from pybat.cli.commands.setup import find_transition_structures, transition
+from pybat.cli.commands.setup import find_transition_cathodes, transition
 
 from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, \
@@ -87,7 +87,7 @@ def transition_workflow(directory, is_metal=False, is_migration=False,
     """
     # Find the initial and final structures
     (initial_structure,
-     final_structure) = find_transition_structures(directory)
+     final_structure) = find_transition_cathodes(directory)
 
     # Set up the calculation
     transition(directory=directory,

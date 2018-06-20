@@ -123,18 +123,22 @@ def transition(directory, is_metal=False, is_migration=False,
     estimated path for the nudged elastic band calculations.
 
     """
-    (initial_structure, final_structure) = find_transition_structures(
+    # Make sure the directory is written as an absolute path
+    directory = os.path.abspath(directory)
+
+    # Obtain the initial and final Cathodes
+    (initial_cathode, final_cathode) = find_transition_cathodes(
         directory)
 
     # Check if a magnetic moment was not provided for the sites. If not, make
     # sure it is zero for the calculations.
-    if "magmom" not in initial_structure.site_properties.keys():
-        initial_structure.add_site_property("magmom",
-                                            [0] * len(initial_structure.sites))
+    if "magmom" not in initial_cathode.site_properties.keys():
+        initial_cathode.add_site_property("magmom",
+                                            [0] * len(initial_cathode.sites))
 
-    if "magmom" not in final_structure.site_properties.keys():
-        final_structure.add_site_property("magmom",
-                                          [0] * len(initial_structure.sites))
+    if "magmom" not in final_cathode.site_properties.keys():
+        final_cathode.add_site_property("magmom",
+                                          [0] * len(initial_cathode.sites))
 
     # Set up the calculations
 
@@ -155,37 +159,35 @@ def transition(directory, is_metal=False, is_migration=False,
         dftu_config = _load_yaml_config("DFTUSet")
         user_incar_settings.update(dftu_config["INCAR"])
 
-    # Set up the initial and final optimization calculations
-    initial_optimization = bulkRelaxSet(
-        structure=initial_structure,
-        potcar_functional=DFT_FUNCTIONAL,
-        user_incar_settings=user_incar_settings
-    )
+    # If requested, set up the initial structure optimization calculation
+    if optimize_initial:
+        initial_optimization = bulkRelaxSet(
+            structure=initial_cathode,
+            potcar_functional=DFT_FUNCTIONAL,
+            user_incar_settings=user_incar_settings
+        )
+        initial_optimization.write_input(os.path.join(directory, "initial"))
 
+    # Set up the final structure optimization calculation
     final_optimization = bulkRelaxSet(
-        structure=final_structure,
+        structure=final_cathode,
         potcar_functional=DFT_FUNCTIONAL,
         user_incar_settings=user_incar_settings
     )
 
-    # Set up the root directory for the neb calculation
-    neb_dir = os.path.abspath(directory)
-
-    # Write input files to directories
-    initial_optimization.write_input(os.path.join(neb_dir, "initial"))
-    final_optimization.write_input(os.path.join(neb_dir, "final"))
+    final_optimization.write_input(os.path.join(directory, "final"))
 
     # If the transition is a migration of an atom in the structure, set up the
     # calculation for the charge density, used to find a better initial pathway
     if is_migration:
-        migration_site_index = find_migrating_ion(initial_structure,
-                                                  final_structure)
+        migration_site_index = find_migrating_ion(initial_cathode,
+                                                  final_cathode)
 
-        host_structure = initial_structure.copy()
+        host_structure = initial_cathode.copy()
         host_structure.remove_sites([migration_site_index])
         host_scf = MPStaticSet(host_structure,
                                potcar_functional=DFT_FUNCTIONAL)
-        host_scf.write_input(os.path.join(neb_dir, "host"))
+        host_scf.write_input(os.path.join(directory, "host"))
 
 
 def dimers(structure_file, dimer_distance=1.4,
@@ -354,14 +356,14 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
 ###########
 
 
-def find_transition_structures(directory, initial_contains="init.json",
-                               final_contains="final.json"):
+def find_transition_cathodes(directory, initial_contains="init.json",
+                             final_contains="final.json"):
     """
-    Find the initial and final structures for a transition from the files in a
+    Find the initial and final Cathodes for a transition from the files in a
     directory.
 
     The function demands .json type files, in order to include the magnetic
-    moments.
+    moments, as well as the vacant Sites in the Cathode.
 
     Args:
         directory:
@@ -369,6 +371,7 @@ def find_transition_structures(directory, initial_contains="init.json",
         final_contains:
 
     Returns:
+        Tuple of the initial and final pybat.core.Cathode's
 
     """
     directory = os.path.abspath(directory)
@@ -385,20 +388,18 @@ def find_transition_structures(directory, initial_contains="init.json",
             final_structure_file = os.path.join(directory, item)
 
     if initial_structure_file:
-        initial_structure = Cathode.from_file(
-            initial_structure_file).as_ordered_structure()
+        initial_cathode = Cathode.from_file(initial_structure_file)
     else:
         raise FileNotFoundError("No suitably named initial structure file in "
                                 "directory.")
 
     if final_structure_file:
-        final_structure = Cathode.from_file(
-            final_structure_file).as_ordered_structure()
+        final_cathode = Cathode.from_file(final_structure_file)
     else:
         raise FileNotFoundError("No suitably named final structure file in "
                                 "directory.")
 
-    return initial_structure, final_structure
+    return initial_cathode, final_cathode
 
 
 def find_migrating_ion(initial_structure, final_structure):
