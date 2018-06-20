@@ -113,12 +113,15 @@ def transition(directory, initial_structure, final_structure, is_metal=False,
                is_migration=False, hse_calculation=False,
                optimize_initial=False):
     """
-    This script will set up the geometry optimizations for the initial and
-    final structures.
+    This script will set up the geometry optimizations for a transition
+    structure, i.e. using ISIF = 2. It is assumed that the initial structure
+    is already optimized, unless the user specifically requests its
+    optimization.
 
-    If requested, it will also set up a charge density calculation for the
+    If requested, a charge density calculation will be set up for the
     "host structure", i.e. the structure with vacancies at the initial and
-    final locations of the migrating ion.
+    final locations of the migrating ion. This is used later to provide an
+    estimated path for the nudged elastic band calculations.
 
     """
 
