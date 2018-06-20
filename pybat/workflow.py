@@ -91,8 +91,6 @@ def transition_workflow(directory, is_metal=False, is_migration=False,
 
     # Set up the calculation
     transition(directory=directory,
-               initial_structure=initial_structure,
-               final_structure=final_structure,
                is_metal=is_metal,
                is_migration=is_migration,
                hse_calculation=hse_calculation)

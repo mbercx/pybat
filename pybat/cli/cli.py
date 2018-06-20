@@ -127,7 +127,9 @@ def relax(structure_file, calculation_dir, is_metal, hse_calculation):
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
 @click.option("--hse_calculation", "-H", is_flag=True)
-def transition(directory, is_metal, is_migration, hse_calculation):
+@click.option("--optimize_initial", "-I", is_flag=True)
+def transition(directory, is_metal, is_migration, hse_calculation,
+               optimize_initial):
     """
     Set up a the geometry optimizations for the initial and final state of a
     transition.
@@ -138,7 +140,8 @@ def transition(directory, is_metal, is_migration, hse_calculation):
     transition(directory=directory,
                is_metal=is_metal,
                is_migration=is_migration,
-               hse_calculation=hse_calculation)
+               hse_calculation=hse_calculation,
+               optimize_initial=optimize_initial)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
