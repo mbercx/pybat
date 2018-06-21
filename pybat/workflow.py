@@ -72,7 +72,8 @@ def run_custodian(directory):
 
     jobs = [VaspJob(vasp_cmd=vasp_cmd,
                     output_file=output,
-                    stderr_file=output)]
+                    stderr_file=output,
+                    auto_npar=False)]
 
     c = Custodian(handlers, jobs, max_errors=10)
     c.run()
@@ -117,8 +118,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     LAUNCHPAD.add_wf(workflow)
 
 
-def migration_workflow(structure_file, dimer_indices=(0, 0), distance=0,
-                   is_metal=False, hse_calculation=False):
+def migration_workflow(structure_file, migration_indices=(0, 0),
+                       is_metal=False, hse_calculation=False):
     """
     Set up a workflow that calculates the thermodynamics for a migration in
     the current directory.
@@ -130,7 +131,9 @@ def migration_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     """
 
     # Let the user define a migration
-    migration_dir = define_migration()
+    migration_dir = define_migration(structure_file=structure_file,
+                                     migration_indices=migration_indices,
+                                     write_cif=True)
 
     # Set up the transition calculation
     transition(directory=migration_dir,
@@ -144,7 +147,7 @@ def migration_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Migration Geometry optimization",
-                              spec={"_launch_dir":migration_dir,
+                              spec={"_launch_dir": migration_dir,
                                     "_category":"2nodes"})
 
     workflow = Workflow(fireworks=[relax_firework],
