@@ -45,7 +45,7 @@ def define():
 @click.argument("structure_file", nargs=1)
 @click.option("--migration_indices", "-i", default=(0, 0))
 @click.option("--write_cif", "-w", is_flag=True)
-def migration(structure_file, write_cif):
+def migration(structure_file, migration_indices, write_cif):
     """
     Define a migration of an ion in a structure.
 
@@ -53,6 +53,7 @@ def migration(structure_file, write_cif):
     from pybat.cli.commands.define import define_migration
 
     define_migration(structure_file=structure_file,
+                     migration_indices=migration_indices,
                      write_cif=write_cif)
 
 
