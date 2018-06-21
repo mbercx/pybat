@@ -38,7 +38,7 @@ def define_migration(structure_file, write_cif=False):
         structures should also be written in a cif format.
 
     Returns:
-        None
+        migration_dir (str): The absolute path to the migration directory.
 
     """
     cathode = Cathode.from_file(structure_file)
@@ -151,6 +151,7 @@ def define_migration(structure_file, write_cif=False):
         final_structure.to("cif",
                            migration_dir + "/" + final_structure_file + ".cif")
 
+    return migration_dir
 
 def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
                  remove_cations=False, write_cif=False):
@@ -171,7 +172,7 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
         structure files should also be written in a cif format.
 
     Returns:
-        dimer_dir (str): Path to the dimer directory.
+        dimer_dir (str): Absolute path to the dimer directory.
 
     """
 

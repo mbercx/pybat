@@ -6,7 +6,7 @@ import os
 import subprocess
 import shlex
 
-from pybat.cli.commands.define import define_dimer
+from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
 
 from custodian import Custodian
@@ -84,7 +84,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
 
-    Can later be expanded to also include barrier calculation.
+    Can later be expanded to also include kinetic barrier calculation.
 
     Returns:
 
@@ -113,5 +113,41 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + dimer_dir.split("/")[-1])
+
+    LAUNCHPAD.add_wf(workflow)
+
+
+def migration_workflow(structure_file, dimer_indices=(0, 0), distance=0,
+                   is_metal=False, hse_calculation=False):
+    """
+    Set up a workflow that calculates the thermodynamics for a migration in
+    the current directory.
+
+    Can later be expanded to also include kinetic barrier calculation.
+
+    Returns:
+
+    """
+
+    # Let the user define a migration
+    migration_dir = define_migration()
+
+    # Set up the transition calculation
+    transition(directory=migration_dir,
+               is_metal=is_metal,
+               is_migration=False,
+               hse_calculation=hse_calculation)
+
+    # Set up the FireTask for the custodian run
+    run_relax = PyTask(func="pybat.workflow.run_custodian",
+                       kwargs={"directory": os.path.join(migration_dir, "final")})
+
+    relax_firework = Firework(tasks=[run_relax],
+                              name="Migration Geometry optimization",
+                              spec={"_launch_dir":migration_dir,
+                                    "_category":"2nodes"})
+
+    workflow = Workflow(fireworks=[relax_firework],
+                        name=structure_file + migration_dir.split("/")[-1])
 
     LAUNCHPAD.add_wf(workflow)
