@@ -143,8 +143,10 @@ def define_migration(structure_file, migration_indices=(0,0), write_cif=False):
 
     # Set up the migration directory
     migration_dir = os.path.join(os.getcwd(), "migration_" + migration_id)
-    os.mkdir(migration_dir)
-
+    try:
+        os.mkdir(migration_dir)
+    except FileExistsError:
+        print("WARNING: Migration directory already exists.")
 
     # Set up the filenames
     initial_structure_file = ".".join(structure_file.split("/")[-1].split(".")[
