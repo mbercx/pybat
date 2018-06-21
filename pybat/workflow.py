@@ -108,7 +108,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Dimer Geometry optimization",
-                              spec={"_launch_dir":dimer_dir})
+                              spec={"_launch_dir":dimer_dir,
+                                    "_category":"2nodes"})
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + dimer_dir.split("/")[-1])
