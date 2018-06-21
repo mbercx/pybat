@@ -23,7 +23,7 @@ __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "May 2018"
 
 
-def define_migration(structure_file, write_cif=False):
+def define_migration(structure_file, migration_indices=(0,0), write_cif=False):
     """
     This script allows the user to define a migration of a cation in a
     Cathode structure.
@@ -34,6 +34,8 @@ def define_migration(structure_file, write_cif=False):
 
     Args:
         structure_file (str): Path to the structure file.
+        migration_indices (tuple): Tuple of the indices which designate the
+        migrating site and the vacant site to which the cation will migrate.
         write_cif (bool): Flag that determines if the initial and final
         structures should also be written in a cif format.
 
@@ -44,29 +46,39 @@ def define_migration(structure_file, write_cif=False):
     cathode = Cathode.from_file(structure_file)
     final_structure = cathode.copy()
 
-    # Prompt the user for the migration site
-    print("")
-    print(cathode)
-    print("")
-    migration_site_index = int(input("Please provide the index of the "
-                                     "migrating cation (Note: Not the VESTA "
-                                     "index!): "))
-    print("")
+    if migration_indices == (0,0):
+        # Prompt the user for the migration site
+        print("")
+        print(cathode)
+        print("")
+        migration_site_index = int(input("Please provide the index of the "
+                                         "migrating cation (Note: Not the VESTA "
+                                         "index!): "))
+        print("")
 
-    migration_site = cathode.sites[migration_site_index]
-    migration_species = migration_site.species_and_occu
+        migration_site = cathode.sites[migration_site_index]
+        migration_species = migration_site.species_and_occu
 
-    # Check if the site to which the ion should migrate is actually occupied
-    if migration_species == Composition():
-        raise ValueError("Chosen site is vacant.")
+        # Check if the site to which the ion should migrate is actually occupied
+        if migration_species == Composition():
+            raise ValueError("Chosen site is vacant.")
 
-    # Ask the user for the final coordinates of the migrating ion
-    final_coords = input("Please provide the index of the site the cation "
-                         "is migrating to, or the final fractional coordinates "
-                         "of the migration site: ")
-    print("")
-    final_coords = [float(number) for number
-                    in list(final_coords.split(" "))]
+        # Ask the user for the final coordinates of the migrating ion
+        final_coords = input("Please provide the index of the site the cation "
+                             "is migrating to, or the final fractional coordinates "
+                             "of the migration site: ")
+        print("")
+        final_coords = [float(number) for number
+                        in list(final_coords.split(" "))]
+    else:
+        migration_site_index = migration_indices[0]
+        migration_site = cathode.sites[migration_site_index]
+        migration_species = migration_site.species_and_occu
+
+        # Check if the site to which the ion should migrate is actually occupied
+        if migration_species == Composition():
+            raise ValueError("Chosen site is vacant.")
+        final_coords = [migration_indices[1]]
 
     # In case of a site index as input
     if len(final_coords) == 1:

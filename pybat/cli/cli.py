@@ -43,6 +43,7 @@ def define():
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
+@click.option("--migration_indices", "-i", default=(0, 0))
 @click.option("--write_cif", "-w", is_flag=True)
 def migration(structure_file, write_cif):
     """
