@@ -20,7 +20,7 @@ INCAR:
   PREC: Normal
   SIGMA: 0.05
 KPOINTS:
-  grid_density: 3000
+  reciprocal_density: 100
 POTCAR:
   Ac: Ac
   Ag: Ag
