@@ -104,7 +104,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                hse_calculation=hse_calculation)
 
     # Set up the FireTask for the custodian run
-    run_relax = PyTask(func="pybat.workflow.run_vasp",
+    run_relax = PyTask(func="pybat.workflow.run_custodian",
                        kwargs={"directory": os.path.join(dimer_dir, "final")})
 
     relax_firework = Firework(tasks=[run_relax],
