@@ -379,4 +379,3 @@ def workflow(structure_file, dimer_indices, distance, is_metal,
                    is_metal=is_metal,
                    hse_calculation=hse_calculation)
 
-
