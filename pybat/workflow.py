@@ -104,12 +104,12 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                hse_calculation=hse_calculation)
 
     # Set up the FireTask for the custodian run
-    run_relax = PyTask(func="pybat.workflow.run_vasp",
+    run_relax = PyTask(func="pybat.workflow.run_custodian",
                        kwargs={"directory": os.path.join(dimer_dir, "final")})
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Dimer Geometry optimization",
-                              spec={"_launch_dir":dimer_dir,
+                              spec={"_launch_dir": dimer_dir,
                                     "_category":"2nodes"})
 
     workflow = Workflow(fireworks=[relax_firework],
@@ -154,3 +154,4 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
                         name=structure_file + migration_dir.split("/")[-1])
 
     LAUNCHPAD.add_wf(workflow)
+
