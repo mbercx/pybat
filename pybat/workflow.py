@@ -178,7 +178,7 @@ def all_dimers(structure_file, site_index, distance, is_metal=False,
     """
 
     lirich = LiRichCathode.from_file(structure_file)
-    dimer_list = lirich.find_oxygen_dimers(site_index)
+    dimer_list = lirich.find_oxygen_dimers(int(site_index))
 
     for dimer in dimer_list:
 
