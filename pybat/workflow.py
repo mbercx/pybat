@@ -25,7 +25,8 @@ Workflow setup for the pybat package.
 
 # Path to the
 VASP_RUN_SCRIPT = "/user/antwerpen/202/vsc20248/local/scripts/job_workflow.sh"
-VASP_RUN_COMMAND = "mpirun -genv LD_BIND_NOW=1 vasp_std"
+VASP_RUN_COMMAND = "module load VASP/5.4.4-intel-2016b; mpirun -genv " \
+                   "LD_BIND_NOW=1 vasp_std"
 
 # Set up the Launchpad for the workflows
 LAUNCHPAD = LaunchPad(host="ds247327.mlab.com", port=47327, name="pybat",
