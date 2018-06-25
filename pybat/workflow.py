@@ -6,6 +6,7 @@ import os
 import subprocess
 import shlex
 
+from pybat.core import LiRichCathode
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
 
@@ -80,7 +81,7 @@ def run_custodian(directory):
 
 
 def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
-                   is_metal=False, hse_calculation=False):
+                   is_metal=False, hse_calculation=False, in_custodian=False):
     """
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
@@ -103,9 +104,13 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                is_migration=False,
                hse_calculation=hse_calculation)
 
-    # Set up the FireTask for the custodian run
-    run_relax = PyTask(func="pybat.workflow.run_custodian",
-                       kwargs={"directory": os.path.join(dimer_dir, "final")})
+    # Set up the FireTask for the custodian run, if requested
+    if in_custodian:
+        run_relax = PyTask(func="pybat.workflow.run_custodian",
+                           kwargs={"directory": os.path.join(dimer_dir, "final")})
+    else:
+        run_relax = PyTask(func="pybat.workflow.run_vasp",
+                           kwargs={"directory": os.path.join(dimer_dir, "final")})
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Dimer Geometry optimization",
@@ -155,3 +160,31 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
     LAUNCHPAD.add_wf(workflow)
 
+def all_dimers(structure_file, site_index, distance, is_metal=False,
+               hse_calculation=False, in_custodian=False):
+    """
+    Run dimer calculations for all the dimers around a site.
+
+    Args:
+        structure_file:
+        site_index:
+        distance:
+        is_metal:
+        hse_calculation:
+        in_custodian:
+
+    Returns:
+
+    """
+
+    lirich = LiRichCathode.from_file(structure_file)
+    dimer_list = lirich.find_oxygen_dimers(site_index)
+
+    for dimer in dimer_list:
+
+        dimer_workflow(structure_file=structure_file,
+                       dimer_indices=dimer,
+                       distance=distance,
+                       is_metal=is_metal,
+                       hse_calculation=hse_calculation,
+                       in_custodian=in_custodian)

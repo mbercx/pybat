@@ -365,8 +365,9 @@ def test():
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
 @click.option("--hse_calculation", "-H", is_flag=True)
+@click.option("--in_custodian", "-C", is_flag=True)
 def workflow(structure_file, dimer_indices, distance, is_metal,
-             hse_calculation):
+             hse_calculation, in_custodian):
     """
     Testing for the workflow scripts.
 
@@ -377,5 +378,34 @@ def workflow(structure_file, dimer_indices, distance, is_metal,
                    dimer_indices=dimer_indices,
                    distance=distance,
                    is_metal=is_metal,
-                   hse_calculation=hse_calculation)
+                   hse_calculation=hse_calculation,
+                   in_custodian=in_custodian)
+
+
+@test.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("site_index", nargs=1)
+@click.argument("structure_file", nargs=1)
+@click.option("--distance", "-d", default=float(1.4))
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
+@click.option("--hse_calculation", "-H", is_flag=True)
+@click.option("--in_custodian", "-C", is_flag=True)
+def dimers(site_index, structure_file, distance, is_metal, hse_calculation,
+           in_custodian):
+    """
+    Testing for the workflow scripts.
+
+    """
+    from pybat.workflow import all_dimers
+
+    all_dimers(structure_file=structure_file,
+               site_index=site_index,
+               distance=distance,
+               is_metal=is_metal,
+               hse_calculation=hse_calculation,
+               in_custodian=in_custodian)
+
+
 
