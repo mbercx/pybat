@@ -3,8 +3,8 @@
 # with Materials Project data for analysis.
 INCAR:
   ALGO: Normal
-  EDIFF: 1.0e-4
-  EDIFFG: -0.01
+  EDIFF: 1.0e-6
+  EDIFFG: 1.0e-3
   ENCUT: 500
   IBRION: 2
   ICHARG: 1

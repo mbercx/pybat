@@ -1,8 +1,8 @@
 # PBE+U calculations used for the relaxation of the bulk.
 INCAR:
   ALGO: Normal
-  EDIFF: 1.0e-04
-  EDIFFG: -0.01
+  EDIFF: 1.0e-06
+  EDIFFG: 1.0e-03
   ENCUT: 500
   IBRION: 2
   ISIF: 3
