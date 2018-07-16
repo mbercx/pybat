@@ -233,7 +233,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
         try:
             initial_structure.add_site_property("magmom", initial_magmom)
         except ValueError:
-            if len(initial_structure) == 0:
+            if len(initial_magmom) == 0:
                 print("No magnetic moments found in OUTCAR file. Setting "
                       "magnetic moments to zero.")
             else:
