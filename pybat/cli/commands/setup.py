@@ -282,6 +282,8 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
     neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL,
                                   user_incar_settings=user_incar_settings)
 
+    pdb.set_trace()
+
     # Set up the NEB calculation
     neb_calculation.write_input(directory)
 
