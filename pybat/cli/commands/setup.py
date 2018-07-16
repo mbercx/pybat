@@ -237,6 +237,8 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
             if len(initial_magmom) == 0:
                 print("No magnetic moments found in OUTCAR file. Setting "
                       "magnetic moments to zero.")
+                initial_magmom = [0]*len(initial_structure)
+                initial_structure.add_site_property("magmom", initial_magmom)
             else:
                 raise ValueError("Number of magnetic moments in OUTCAR file "
                                  "do not match the number of sites!")
@@ -281,8 +283,6 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
 
     neb_calculation = PybatNEBSet(images, potcar_functional=DFT_FUNCTIONAL,
                                   user_incar_settings=user_incar_settings)
-
-    pdb.set_trace()
 
     # Set up the NEB calculation
     neb_calculation.write_input(directory)
