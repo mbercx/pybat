@@ -230,6 +230,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
         # Add the magnetic configuration to the initial structure
         initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
         initial_magmom = [site["tot"] for site in initial_out.magnetization]
+
         try:
             initial_structure.add_site_property("magmom", initial_magmom)
         except ValueError:
@@ -239,8 +240,6 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
             else:
                 raise ValueError("Number of magnetic moments in OUTCAR file "
                                  "do not match the number of sites!")
-        initial_structure = Structure.from_file(os.path.join(initial_dir,
-                                                             "structure.json"))
     except:
         raise FileNotFoundError("Could not find required structure "
                                 "information in " + initial_dir + ".")
