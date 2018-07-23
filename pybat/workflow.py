@@ -58,13 +58,6 @@ else:
                             "in order to set up the configuration for "
                             "the workflows.")
 
-
-# LAUNCHPAD = LaunchPad(host="ds247327.mlab.com",
-#                       port=47327,
-#                       name="pybat",
-#                       username="mbercx",
-#                       password="li2mno3")
-
 def run_vasp(directory):
     """
     Method that simply runs VASP in the directory that is specified. Mainly
@@ -112,8 +105,8 @@ def run_custodian(directory):
     c.run()
 
 
-def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
-                   is_metal=False, hse_calculation=False, in_custodian=False):
+def dimer(structure_file, dimer_indices=(0, 0), distance=0,
+          is_metal=False, hse_calculation=False, in_custodian=False):
     """
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
@@ -157,8 +150,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     LAUNCHPAD.add_wf(workflow)
 
 
-def migration_workflow(structure_file, migration_indices=(0, 0),
-                       is_metal=False, hse_calculation=False):
+def migration(structure_file, migration_indices=(0, 0),
+              is_metal=False, hse_calculation=False):
     """
     Set up a workflow that calculates the thermodynamics for a migration in
     the current directory.
@@ -222,9 +215,9 @@ def all_dimers(structure_file, site_index, distance, is_metal=False,
     dimer_list = lirich.find_oxygen_dimers(int(site_index))
 
     for dimer in dimer_list:
-        dimer_workflow(structure_file=structure_file,
-                       dimer_indices=dimer,
-                       distance=distance,
-                       is_metal=is_metal,
-                       hse_calculation=hse_calculation,
-                       in_custodian=in_custodian)
+        dimer(structure_file=structure_file,
+              dimer_indices=dimer,
+              distance=distance,
+              is_metal=is_metal,
+              hse_calculation=hse_calculation,
+              in_custodian=in_custodian)

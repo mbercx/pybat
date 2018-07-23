@@ -386,14 +386,14 @@ def workflow(structure_file, dimer_indices, distance, is_metal,
     Testing for the workflow scripts.
 
     """
-    from pybat.workflow import dimer_workflow
+    from pybat.workflow import dimer
 
-    dimer_workflow(structure_file=structure_file,
-                   dimer_indices=dimer_indices,
-                   distance=distance,
-                   is_metal=is_metal,
-                   hse_calculation=hse_calculation,
-                   in_custodian=in_custodian)
+    dimer(structure_file=structure_file,
+          dimer_indices=dimer_indices,
+          distance=distance,
+          is_metal=is_metal,
+          hse_calculation=hse_calculation,
+          in_custodian=in_custodian)
 
 
 @test.command(context_settings=CONTEXT_SETTINGS)
