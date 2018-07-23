@@ -221,6 +221,20 @@ def util():
 
 
 @util.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--settings", "-s", default="all",
+              help="Choice of settings to adjust. Defaults to \"all\", "
+                   "but the user can also choose to only change the settings "
+                   "for the \"server\", or the \"workflow\".")
+def config(settings):
+    """
+    Configure the workflows server and script.
+
+    """
+    from pybat.cli.commands.util import config
+    config(settings=settings)
+
+
+@util.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
 @click.option("--filename", "-f", default="neb_result")
 def showpath(directory, filename):
@@ -407,9 +421,5 @@ def dimers(site_index, structure_file, distance, is_metal, hse_calculation,
                hse_calculation=hse_calculation,
                in_custodian=in_custodian)
 
-@test.command(context_settings=CONTEXT_SETTINGS)
-def setup():
-    from pybat.cli.commands.util import workflow_config
-    workflow_config()
 
 

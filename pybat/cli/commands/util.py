@@ -26,7 +26,7 @@ __date__ = "May 2018"
 # Load the workflow configuration
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
 
-def workflow_config(settings="all"):
+def config(settings="all"):
     """
     Script to set up the configuration of the workflow server and jobscripts.
 
@@ -78,7 +78,9 @@ def show_path(directory, filename):
     Returns:
 
     """
-    # TODO This is quite inefficient, since the NEBAnalysis script also parses the OUTCAR files. However, this was the fastest solution implementation wise.
+    # TODO This is quite inefficient, since the NEBAnalysis script also
+    # parses the OUTCAR files. However, this was the fastest solution
+    # implementation wise. Improve when feeling less lazy.
     neb = NEBAnalysis.from_dir(directory)
 
     transition_structure = neb.structures[0].copy()
