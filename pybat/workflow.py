@@ -64,7 +64,8 @@ def run_vasp(directory):
     FireWorks to run VASP in the appropriate directory.
 
     Args:
-        directory: Absolute path to the directory in which VASP should be run.
+        directory (str): Absolute path to the directory in which VASP should be
+            run.
 
     Returns:
         None
@@ -80,9 +81,11 @@ def run_custodian(directory):
     Run VASP under supervision of a custodian in a certain directory.
 
     Args:
-        directory:
+        directory (str): Absolute path to the directory in which VASP should be
+            run.
 
     Returns:
+        None
 
     """
 
@@ -104,13 +107,21 @@ def run_custodian(directory):
     c.run()
 
 
-def dimer(structure_file, dimer_indices=(0, 0), distance=0,
-          is_metal=False, hse_calculation=False, in_custodian=False):
+def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
+                   is_metal=False, hse_calculation=False, in_custodian=False):
     """
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
 
     Can later be expanded to also include kinetic barrier calculation.
+
+    Args:
+        structure_file:
+        dimer_indices:
+        distance:
+        is_metal:
+        hse_calculation:
+        in_custodian:
 
     Returns:
 
@@ -149,13 +160,19 @@ def dimer(structure_file, dimer_indices=(0, 0), distance=0,
     LAUNCHPAD.add_wf(workflow)
 
 
-def migration(structure_file, migration_indices=(0, 0),
-              is_metal=False, hse_calculation=False):
+def migration_workflow(structure_file, migration_indices=(0, 0),
+                       is_metal=False, hse_calculation=False):
     """
     Set up a workflow that calculates the thermodynamics for a migration in
     the current directory.
 
     Can later be expanded to also include kinetic barrier calculation.
+
+    Args:
+        structure_file:
+        migration_indices:
+        is_metal:
+        hse_calculation:
 
     Returns:
 
@@ -188,8 +205,8 @@ def migration(structure_file, migration_indices=(0, 0),
     LAUNCHPAD.add_wf(workflow)
 
 
-def all_dimers(structure_file, site_index, distance, is_metal=False,
-               hse_calculation=False, in_custodian=False):
+def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
+                         hse_calculation=False, in_custodian=False):
     """
     Run dimer calculations for all the dimers around a site.
 

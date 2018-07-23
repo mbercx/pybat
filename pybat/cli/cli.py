@@ -386,14 +386,14 @@ def workflow(structure_file, dimer_indices, distance, is_metal,
     Testing for the workflow scripts.
 
     """
-    from pybat.workflow import dimer
+    from pybat.workflow import dimer_workflow
 
-    dimer(structure_file=structure_file,
-          dimer_indices=dimer_indices,
-          distance=distance,
-          is_metal=is_metal,
-          hse_calculation=hse_calculation,
-          in_custodian=in_custodian)
+    dimer_workflow(structure_file=structure_file,
+                   dimer_indices=dimer_indices,
+                   distance=distance,
+                   is_metal=is_metal,
+                   hse_calculation=hse_calculation,
+                   in_custodian=in_custodian)
 
 
 @test.command(context_settings=CONTEXT_SETTINGS)
@@ -412,14 +412,14 @@ def dimers(site_index, structure_file, distance, is_metal, hse_calculation,
     Testing for the workflow scripts.
 
     """
-    from pybat.workflow import all_dimers
+    from pybat.workflow import site_dimers_workflow
 
-    all_dimers(structure_file=structure_file,
-               site_index=site_index,
-               distance=distance,
-               is_metal=is_metal,
-               hse_calculation=hse_calculation,
-               in_custodian=in_custodian)
+    site_dimers_workflow(structure_file=structure_file,
+                         site_index=site_index,
+                         distance=distance,
+                         is_metal=is_metal,
+                         hse_calculation=hse_calculation,
+                         in_custodian=in_custodian)
 
 
 
