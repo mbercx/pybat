@@ -5,7 +5,6 @@
 import os
 
 from string import ascii_letters
-
 from pybat.core import Cathode
 from pymatgen.core import Composition
 

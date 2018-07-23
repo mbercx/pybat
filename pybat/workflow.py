@@ -7,18 +7,14 @@ import subprocess
 import shlex
 
 from ruamel.yaml import YAML
-
 from pymongo.errors import ServerSelectionTimeoutError
-
 from pybat.core import LiRichCathode
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
-
 from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, \
     UnconvergedErrorHandler
 from custodian.vasp.jobs import VaspJob
-
 from fireworks import Firework, LaunchPad, PyTask, Workflow
 
 """

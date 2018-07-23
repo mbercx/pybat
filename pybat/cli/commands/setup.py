@@ -6,13 +6,9 @@ import numpy as np
 import os
 import shutil
 
-import pdb
-
 from pybat.core import Cathode, LiRichCathode
 from pybat.sets import bulkRelaxSet, PybatNEBSet
-
 from monty.serialization import loadfn
-
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
 from pymatgen.io.vasp.outputs import Chgcar, Outcar
@@ -28,7 +24,7 @@ __copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
 __version__ = "0.1"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
-__date__ = "May 2018"
+__date__ = "Jul 2018"
 
 MODULE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           "../../set_configs")
@@ -41,26 +37,22 @@ def _load_yaml_config(filename):
     return config
 
 
-def relax(structure_file, calculation_dir="",
-          is_metal=False, hse_calculation=False):
+def relax(structure_file, calculation_dir="", is_metal=False,
+          hse_calculation=False):
     """
     Set up a standard geometry optimization calculation of a Cathode
     structure. Optimizes both the atomic positions as well as the unit cell.
 
     Args:
         structure_file (str): Path to the Cathode structure file, either
-        relative or absolute.
+            relative or absolute.
         calculation_dir (str): Path to the directory in which to set up the
-        VASP calculation.
+            VASP calculation.
         is_metal (bool): Flag that indicates the material being studied is a
-        metal, which changes the smearing from Gaussian to second order
-        Methfessel-Paxton of 0.2 eV.
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV.
         hse_calculation (bool): Flag that indicates that a hybrid HSE06
-        functional should be used for the geometry optimization.
-
-    Returns:
-        None
-
+            functional should be used for the geometry optimization.
     """
 
     # Import the structure as a Cathode instance from the structure file
@@ -136,11 +128,11 @@ def transition(directory, is_metal=False, is_migration=False,
     # sure it is zero for the calculations.
     if "magmom" not in initial_cathode.site_properties.keys():
         initial_cathode.add_site_property("magmom",
-                                            [0] * len(initial_cathode.sites))
+                                          [0] * len(initial_cathode.sites))
 
     if "magmom" not in final_cathode.site_properties.keys():
         final_cathode.add_site_property("magmom",
-                                          [0] * len(initial_cathode.sites))
+                                        [0] * len(initial_cathode.sites))
 
     # Set up the calculations
 
@@ -172,7 +164,7 @@ def transition(directory, is_metal=False, is_migration=False,
         initial_cathode.to("json", os.path.join(directory, "initial",
                                                 "initial_cathode.json"))
     else:
-        os.makedirs(os.path.join(directory, "initial"), exist_ok = True)
+        os.makedirs(os.path.join(directory, "initial"), exist_ok=True)
         initial_cathode.to("json", os.path.join(directory, "initial",
                                                 "final_cathode.json"))
 
@@ -237,7 +229,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
             if len(initial_magmom) == 0:
                 print("No magnetic moments found in OUTCAR file. Setting "
                       "magnetic moments to zero.")
-                initial_magmom = [0]*len(initial_structure)
+                initial_magmom = [0] * len(initial_structure)
                 initial_structure.add_site_property("magmom", initial_magmom)
             else:
                 raise ValueError("Number of magnetic moments in OUTCAR file "

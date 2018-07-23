@@ -5,7 +5,6 @@
 import os
 
 from pybat.core import Cathode
-
 from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.analysis.transition_state import NEBAnalysis

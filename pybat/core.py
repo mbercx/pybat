@@ -7,15 +7,11 @@ import math
 import json
 import os
 
-# This is a useless comment
-
 import numpy as np
 
 from monty.io import zopen
 from monty.json import MSONable
-
-from pymatgen.core import Structure, Composition, Molecule, Site, \
-    PeriodicSite, Element
+from pymatgen.core import Structure, Composition, Molecule, Site, Element
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 from pymatgen.io.vasp.outputs import Outcar

@@ -6,7 +6,6 @@ import os
 
 from pathlib import Path
 from ruamel.yaml import YAML
-
 from pymatgen.core import Structure
 from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
