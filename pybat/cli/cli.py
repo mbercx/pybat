@@ -407,5 +407,9 @@ def dimers(site_index, structure_file, distance, is_metal, hse_calculation,
                hse_calculation=hse_calculation,
                in_custodian=in_custodian)
 
+@test.command(context_settings=CONTEXT_SETTINGS)
+def setup():
+    from pybat.workflow import workflow_config
+    workflow_config()
 
 

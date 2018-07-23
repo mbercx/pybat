@@ -6,6 +6,9 @@ import os
 import subprocess
 import shlex
 
+from pathlib import Path
+from ruamel.yaml import YAML
+
 from pybat.core import LiRichCathode
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
@@ -24,13 +27,79 @@ Workflow setup for the pybat package.
 
 """
 
-# Path to the
-VASP_RUN_SCRIPT = "/user/antwerpen/202/vsc20248/local/scripts/job_workflow.sh"
-VASP_RUN_COMMAND = "bash /user/antwerpen/202/vsc20248/local/scripts/job_workflow.sh"
+# Load the workflow configuration
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
+
+if os.path.exists(CONFIG_FILE):
+    with open(CONFIG_FILE, 'r') as configfile:
+        yaml = YAML()
+        yaml.default_flow_style = False
+        CONFIG = yaml.load(configfile.read())
+else:
+    CONFIG = {"SERVER": {}, "WORKFLOW": {}}
+
+VASP_RUN_SCRIPT = CONFIG["WORKFLOW"].get("script_path")
+VASP_RUN_COMMAND = "bash " + VASP_RUN_SCRIPT
 
 # Set up the Launchpad for the workflows
-LAUNCHPAD = LaunchPad(host="ds247327.mlab.com", port=47327, name="pybat",
-                      username="mbercx", password="li2mno3")
+
+LAUNCHPAD = LaunchPad(host=CONFIG["SERVER"].get("host"),
+                      port=CONFIG["SERVER"].get("port"),
+                      name=CONFIG["SERVER"].get("name"),
+                      username=CONFIG["SERVER"].get("username"),
+                      password=CONFIG["SERVER"].get("password"))
+
+# LAUNCHPAD = LaunchPad(host="ds247327.mlab.com",
+#                       port=47327,
+#                       name="pybat",
+#                       username="mbercx",
+#                       password="li2mno3")
+
+
+def workflow_config(settings="all"):
+    """
+    Script to set up the configuration of the workflow server and jobscripts.
+
+    Returns:
+        None
+
+    """
+    yaml = YAML()
+    yaml.default_flow_style = False
+
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as config_file:
+            config_dict = yaml.load(config_file.read())
+    else:
+        config_dict = {"SERVER": {}, "WORKFLOW": {}}
+
+    if settings in ["server", "all"]:
+        config_dict["SERVER"]["host"] = input("Please provide the server "
+                                              "host: ")
+        config_dict["SERVER"]["port"] = input("Please provide the port "
+                                              "number: ")
+        config_dict["SERVER"]["name"] = input("Please provide the server "
+                                              "name: ")
+        config_dict["SERVER"]["username"] = input("Please provide your "
+                                                  "username: ")
+        config_dict["SERVER"]["password"] = input("Please provide your "
+                                                  "password: ")
+
+    if settings in ["workflow", "all"]:
+        script_path = input(
+            "Please provide the full path to the workflow script: "
+        )
+        if not os.path.exists(script_path):
+            raise FileNotFoundError("Could not find suggested path.")
+        elif not os.path.isabs(script_path):
+            print("Provided path is not an absolute path. Finding absolute "
+                  "path for proper configuration of the workflows...")
+            script_path = os.path.abspath(script_path)
+
+        config_dict["WORKFLOW"]["script_path"] = script_path
+
+    with Path(CONFIG_FILE) as config_file:
+        yaml.dump(config_dict, config_file)
 
 
 def run_vasp(directory):
@@ -107,15 +176,17 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     # Set up the FireTask for the custodian run, if requested
     if in_custodian:
         run_relax = PyTask(func="pybat.workflow.run_custodian",
-                           kwargs={"directory": os.path.join(dimer_dir, "final")})
+                           kwargs={
+                               "directory": os.path.join(dimer_dir, "final")})
     else:
         run_relax = PyTask(func="pybat.workflow.run_vasp",
-                           kwargs={"directory": os.path.join(dimer_dir, "final")})
+                           kwargs={
+                               "directory": os.path.join(dimer_dir, "final")})
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Dimer Geometry optimization",
                               spec={"_launch_dir": dimer_dir,
-                                    "_category":"2nodes"})
+                                    "_category": "2nodes"})
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + dimer_dir.split("/")[-1])
@@ -148,17 +219,19 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
     # Set up the FireTask for the custodian run
     run_relax = PyTask(func="pybat.workflow.run_custodian",
-                       kwargs={"directory": os.path.join(migration_dir, "final")})
+                       kwargs={
+                           "directory": os.path.join(migration_dir, "final")})
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Migration Geometry optimization",
                               spec={"_launch_dir": migration_dir,
-                                    "_category":"2nodes"})
+                                    "_category": "2nodes"})
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + migration_dir.split("/")[-1])
 
     LAUNCHPAD.add_wf(workflow)
+
 
 def all_dimers(structure_file, site_index, distance, is_metal=False,
                hse_calculation=False, in_custodian=False):
@@ -181,7 +254,6 @@ def all_dimers(structure_file, site_index, distance, is_metal=False,
     dimer_list = lirich.find_oxygen_dimers(int(site_index))
 
     for dimer in dimer_list:
-
         dimer_workflow(structure_file=structure_file,
                        dimer_indices=dimer,
                        distance=distance,
