@@ -33,7 +33,7 @@ def _load_yaml_config(fname):
     return config
 
 
-class bulkRelaxSet(DictSet):
+class BulkRelaxSet(DictSet):
     """
     VASP input set for the bulk relaxation.
 
@@ -41,8 +41,8 @@ class bulkRelaxSet(DictSet):
     CONFIG = _load_yaml_config("bulkRelaxSet")
 
     def __init__(self, structure, **kwargs):
-        super(bulkRelaxSet, self).__init__(
-            structure, bulkRelaxSet.CONFIG, **kwargs)
+        super(BulkRelaxSet, self).__init__(
+            structure, BulkRelaxSet.CONFIG, **kwargs)
         self.kwargs = kwargs
 
 
@@ -82,7 +82,7 @@ class PybatNEBSet(PybatRelaxSet):
 
     """
 
-    #TODO make this class independent of PyBatRelaxSet
+    # TODO make this class independent of PyBatRelaxSet
 
     def __init__(self, structures, hse_calculation=False, **kwargs):
         if len(structures) < 3:

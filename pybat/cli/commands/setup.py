@@ -7,7 +7,7 @@ import os
 import shutil
 
 from pybat.core import Cathode, LiRichCathode
-from pybat.sets import bulkRelaxSet, PybatNEBSet
+from pybat.sets import BulkRelaxSet, PybatNEBSet
 from monty.serialization import loadfn
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
@@ -93,7 +93,7 @@ def relax(structure_file, calculation_dir="", is_metal=False,
         user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
 
     # Set up the geometry optimization
-    geo_optimization = bulkRelaxSet(structure=structure,
+    geo_optimization = BulkRelaxSet(structure=structure,
                                     user_incar_settings=user_incar_settings,
                                     potcar_functional=DFT_FUNCTIONAL)
 
@@ -155,7 +155,7 @@ def transition(directory, is_metal=False, is_migration=False,
 
     # If requested, set up the initial structure optimization calculation
     if optimize_initial:
-        initial_optimization = bulkRelaxSet(
+        initial_optimization = BulkRelaxSet(
             structure=initial_cathode.as_ordered_structure(),
             potcar_functional=DFT_FUNCTIONAL,
             user_incar_settings=user_incar_settings
@@ -169,7 +169,7 @@ def transition(directory, is_metal=False, is_migration=False,
                                                 "final_cathode.json"))
 
     # Set up the final structure optimization calculation
-    final_optimization = bulkRelaxSet(
+    final_optimization = BulkRelaxSet(
         structure=final_cathode.as_ordered_structure(),
         potcar_functional=DFT_FUNCTIONAL,
         user_incar_settings=user_incar_settings
@@ -251,13 +251,13 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False,
         migration_site_index = find_migrating_ion(initial_structure,
                                                   final_structure)
 
-        neb = NEBPathfinder(start_struct=initial_structure,
-                            end_struct=final_structure,
-                            relax_sites=migration_site_index,
-                            v=host_potential)
+        neb_path = NEBPathfinder(start_struct=initial_structure,
+                                 end_struct=final_structure,
+                                 relax_sites=migration_site_index,
+                                 v=host_potential)
 
-        images = neb.images
-        neb.plot_images("neb.vasp")
+        images = neb_path.images
+        neb_path.plot_images("neb.vasp")
 
     else:
         # Linearly interpolate the initial and final structures
@@ -334,7 +334,7 @@ def dimers(structure_file, dimer_distance=1.4,
     except FileExistsError:
         pass
 
-    initial_optimization = bulkRelaxSet(
+    initial_optimization = BulkRelaxSet(
         structure=cathode.as_structure(),
         potcar_functional=DFT_FUNCTIONAL,
         user_incar_settings=user_incar_settings
@@ -368,7 +368,7 @@ def dimers(structure_file, dimer_distance=1.4,
             raise NotImplementedError("HSE06 calculation not implemented yet.")
 
         # Set up the geometry optimization for the dimer structure
-        dimer_optimization = bulkRelaxSet(
+        dimer_optimization = BulkRelaxSet(
             structure=dimer_structure.as_structure(),
             potcar_functional=DFT_FUNCTIONAL,
             user_incar_settings=user_incar_settings
@@ -457,11 +457,14 @@ def find_migrating_ion(initial_structure, final_structure):
     max_distance = 0
     migrating_site = None
 
-    # TODO Build in some checks, i.e. make sure that the other ions have not moved significantly, and that the migrating ion has moved sufficiently.
+    # TODO Build in some checks, i.e. make sure that the other ions have not
+    # moved significantly, and that the migrating ion has moved sufficiently.
 
     for site_pair in zip(initial_structure.sites, final_structure.sites):
 
-        # TODO This definition of distance is inadequate, i.e. if the site has crossed into another unit cell, the distance will be very big. This can be fixed by using the nearest image!
+        # TODO This definition of distance is inadequate, i.e. if the site has
+        # crossed into another unit cell, the distance will be very big. This
+        # can be fixed by using the nearest image!
         distance = np.linalg.norm(site_pair[0].coords - site_pair[1].coords)
 
         if distance > max_distance:

@@ -31,10 +31,10 @@ def get_structure(directory, write_cif=False):
     output of a VASP calculation, i.e. the CONTCAR and OUTCAR file.
 
     Args:
-        directory:
-
-    Returns:
-
+        directory (str): Directory in which the geometry optimization
+                output files (i.e. CONTCAR and OUTCAR) are stores.
+        write_cif (bool): Flag that indicates whether the structure should
+            also be written as a .cif file.
     """
     directory = os.path.abspath(directory)
     structure = Structure.from_file(os.path.join(directory, "CONTCAR"))
@@ -57,6 +57,7 @@ def get_structure(directory, write_cif=False):
     if write_cif:
         structure.to("cif", "structure.cif")
 
+
 def get_cathode(directory, write_cif=False):
     """
     Construct a .json file of the updated Cathode from a geometry
@@ -77,13 +78,14 @@ def get_cathode(directory, write_cif=False):
     """
     directory = os.path.abspath(directory)
     cathode = Cathode.from_file(os.path.join(directory,
-                                               "initial_cathode.json"))
+                                             "initial_cathode.json"))
     cathode.update_sites(directory)
 
     cathode.to("json", "final_cathode.json")
 
     if write_cif:
         cathode.to("cif", "final_cathode.cif")
+
 
 def get_barrier(directory):
     """
@@ -108,9 +110,6 @@ def get_voltage(directory, calculation="relax", functional=None):
         directory:
         calculation:
         functional:
-
-    Returns:
-
     """
     raise NotImplementedError
 

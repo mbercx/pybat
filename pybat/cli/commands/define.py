@@ -22,7 +22,8 @@ __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "May 2018"
 
 
-def define_migration(structure_file, migration_indices=(0,0), write_cif=False):
+def define_migration(structure_file, migration_indices=(0, 0),
+                     write_cif=False):
     """
     This script allows the user to define a migration of a cation in a
     Cathode structure.
@@ -45,27 +46,28 @@ def define_migration(structure_file, migration_indices=(0,0), write_cif=False):
     cathode = Cathode.from_file(structure_file)
     final_structure = cathode.copy()
 
-    if migration_indices == (0,0):
+    if migration_indices == (0, 0):
         # Prompt the user for the migration site
         print("")
         print(cathode)
         print("")
         migration_site_index = int(input("Please provide the index of the "
-                                         "migrating cation (Note: Not the VESTA "
-                                         "index!): "))
+                                         "migrating cation (Note: Not the "
+                                         "VESTA index!): "))
         print("")
 
         migration_site = cathode.sites[migration_site_index]
         migration_species = migration_site.species_and_occu
 
-        # Check if the site to which the ion should migrate is actually occupied
+        # Check if the site to which the ion should migrate is actually
+        # occupied
         if migration_species == Composition():
             raise ValueError("Chosen site is vacant.")
 
         # Ask the user for the final coordinates of the migrating ion
         final_coords = input("Please provide the index of the site the cation "
-                             "is migrating to, or the final fractional coordinates "
-                             "of the migration site: ")
+                             "is migrating to, or the final fractional "
+                             "coordinates of the migration site: ")
         print("")
         final_coords = [float(number) for number
                         in list(final_coords.split(" "))]
@@ -74,7 +76,8 @@ def define_migration(structure_file, migration_indices=(0,0), write_cif=False):
         migration_site = cathode.sites[migration_site_index]
         migration_species = migration_site.species_and_occu
 
-        # Check if the site to which the ion should migrate is actually occupied
+        # Check if the site to which the ion should migrate is actually
+        # occupied
         if migration_species == Composition():
             raise ValueError("Chosen site is vacant.")
         final_coords = [migration_indices[1]]
@@ -122,7 +125,7 @@ def define_migration(structure_file, migration_indices=(0,0), write_cif=False):
         letter_index = 0
 
         while "migration_" + migration_id in os.listdir(os.getcwd()) and \
-            letter_index < len(ascii_letters):
+                        letter_index < len(ascii_letters):
             letter_index += 1
             migration_id = str(migration_site_index) + "_" + \
                            ascii_letters[letter_index]
@@ -160,11 +163,13 @@ def define_migration(structure_file, migration_indices=(0,0), write_cif=False):
 
     # Write the structures to a cif format if requested
     if write_cif:
-        cathode.to("cif", migration_dir + "/" + initial_structure_file + ".cif")
+        cathode.to("cif",
+                   migration_dir + "/" + initial_structure_file + ".cif")
         final_structure.to("cif",
                            migration_dir + "/" + final_structure_file + ".cif")
 
     return migration_dir
+
 
 def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
                  remove_cations=False, write_cif=False):

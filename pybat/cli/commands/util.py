@@ -25,6 +25,7 @@ __date__ = "May 2018"
 # Load the workflow configuration
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
 
+
 def config(settings="all"):
     """
     Script to set up the configuration of the workflow server and jobscripts.
@@ -69,6 +70,7 @@ def config(settings="all"):
 
     with Path(CONFIG_FILE) as config_file:
         yaml.dump(config_dict, config_file)
+
 
 def show_path(directory, filename):
     """

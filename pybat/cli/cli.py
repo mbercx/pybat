@@ -19,6 +19,7 @@ __date__ = "May 2018"
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     """
@@ -26,9 +27,11 @@ def main():
     """
     pass
 
+
 ##########
 # DEFINE #
 ##########
+
 
 @main.group(context_settings=CONTEXT_SETTINGS)
 def define():
@@ -73,6 +76,7 @@ def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
                  distance=distance,
                  remove_cations=remove_cations,
                  write_cif=write_cif)
+
 
 #########
 # SETUP #
@@ -204,6 +208,7 @@ def neb(directory, nimages, is_metal, is_migration, hse_calculation):
         is_migration=is_migration,
         hse_calculation=hse_calculation)
 
+
 ###########
 # UTILITY #
 ###########
@@ -289,6 +294,7 @@ def supercell(cell, structure_file, file_format):
                    supercell=cell,
                    fmt=file_format)
 
+
 #######
 # GET #
 #######
@@ -316,6 +322,7 @@ def structure(directory, write_cif):
     get_structure(directory=directory,
                   write_cif=write_cif)
 
+
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
 @click.option("--write_cif", "-w", is_flag=True)
@@ -327,7 +334,7 @@ def cathode(directory, write_cif):
     from pybat.cli.commands.get import get_cathode
 
     get_cathode(directory=directory,
-                  write_cif=write_cif)
+                write_cif=write_cif)
 
 
 @get.command(context_settings=CONTEXT_SETTINGS)
@@ -350,6 +357,7 @@ def voltage():
     pass
     # TODO
 
+
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
 def endiff(directory):
@@ -367,6 +375,7 @@ def test():
     Scripts or methods in the testing phase!
     """
     pass
+
 
 @test.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
@@ -418,6 +427,3 @@ def dimers(site_index, structure_file, distance, is_metal, hse_calculation,
                          is_metal=is_metal,
                          hse_calculation=hse_calculation,
                          in_custodian=in_custodian)
-
-
-

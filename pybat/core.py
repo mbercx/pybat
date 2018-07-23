@@ -29,7 +29,10 @@ __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "May 2018"
 
-# TODO Currently, the dimers are defined by their indices. This is a consequence of the fact that the DetailedVoronoiContainer expects indices for its neighbor method. Frankly, I would prefer sites as the basis of the dimer definition as well as it's environment.
+# TODO Currently, the dimers are defined by their indices.
+# This is a consequence of the fact that the DetailedVoronoiContainer
+# expects indices for its neighbor method. Frankly, I would prefer sites as
+# the basis of the dimer definition as well as it's environment.
 
 # Values for determining the neighbors of a site in a voronoi decomposition
 VORONOI_DIST_FACTOR = 1.3
@@ -135,8 +138,7 @@ class Cathode(Structure):
 
         """
         outs = ["Full Formula ({s})".format(s=self.composition.formula),
-                "Reduced Formula: {}"
-                    .format(self.composition.reduced_formula)]
+                "Reduced Formula: {}".format(self.composition.reduced_formula)]
         to_s = lambda x: "%0.6f" % x
         outs.append("abc   : " + " ".join([to_s(i).rjust(10)
                                            for i in self.lattice.abc]))
@@ -193,8 +195,6 @@ class Cathode(Structure):
 
     def add_cations(self, sites=None):
         """
-
-
         Args:
             sites:
 
@@ -268,9 +268,6 @@ class Cathode(Structure):
         Args:
             site_indices:
             distance:
-
-        Returns:
-
         """
 
         # TODO Add possibility of site_indices simply being the sites
@@ -297,10 +294,10 @@ class Cathode(Structure):
         site_move_distance = (original_distance - distance) / 2
 
         # Calculate the new cartesian coordinates of the sites
-        new_site_a_coords = site_a.coords + site_move_distance \
-                                            * connection_vector
-        new_site_b_coords = site_b.coords - site_move_distance \
-                                            * connection_vector
+        new_site_a_coords = site_a.coords \
+                            + site_move_distance * connection_vector
+        new_site_b_coords = site_b.coords \
+                            - site_move_distance * connection_vector
 
         # Change the sites in the structure
         self.replace(i=site_indices[0], species=site_a.species_string,
@@ -321,10 +318,8 @@ class Cathode(Structure):
         changed.
 
         Args:
-            contcar_file:
-
-        Returns:
-
+            directory (str): Directory in which the geometry optimization
+                output files (i.e. CONTCAR and OUTCAR) are stores.
         """
 
         new_cathode = Cathode.from_file(os.path.join(directory, "CONTCAR"))
@@ -391,7 +386,8 @@ class Cathode(Structure):
 
     def to(self, fmt=None, filename=None, **kwargs):
         """
-        Structure method override to solve issue with writing the Cathode to a POSCAR file
+        Structure method override to solve issue with writing the Cathode to a
+        POSCAR file
 
         # TODO Figure out what exactly was the problem here again... Should
         have written this down immediately! I think it had something to do
@@ -887,10 +883,8 @@ class Dimer(MSONable):
 
     def as_dict(self):
 
-        d = {}
-
-        d["cathode"] = self.cathode.as_dict()
-        d["dimer_indices"] = self.indices
+        d = {"cathode": self.cathode.as_dict(),
+             "dimer_indices": self.indices}
 
         return d
 
