@@ -8,6 +8,8 @@ import shlex
 
 from ruamel.yaml import YAML
 
+from pymongo.errors import ServerSelectionTimeoutError
+
 from pybat.core import LiRichCathode
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
@@ -35,12 +37,19 @@ if os.path.exists(CONFIG_FILE):
         yaml.default_flow_style = False
         CONFIG = yaml.load(configfile.read())
 
-        LAUNCHPAD = LaunchPad(
-            host=CONFIG["SERVER"].get("host", default=""),
-            port=int(CONFIG["SERVER"].get("port", default=0)),
-            name=CONFIG["SERVER"].get("name", default=""),
-            username=CONFIG["SERVER"].get("username", default=""),
-            password=CONFIG["SERVER"].get("password", default=""))
+        try:
+            LAUNCHPAD = LaunchPad(
+                host=CONFIG["SERVER"].get("host", default=""),
+                port=int(CONFIG["SERVER"].get("port", default=0)),
+                name=CONFIG["SERVER"].get("name", default=""),
+                username=CONFIG["SERVER"].get("username", default=""),
+                password=CONFIG["SERVER"].get("password", default="")
+            )
+        except ServerSelectionTimeoutError:
+            raise TimeoutError("Could not connect to server. Please make "
+                               "sure the details of the server are correctly "
+                               "set up.")
+
         VASP_RUN_SCRIPT = CONFIG["WORKFLOW"].get("script_path", default="")
         VASP_RUN_COMMAND = "bash " + VASP_RUN_SCRIPT
 else:
