@@ -7,7 +7,6 @@ INCAR:
   EDIFFG: 1.0e-3
   ENCUT: 500
   IBRION: 2
-  ICHARG: 1
   ISIF: 2
   ISMEAR: 0
   ISPIN: 2
