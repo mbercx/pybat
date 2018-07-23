@@ -26,6 +26,13 @@ Workflow setup for the pybat package.
 
 """
 
+__author__ = "Marnik Bercx"
+__copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
+__version__ = "0.1"
+__maintainer__ = "Marnik Bercx"
+__email__ = "marnik.bercx@uantwerpen.be"
+__date__ = "Jul 2018"
+
 # Load the workflow configuration
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
 
@@ -66,10 +73,6 @@ def run_vasp(directory):
     Args:
         directory (str): Absolute path to the directory in which VASP should be
             run.
-
-    Returns:
-        None
-
     """
 
     os.chdir(directory)
@@ -83,10 +86,6 @@ def run_custodian(directory):
     Args:
         directory (str): Absolute path to the directory in which VASP should be
             run.
-
-    Returns:
-        None
-
     """
 
     directory = os.path.abspath(directory)
@@ -116,15 +115,22 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     Can later be expanded to also include kinetic barrier calculation.
 
     Args:
-        structure_file:
-        dimer_indices:
-        distance:
-        is_metal:
-        hse_calculation:
-        in_custodian:
-
-    Returns:
-
+        structure_file (str): Structure file of the cathode material. Note
+            that the structure file should be a json format file that is
+            derived from the Cathode class, i.e. it should contain the cation
+            configuration of the structure.
+        dimer_indices (tuple): Indices of the oxygen sites which are to form a
+            dimer. If no indices are provided, the user will be prompted.
+        distance (float): Final distance between the oxygen atoms. If no
+            distance is provided, the user will be prompted.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV. Defaults to False.
+        hse_calculation (bool): Flag that indicates that the hybrid functional
+            HSE06 should be used to calculate the exchange-correlation
+            energy. Defaults to False.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
     """
 
     # Let the user define a dimer
@@ -141,13 +147,15 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     # Set up the FireTask for the custodian run, if requested
     if in_custodian:
-        run_relax = PyTask(func="pybat.workflow.run_custodian",
-                           kwargs={
-                               "directory": os.path.join(dimer_dir, "final")})
+        run_relax = PyTask(
+            func="pybat.workflow.run_custodian",
+            kwargs={"directory": os.path.join(dimer_dir, "final")}
+        )
     else:
-        run_relax = PyTask(func="pybat.workflow.run_vasp",
-                           kwargs={
-                               "directory": os.path.join(dimer_dir, "final")})
+        run_relax = PyTask(
+            func="pybat.workflow.run_vasp",
+            kwargs={"directory": os.path.join(dimer_dir, "final")}
+        )
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Dimer Geometry optimization",
@@ -161,7 +169,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
 
 def migration_workflow(structure_file, migration_indices=(0, 0),
-                       is_metal=False, hse_calculation=False):
+                       is_metal=False, hse_calculation=False,
+                       in_custodian=False):
     """
     Set up a workflow that calculates the thermodynamics for a migration in
     the current directory.
@@ -169,13 +178,21 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     Can later be expanded to also include kinetic barrier calculation.
 
     Args:
-        structure_file:
-        migration_indices:
-        is_metal:
-        hse_calculation:
-
-    Returns:
-
+        structure_file (str): Structure file of the cathode material. Note
+            that the structure file should be a json format file that is
+            derived from the Cathode class, i.e. it should contain the cation
+            configuration of the structure.
+        migration_indices (tuple): Tuple of the indices which designate the
+            migrating site and the vacant site to which the cation will
+            migrate. If no indices are provided, the user will be prompted.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV. Defaults to False.
+        hse_calculation (bool): Flag that indicates that the hybrid functional
+            HSE06 should be used to calculate the exchange-correlation
+            energy. Defaults to False.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
     """
 
     # Let the user define a migration
@@ -189,10 +206,17 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
                is_migration=False,
                hse_calculation=hse_calculation)
 
-    # Set up the FireTask for the custodian run
-    run_relax = PyTask(func="pybat.workflow.run_custodian",
-                       kwargs={
-                           "directory": os.path.join(migration_dir, "final")})
+    # Set up the FireTask for the custodian run, if requested
+    if in_custodian:
+        run_relax = PyTask(
+            func="pybat.workflow.run_custodian",
+            kwargs={"directory": os.path.join(migration_dir, "final")}
+        )
+    else:
+        run_relax = PyTask(
+            func="pybat.workflow.run_vasp",
+            kwargs={"directory": os.path.join(migration_dir, "final")}
+        )
 
     relax_firework = Firework(tasks=[run_relax],
                               name="Migration Geometry optimization",
@@ -211,15 +235,22 @@ def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
     Run dimer calculations for all the dimers around a site.
 
     Args:
-        structure_file:
-        site_index:
-        distance:
-        is_metal:
-        hse_calculation:
-        in_custodian:
-
-    Returns:
-
+        structure_file (str): Structure file of the cathode material. Note
+            that the structure file should be a json format file that is
+            derived from the Cathode class, i.e. it should contain the cation
+            configuration of the structure.
+        site_index (int): Index of the site around which the dimers should
+            be investigated. Corresponds to the internal Python index.
+        distance (float): Final distance between the oxygen atoms. If no
+            distance is provided, the user will be prompted.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV. Defaults to False.
+        hse_calculation (bool): Flag that indicates that the hybrid functional
+            HSE06 should be used to calculate the exchange-correlation
+            energy. Defaults to False.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
     """
     if CONFIG == {}:
         raise FileNotFoundError("No configuration file found in user's home "

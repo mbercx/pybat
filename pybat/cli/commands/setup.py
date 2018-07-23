@@ -304,10 +304,13 @@ def dimers(structure_file, dimer_distance=1.4,
             configuration of the structure.
         dimer_distance (float): Final distance in angstroms between the oxygen
             atoms in oxygen pair.
-        hse_calculation (bool): True if the geometry optimization should be
-            done using the hybrid functional HSE06.
+        hse_calculation (bool): Flag that indicates that the hybrid functional
+            HSE06 should be used to calculate the exchange-correlation energy.
 
     """
+    raise NotImplementedError
+
+    # TODO FIX
 
     # Load the cathode structure
     cathode = LiRichCathode.from_file(structure_file)
