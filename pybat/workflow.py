@@ -19,9 +19,7 @@ from custodian.vasp.handlers import VaspErrorHandler, \
     UnconvergedErrorHandler
 from custodian.vasp.jobs import VaspJob
 
-from fireworks import Firework, LaunchPad, PyTask, FWorker, \
-    Workflow
-from fireworks.user_objects.queue_adapters.common_adapter import CommonAdapter
+from fireworks import Firework, LaunchPad, PyTask, Workflow
 
 """
 Workflow setup for the pybat package.
@@ -57,6 +55,7 @@ else:
                             "directory. Please use pybat workflow setup "
                             "in order to set up the configuration for "
                             "the workflows.")
+
 
 def run_vasp(directory):
     """
