@@ -6,7 +6,6 @@ import os
 import subprocess
 import shlex
 
-from pathlib import Path
 from ruamel.yaml import YAML
 
 from pybat.core import LiRichCathode
@@ -35,72 +34,27 @@ if os.path.exists(CONFIG_FILE):
         yaml = YAML()
         yaml.default_flow_style = False
         CONFIG = yaml.load(configfile.read())
+
+        LAUNCHPAD = LaunchPad(
+            host=CONFIG["SERVER"].get("host", default=""),
+            port=int(CONFIG["SERVER"].get("port", default=0)),
+            name=CONFIG["SERVER"].get("name", default=""),
+            username=CONFIG["SERVER"].get("username", default=""),
+            password=CONFIG["SERVER"].get("password", default=""))
+        VASP_RUN_SCRIPT = CONFIG["WORKFLOW"].get("script_path", default="")
+        VASP_RUN_COMMAND = "bash " + VASP_RUN_SCRIPT
 else:
-    CONFIG = {"SERVER": {}, "WORKFLOW": {}}
+    raise FileNotFoundError("No configuration file found in user's home "
+                            "directory. Please use pybat workflow setup "
+                            "in order to set up the configuration for "
+                            "the workflows.")
 
-VASP_RUN_SCRIPT = CONFIG["WORKFLOW"].get("script_path")
-VASP_RUN_COMMAND = "bash " + VASP_RUN_SCRIPT
-
-# Set up the Launchpad for the workflows
-
-LAUNCHPAD = LaunchPad(host=CONFIG["SERVER"].get("host"),
-                      port=CONFIG["SERVER"].get("port"),
-                      name=CONFIG["SERVER"].get("name"),
-                      username=CONFIG["SERVER"].get("username"),
-                      password=CONFIG["SERVER"].get("password"))
 
 # LAUNCHPAD = LaunchPad(host="ds247327.mlab.com",
 #                       port=47327,
 #                       name="pybat",
 #                       username="mbercx",
 #                       password="li2mno3")
-
-
-def workflow_config(settings="all"):
-    """
-    Script to set up the configuration of the workflow server and jobscripts.
-
-    Returns:
-        None
-
-    """
-    yaml = YAML()
-    yaml.default_flow_style = False
-
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as config_file:
-            config_dict = yaml.load(config_file.read())
-    else:
-        config_dict = {"SERVER": {}, "WORKFLOW": {}}
-
-    if settings in ["server", "all"]:
-        config_dict["SERVER"]["host"] = input("Please provide the server "
-                                              "host: ")
-        config_dict["SERVER"]["port"] = input("Please provide the port "
-                                              "number: ")
-        config_dict["SERVER"]["name"] = input("Please provide the server "
-                                              "name: ")
-        config_dict["SERVER"]["username"] = input("Please provide your "
-                                                  "username: ")
-        config_dict["SERVER"]["password"] = input("Please provide your "
-                                                  "password: ")
-
-    if settings in ["workflow", "all"]:
-        script_path = input(
-            "Please provide the full path to the workflow script: "
-        )
-        if not os.path.exists(script_path):
-            raise FileNotFoundError("Could not find suggested path.")
-        elif not os.path.isabs(script_path):
-            print("Provided path is not an absolute path. Finding absolute "
-                  "path for proper configuration of the workflows...")
-            script_path = os.path.abspath(script_path)
-
-        config_dict["WORKFLOW"]["script_path"] = script_path
-
-    with Path(CONFIG_FILE) as config_file:
-        yaml.dump(config_dict, config_file)
-
 
 def run_vasp(directory):
     """
@@ -249,6 +203,11 @@ def all_dimers(structure_file, site_index, distance, is_metal=False,
     Returns:
 
     """
+    if CONFIG == {}:
+        raise FileNotFoundError("No configuration file found in user's home "
+                                "directory. Please use pybat workflow setup "
+                                "in order to set up the configuration for "
+                                "the workflows.")
 
     lirich = LiRichCathode.from_file(structure_file)
     dimer_list = lirich.find_oxygen_dimers(int(site_index))
