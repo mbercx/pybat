@@ -526,7 +526,7 @@ class LiRichCathode(Cathode):
 
         self.remove_cations(remove_sites)
 
-    def find_noneq_dimers(self, site_index=None):
+    def find_noneq_dimers(self, site_index=None, method="symmops"):
         """
         A script that distills the non-equivalent oxygen dimers around a site
         index.
@@ -541,34 +541,51 @@ class LiRichCathode(Cathode):
 
         noneq_dimers = []
 
-        if site_index is None:
+        if method == "symmops":
 
-            ignore = set(CATIONS).union(("O",))
+            cation_indices = [
+                index for index in range(len(self.sites))
+                if not self.sites[index].species_string == "O"
+            ]
 
-            transition_metal_indices = [index for index in
-                                        range(len(self.sites))
-                                        if self.sites[index].species_string
-                                        not in ignore]
+            for index in cation_indices:
+                pass
 
-            for index in transition_metal_indices:
+
+        elif method == "representation":
+
+            if site_index is None:
+
+                ignore = set(CATIONS).union(("O",))
+
+                transition_metal_indices = [index for index in
+                                            range(len(self.sites))
+                                            if self.sites[index].species_string
+                                            not in ignore]
+
+                for index in transition_metal_indices:
+
+                    dimers = [Dimer(self, dimer_indices) for dimer_indices
+                              in self.find_oxygen_dimers(index)]
+
+                    for dimer in dimers:
+                        if dimer not in noneq_dimers:
+                            noneq_dimers.append(dimer)
+
+            else:
 
                 dimers = [Dimer(self, dimer_indices) for dimer_indices
-                          in self.find_oxygen_dimers(index)]
+                          in self.find_oxygen_dimers(site_index)]
 
                 for dimer in dimers:
                     if dimer not in noneq_dimers:
                         noneq_dimers.append(dimer)
 
+            return noneq_dimers
+
         else:
-
-            dimers = [Dimer(self, dimer_indices) for dimer_indices
-                      in self.find_oxygen_dimers(site_index)]
-
-            for dimer in dimers:
-                if dimer not in noneq_dimers:
-                    noneq_dimers.append(dimer)
-
-        return noneq_dimers
+            raise IOError("Method for finding non-equivalent dimers is not "
+                          "recognized.")
 
 
 # TODO Currently the whole dimer representation only works for the O-O

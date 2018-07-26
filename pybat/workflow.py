@@ -191,6 +191,12 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
             should be run within a Custodian. Defaults to False.
     """
 
+    # TODO Add setup steps to the workflow
+    # In case adjustments need to made to the setup of certain calculations,
+    #  after which the calculation needs to be rerun, not adding the setup
+    # steps to the workflow means that these will have to be rerun manually,
+    #  instead of simply relying on the fireworks commands.
+
     # Let the user define a migration
     migration_dir = define_migration(structure_file=structure_file,
                                      migration_indices=migration_indices,
@@ -248,19 +254,14 @@ def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
     """
-    if CONFIG == {}:
-        raise FileNotFoundError("No configuration file found in user's home "
-                                "directory. Please use pybat workflow setup "
-                                "in order to set up the configuration for "
-                                "the workflows.")
 
     lirich = LiRichCathode.from_file(structure_file)
     dimer_list = lirich.find_oxygen_dimers(int(site_index))
 
     for dimer in dimer_list:
-        dimer(structure_file=structure_file,
-              dimer_indices=dimer,
-              distance=distance,
-              is_metal=is_metal,
-              hse_calculation=hse_calculation,
-              in_custodian=in_custodian)
+        dimer_workflow(structure_file=structure_file,
+                      dimer_indices=dimer,
+                      distance=distance,
+                      is_metal=is_metal,
+                      hse_calculation=hse_calculation,
+                      in_custodian=in_custodian)
