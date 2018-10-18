@@ -15,6 +15,7 @@ from pymatgen.core import Structure, Composition, Molecule, Site, Element
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 from pymatgen.io.vasp.outputs import Outcar
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 """
 Module that contains tools to represent and calculate the properties of
@@ -344,6 +345,44 @@ class Cathode(Structure):
                              properties=new_site.properties)
                 new_index += 1
 
+    def find_noneq_cations(self):
+        """
+        Find a list of the site indices of all non-equivalent cations.
+
+        Returns:
+            List of site indices
+
+        """
+        symmops = SpacegroupAnalyzer(self).get_space_group_operations()
+
+        cation_indices = [
+            index for index in range(len(self.sites))
+            if not self.sites[index].species_string == "O"
+        ]
+
+        # Start with adding the first cation
+        inequiv_cations = [cation_indices[0],]
+
+        for index in cation_indices[1:]:
+
+            s1 = [self.sites[index], ]
+
+            # Check if the site is equivalent with one of the sites in the
+            # inequivalent list.
+            inequivalent = True
+
+            for inequive_index in inequiv_cations:
+
+                s2 = [self.sites[inequive_index], ]
+
+                if symmops.are_symmetrically_equivalent(s1, s2):
+                    inequivalent = False
+
+            if inequivalent:
+                inequiv_cations.append(index)
+
+        return inequiv_cations
+
     def find_cation_configurations(self):
         """
         Plan is to find all non-equivalent cation configurations. Is probably
@@ -444,7 +483,8 @@ class LiRichCathode(Cathode):
             site_properties=site_properties
         )
 
-    def find_oxygen_dimers(self, site_index):
+    def find_oxygen_dimers(self, site_index=None,
+                           oxygen_angle_tol=OXYGEN_ANGLE_TOL):
         """
         Returns a list of index pairs corresponding to the oxygen dimers that
         can be formed around the site provided by the user, i.e. with oxygens
@@ -457,56 +497,78 @@ class LiRichCathode(Cathode):
 
         """
 
-        # Determine the oxygen neighbors for the provided site
-        oxygen_neighbors_indices = [
-            neighbor["index"] for neighbor
-            in self.voronoi.neighbors(site_index, VORONOI_DIST_FACTOR,
-                                      VORONOI_ANG_FACTOR)
-            if self.sites[neighbor["index"]].species_string == "O"
-        ]
+        if site_index is None:
 
-        # pdb.set_trace()
+            # TODO This is a lazy way of dealing with this...
+            # Just using the method for single indices and then filtering
+            # duplicates is probably not the fastest implementation. But it
+            # sure is the fastest to implement :P
 
-        if len(oxygen_neighbors_indices) <= 1:
-            raise ValueError("Provided site does not have two oxygen "
-                             "neighbours.\n")
+            oxygen_dimers = set()
 
-        # Find all oxygen neighbour combinations that can form dimers. This
-        # means they are not opposites on the site's octahedron environment.
-        oxygen_dimers = []
-        oxygen_combinations = itertools.combinations(
-            oxygen_neighbors_indices, 2
-        )
+            cation_indices = [
+                index for index in range(len(self.sites))
+                if not self.sites[index].species_string == "O"
+            ]
 
-        for oxygen_pair in oxygen_combinations:
+            for index in cation_indices:
+                for dimer in self.find_oxygen_dimers(index):
+                    oxygen_dimers.add(dimer)
 
-            site = self.sites[site_index]
-            oxygen_site_A = self.sites[oxygen_pair[0]]
-            oxygen_site_B = self.sites[oxygen_pair[1]]
+            return list(oxygen_dimers)
 
-            oxygen_image_A = site.distance_and_image(oxygen_site_A)[1]
-            oxygen_image_B = site.distance_and_image(oxygen_site_B)[1]
+        else:
 
-            image_A_cart_coords = oxygen_site_A.coords \
-                                  + np.dot(oxygen_image_A,
-                                           self.lattice.matrix)
-            image_B_cart_coords = oxygen_site_B.coords \
-                                  + np.dot(oxygen_image_B,
-                                           self.lattice.matrix)
+            # Determine the oxygen neighbors for the provided site
+            oxygen_neighbors_indices = [
+                neighbor["index"] for neighbor
+                in self.voronoi.neighbors(site_index, VORONOI_DIST_FACTOR,
+                                          VORONOI_ANG_FACTOR)
+                if self.sites[neighbor["index"]].species_string == "O"
+            ]
 
-            oxygen_vector_A = image_A_cart_coords - site.coords
-            oxygen_vector_B = image_B_cart_coords - site.coords
+            # pdb.set_trace()
 
-            if angle_between(oxygen_vector_A, oxygen_vector_B) < \
-                    OXYGEN_ANGLE_TOL:
-                oxygen_dimers.append(oxygen_pair)
+            if len(oxygen_neighbors_indices) <= 1:
+                raise ValueError("Provided site does not have two oxygen "
+                                 "neighbours.\n")
 
-        if len(oxygen_dimers) > 12:
-            raise Warning("Found more than 12 oxygen pairs around a single "
-                          "site. This can be caused by the use of a small "
-                          "unit cell. Results may not be useful.")
+            # Find all oxygen neighbour combinations that can form dimers. This
+            # means they are not opposites on the site's octahedron environment.
+            oxygen_dimers = []
+            oxygen_combinations = itertools.combinations(
+                oxygen_neighbors_indices, 2
+            )
 
-        return oxygen_dimers
+            for oxygen_pair in oxygen_combinations:
+
+                site = self.sites[site_index]
+                oxygen_site_A = self.sites[oxygen_pair[0]]
+                oxygen_site_B = self.sites[oxygen_pair[1]]
+
+                oxygen_image_A = site.distance_and_image(oxygen_site_A)[1]
+                oxygen_image_B = site.distance_and_image(oxygen_site_B)[1]
+
+                image_A_cart_coords = oxygen_site_A.coords \
+                                      + np.dot(oxygen_image_A,
+                                               self.lattice.matrix)
+                image_B_cart_coords = oxygen_site_B.coords \
+                                      + np.dot(oxygen_image_B,
+                                               self.lattice.matrix)
+
+                oxygen_vector_A = image_A_cart_coords - site.coords
+                oxygen_vector_B = image_B_cart_coords - site.coords
+
+                if angle_between(oxygen_vector_A, oxygen_vector_B) < \
+                        oxygen_angle_tol:
+                    oxygen_dimers.append(oxygen_pair)
+
+            if len(oxygen_dimers) > 12:
+                raise Warning("Found more than 12 oxygen pairs around a single "
+                              "site. This can be caused by the use of a small "
+                              "unit cell. Results may not be useful.")
+
+            return oxygen_dimers
 
     def remove_dimer_cations(self, dimer_indices):
         """
@@ -532,7 +594,20 @@ class LiRichCathode(Cathode):
         index.
 
         In case no site index is provided, the method will loop over all sites
-        which do not contain oxygen or a cation.
+        which do not correspond to an oxygen.
+
+        Args:
+            site_index (int): Index of the site around which the dimers
+            should be considered.
+            method (str): Method for determining equivalency:
+
+            "symmops" - Two dimers are considered when they are
+            symmetrically equivalent, using the symmetry operations of the
+            cathode unit cell.
+
+            "representation" - Two dimers are equivalent if their
+            environments are the same, i.e. when they have the same
+            representation.
 
         Returns:
             List of pybat.Dimer objects
@@ -543,16 +618,43 @@ class LiRichCathode(Cathode):
 
         if method == "symmops":
 
-            cation_indices = [
-                index for index in range(len(self.sites))
-                if not self.sites[index].species_string == "O"
-            ]
+            symmops = SpacegroupAnalyzer(self).get_space_group_operations()
 
-            for index in cation_indices:
-                pass
+            if site_index is None:
 
+                ineq_cations = self.find_noneq_cations()
+
+                ineq_dimers = []
+
+                for index in ineq_cations:
+
+                    site_dimers = self.find_oxygen_dimers(index)
+
+                    for dimer in site_dimers:
+
+                        d1 = [self.sites[dimer[0]], self.sites[dimer[1]]]
+
+                        inequivalent = True
+
+                        for ineq_dimer in ineq_dimers:
+
+                            d2 = [self.sites[ineq_dimer[0]],
+                                  self.sites[ineq_dimer[1]]]
+
+                            if symmops.are_symmetrically_equivalent(d1, d2):
+
+                                inequivalent = False
+
+                        if inequivalent:
+
+                            ineq_dimers.append(dimer)
+            else:
+                raise NotImplementedError()
+
+            return ineq_dimers
 
         elif method == "representation":
+            # TODO update this method
 
             if site_index is None:
 
@@ -586,6 +688,37 @@ class LiRichCathode(Cathode):
         else:
             raise IOError("Method for finding non-equivalent dimers is not "
                           "recognized.")
+
+    def list_noneq_dimers(self):
+        """
+        Create a list of lists of equivalent dimers of the various
+        non-equivalent dimers, i.e. group all dimers in the structure in
+        lists of dimers that are equivalent to each other.
+
+        Returns:
+
+        """
+
+        symmops = SpacegroupAnalyzer(self).get_space_group_operations()
+
+        dimers = self.find_oxygen_dimers()
+
+        noneq_dimer_lists = [[dimer,] for dimer in self.find_noneq_dimers()]
+
+        for dimer in dimers:
+
+            d1 = [self.sites[dimer[0]], self.sites[dimer[1]]]
+
+            for noneq_dimer_list in noneq_dimer_lists:
+
+                d2 = [self.sites[noneq_dimer_list[0][0]],
+                      self.sites[noneq_dimer_list[0][1]]]
+
+                if symmops.are_symmetrically_equivalent(d1, d2):
+
+                    noneq_dimer_list.append(dimer)
+
+        return noneq_dimer_lists
 
 
 # TODO Currently the whole dimer representation only works for the O-O
