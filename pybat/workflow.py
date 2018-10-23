@@ -126,7 +126,6 @@ def relax_workflow(structure_file, directory="", is_metal=False,
         else:
             directory = os.path.join(current_dir, "dftu_relax")
 
-
     # Create the PyTask that sets up the calculation
     setup_relax = PyTask(
         func="pybat.cli.commands.setup.setup_relax",
