@@ -328,7 +328,7 @@ def noneq_dimers_workflow(structure_file, distance, is_metal=False,
         for dimer in dimer_list:
 
             dimer_center = Dimer(lirich, dimer).center
-            lattice_center = np.sum(lirich.lattice.matrix, 0)
+            lattice_center = np.sum(lirich.lattice.matrix, 0)/3
 
             dist_to_center = np.linalg.norm(dimer_center-lattice_center)
 
