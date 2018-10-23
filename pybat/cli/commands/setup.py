@@ -102,6 +102,9 @@ def relax(structure_file, calculation_dir="", is_metal=False,
     shutil.copy(structure_file,
                 os.path.join(calculation_dir, "initial_cathode.json"))
 
+    return calculation_dir
+
+
 
 def transition(directory, is_metal=False, is_migration=False,
                hse_calculation=False, optimize_initial=False):
