@@ -610,11 +610,9 @@ class LiRichCathode(Cathode):
             representation.
 
         Returns:
-            List of pybat.Dimer objects
+            List of Tuples with the dimer indices
 
         """
-
-        noneq_dimers = []
 
         if method == "symmops":
 
@@ -656,34 +654,36 @@ class LiRichCathode(Cathode):
         elif method == "representation":
             # TODO update this method
 
-            if site_index is None:
+            raise NotImplementedError()
 
-                ignore = set(CATIONS).union(("O",))
-
-                transition_metal_indices = [index for index in
-                                            range(len(self.sites))
-                                            if self.sites[index].species_string
-                                            not in ignore]
-
-                for index in transition_metal_indices:
-
-                    dimers = [Dimer(self, dimer_indices) for dimer_indices
-                              in self.find_oxygen_dimers(index)]
-
-                    for dimer in dimers:
-                        if dimer not in noneq_dimers:
-                            noneq_dimers.append(dimer)
-
-            else:
-
-                dimers = [Dimer(self, dimer_indices) for dimer_indices
-                          in self.find_oxygen_dimers(site_index)]
-
-                for dimer in dimers:
-                    if dimer not in noneq_dimers:
-                        noneq_dimers.append(dimer)
-
-            return noneq_dimers
+            # if site_index is None:
+            #
+            #     ignore = set(CATIONS).union(("O",))
+            #
+            #     transition_metal_indices = [index for index in
+            #                                 range(len(self.sites))
+            #                                 if self.sites[index].species_string
+            #                                 not in ignore]
+            #
+            #     for index in transition_metal_indices:
+            #
+            #         dimers = [Dimer(self, dimer_indices) for dimer_indices
+            #                   in self.find_oxygen_dimers(index)]
+            #
+            #         for dimer in dimers:
+            #             if dimer not in noneq_dimers:
+            #                 noneq_dimers.append(dimer)
+            #
+            # else:
+            #
+            #     dimers = [Dimer(self, dimer_indices) for dimer_indices
+            #               in self.find_oxygen_dimers(site_index)]
+            #
+            #     for dimer in dimers:
+            #         if dimer not in noneq_dimers:
+            #             noneq_dimers.append(dimer)
+            #
+            # return noneq_dimers
 
         else:
             raise IOError("Method for finding non-equivalent dimers is not "
