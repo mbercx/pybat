@@ -3,6 +3,7 @@
 # Distributed under the terms of the MIT License
 
 import os
+import _warnings as warnings
 
 from string import ascii_letters
 from pybat.core import Cathode
@@ -227,7 +228,11 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     dimer_dir = os.path.join(
         os.getcwd(), "dimer_" + "_".join([str(el) for el in dimer_indices])
     )
-    os.mkdir(dimer_dir)
+    try:
+        os.mkdir(dimer_dir)
+    except FileExistsError:
+        warnings.warn("Warning: " + dimer_dir + " already exists, "
+                                                "overwriting...")
 
     # Set up the filenames
     initial_structure_file = ".".join(
