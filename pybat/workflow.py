@@ -6,11 +6,14 @@ import os
 import subprocess
 import shlex
 
-from ruamel.yaml import YAML
-from pymongo.errors import ServerSelectionTimeoutError
-from pybat.core import LiRichCathode
+import numpy as np
+
+from pybat.core import LiRichCathode, Dimer
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
+
+from ruamel.yaml import YAML
+from pymongo.errors import ServerSelectionTimeoutError
 from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, \
     UnconvergedErrorHandler
@@ -286,6 +289,58 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
                         name=structure_file + migration_dir.split("/")[-1])
 
     LAUNCHPAD.add_wf(workflow)
+
+
+def noneq_dimers_workflow(structure_file, distance, is_metal=False,
+                         hse_calculation=False, in_custodian=False):
+    """
+    Run dimer calculations for all the nonequivalent dimers in a structure.
+
+    Args:
+        structure_file (str): Structure file of the cathode material. Note
+            that the structure file should be a json format file that is
+            derived from the Cathode class, i.e. it should contain the cation
+            configuration of the structure.
+        site_index (int): Index of the site around which the dimers should
+            be investigated. Corresponds to the internal Python index.
+        distance (float): Final distance between the oxygen atoms. If no
+            distance is provided, the user will be prompted.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV. Defaults to False.
+        hse_calculation (bool): Flag that indicates that the hybrid functional
+            HSE06 should be used to calculate the exchange-correlation
+            energy. Defaults to False.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
+    """
+
+    lirich = LiRichCathode.from_file(structure_file)
+    dimer_lists = lirich.list_noneq_dimers()
+
+    for dimer_list in dimer_lists:
+
+
+        # Find the dimer closest to the center of the lattice. Just for
+        # visualization purposes.
+        central_dimer = [(), 1e10]
+
+        for dimer in dimer_list:
+
+            dimer_center = Dimer(lirich, dimer).center
+            lattice_center = np.sum(lirich.lattice.matrix, 0)
+
+            dist_to_center = np.linalg.norm(dimer_center-lattice_center)
+
+            if dist_to_center < central_dimer[1]:
+                central_dimer = [dimer, dist_to_center]
+
+        dimer_workflow(structure_file=structure_file,
+                      dimer_indices=central_dimer[0],
+                      distance=distance,
+                      is_metal=is_metal,
+                      hse_calculation=hse_calculation,
+                      in_custodian=in_custodian)
 
 
 def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
