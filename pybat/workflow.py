@@ -128,7 +128,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
 
     # Create the PyTask that sets up the calculation
     setup_relax = PyTask(
-        func="pybat.cli.commands.setup.setup_relax",
+        func="pybat.cli.commands.setup.relax",
         kwargs={"structure_file": structure_file,
                 "calculation_dir": directory,
                 "is_metal":is_metal,
