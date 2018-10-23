@@ -297,7 +297,7 @@ def supercell(cell, structure_file, file_format):
 
 #######
 # GET #
-#######
+#######v
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -368,6 +368,48 @@ def endiff(directory):
 
     get_endiff(directory)
 
+
+############
+# WORKFLOW #
+############
+
+@main.group(context_settings=CONTEXT_SETTINGS)
+def workflow():
+    """
+    Scripts for setting up workflows and submitting them to the server.
+    """
+    pass
+
+
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--dimer_indices", "-i", default=(0, 0))
+@click.option("--distance", "-d", default=float(0))
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
+@click.option("--hse_calculation", "-H", is_flag=True)
+@click.option("--in_custodian", "-C", is_flag=True)
+def dimer(structure_file, dimer_indices, distance, is_metal,
+          hse_calculation, in_custodian):
+    """
+    Testing for the workflow scripts.
+
+    """
+    from pybat.workflow import dimer_workflow
+
+    dimer_workflow(structure_file=structure_file,
+                   dimer_indices=dimer_indices,
+                   distance=distance,
+                   is_metal=is_metal,
+                   hse_calculation=hse_calculation,
+                   in_custodian=in_custodian)
+
+
+########
+# TEST #
+########
 
 @main.group(context_settings=CONTEXT_SETTINGS)
 def test():

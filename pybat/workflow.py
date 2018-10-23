@@ -101,6 +101,64 @@ def run_custodian(directory):
     c = Custodian(handlers, jobs, max_errors=10)
     c.run()
 
+def relax_workflow(structure_file, directory="", is_metal=False,
+                   hse_calculation=False, in_custodian=False):
+    """
+
+    Args:
+        structure_file:
+        is_metal:
+        hse_calculation:
+        in_custodian:
+
+    Returns:
+
+    """
+
+    # Set up the directory in which to perform the calculation
+    current_dir = os.getcwd()
+
+    # If no directory was provided
+    if directory == "":
+
+        if hse_calculation:
+            directory = os.path.join(current_dir, "hse_relax")
+        else:
+            directory = os.path.join(current_dir, "dftu_relax")
+
+
+    # Create the PyTask that sets up the calculation
+    setup_relax = PyTask(
+        func="pybat.cli.commands.setup.setup_relax",
+        kwargs={"structure_file": structure_file,
+                "calculation_dir": directory,
+                "is_metal":is_metal,
+                "hse_calculation": hse_calculation}
+    )
+
+    # Create the PyTask that runs the calculation
+    if in_custodian:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_custodian",
+            kwargs={"directory": directory}
+        )
+    else:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_vasp",
+            kwargs={"directory": directory}
+        )
+
+    # Combine the two FireTasks into one FireWork
+    relax_firework = Firework(tasks=[setup_relax, run_vasp],
+                              name="Geometry optimization",
+                              spec={"_launch_dir": current_dir})
+
+    # Create the workflow
+    workflow = Workflow(fireworks=[relax_firework,],
+                        name=structure_file + " Geometry optimization")
+
+    LAUNCHPAD.add_wf(workflow)
+
 
 def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                    is_metal=False, hse_calculation=False, in_custodian=False):
