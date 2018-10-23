@@ -383,6 +383,29 @@ def workflow():
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
+@click.option("--directory", "-d", default="")
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
+@click.option("--hse_calculation", "-H", is_flag=True)
+@click.option("--in_custodian", "-C", is_flag=True)
+def relax(structure_file, directory, is_metal, hse_calculation,
+          in_custodian):
+    """
+    Set up a geometry optimization workflow.
+    """
+    from pybat.workflow import relax_workflow
+
+    relax_workflow(structure_file=structure_file,
+                   is_metal=is_metal,
+                   directory=directory,
+                   hse_calculation=hse_calculation,
+                   in_custodian=in_custodian)
+
+
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
 @click.option("--dimer_indices", "-i", default=(0, 0))
 @click.option("--distance", "-d", default=float(0))
 @click.option("--is_metal", "-m", is_flag=True,
@@ -394,8 +417,7 @@ def workflow():
 def dimer(structure_file, dimer_indices, distance, is_metal,
           hse_calculation, in_custodian):
     """
-    Testing for the workflow scripts.
-
+    Set up dimer calculation workflows.
     """
     from pybat.workflow import dimer_workflow
 
@@ -421,26 +443,25 @@ def test():
 
 @test.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--directory", "-d", default="")
+@click.option("--distance", "-d", default=float(1.4))
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
 @click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-C", is_flag=True)
-def workflow(structure_file, directory, is_metal, hse_calculation,
+def workflow(structure_file, distance, is_metal, hse_calculation,
              in_custodian):
     """
     Testing for the workflow scripts.
-
     """
-    from pybat.workflow import relax_workflow
+    from pybat.workflow import noneq_dimers_workflow
 
-    relax_workflow(structure_file=structure_file,
-                   is_metal=is_metal,
-                   directory=directory,
-                   hse_calculation=hse_calculation,
-                   in_custodian=in_custodian)
+    noneq_dimers_workflow(structure_file=structure_file,
+                         is_metal=is_metal,
+                         distance=distance,
+                         hse_calculation=hse_calculation,
+                         in_custodian=in_custodian)
 
 
 @test.command(context_settings=CONTEXT_SETTINGS)
