@@ -37,8 +37,7 @@ def _load_yaml_config(filename):
     return config
 
 
-def scf(structure_file, calculation_dir="", is_metal=False,
-        hse_calculation=False):
+def scf(structure_file, calculation_dir="", hse_calculation=False):
     """
     Set up a standard scf calculation. Always uses the tetrahedron method to
     calculate accurate total energies.
