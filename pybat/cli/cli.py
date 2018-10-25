@@ -429,6 +429,29 @@ def dimer(structure_file, dimer_indices, distance, is_metal,
                    in_custodian=in_custodian)
 
 
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--distance", "-d", default=float(1.4))
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
+@click.option("--hse_calculation", "-H", is_flag=True)
+@click.option("--in_custodian", "-C", is_flag=True)
+def noneq_dimers(structure_file, distance, is_metal, hse_calculation,
+                 in_custodian):
+    """
+    Set up dimer calculations for all nonequivalent dimers in a structure.
+    """
+    from pybat.workflow import noneq_dimers_workflow
+
+    noneq_dimers_workflow(structure_file=structure_file,
+                          is_metal=is_metal,
+                          distance=distance,
+                          hse_calculation=hse_calculation,
+                          in_custodian=in_custodian)
+
+
 ########
 # TEST #
 ########
@@ -443,25 +466,19 @@ def test():
 
 @test.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--distance", "-d", default=float(1.4))
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
+@click.option("--directory", "-d", default="")
 @click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-C", is_flag=True)
-def workflow(structure_file, distance, is_metal, hse_calculation,
-             in_custodian):
+def workflow(structure_file, directory, hse_calculation, in_custodian):
     """
     Testing for the workflow scripts.
     """
-    from pybat.workflow import noneq_dimers_workflow
+    from pybat.workflow import scf_workflow
 
-    noneq_dimers_workflow(structure_file=structure_file,
-                         is_metal=is_metal,
-                         distance=distance,
-                         hse_calculation=hse_calculation,
-                         in_custodian=in_custodian)
+    scf_workflow(structure_file=structure_file,
+                 directory=directory,
+                 hse_calculation=hse_calculation,
+                 in_custodian=in_custodian)
 
 
 @test.command(context_settings=CONTEXT_SETTINGS)
