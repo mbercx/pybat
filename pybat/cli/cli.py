@@ -325,8 +325,9 @@ def structure(directory, write_cif):
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
+@click.option("--ignore_magmom", "-i", default=False)
 @click.option("--write_cif", "-w", is_flag=True)
-def cathode(directory, write_cif):
+def cathode(directory, ignore_magmom, write_cif):
     """
     Obtain the Cathode with its magnetic configuration and vacancies.
 
@@ -334,6 +335,7 @@ def cathode(directory, write_cif):
     from pybat.cli.commands.get import get_cathode
 
     get_cathode(directory=directory,
+                ignore_magmom=ignore_magmom,
                 write_cif=write_cif)
 
 
