@@ -311,7 +311,7 @@ class Cathode(Structure):
                      coords_are_cartesian=True,
                      properties=site_b.properties)
 
-    def update_sites(self, directory):
+    def update_sites(self, directory, ignore_magmom=False):
         """
         Based on the CONTCAR and OUTCAR of a geometry optimization, update the
         site coordinates and magnetic moments that were optimized. Note that
@@ -326,8 +326,13 @@ class Cathode(Structure):
         new_cathode = Cathode.from_file(os.path.join(directory, "CONTCAR"))
 
         out = Outcar(os.path.join(directory, "OUTCAR"))
-        magmom = [site["tot"] for site in out.magnetization]
-        new_cathode.add_site_property("magmom", magmom)
+
+        if ignore_magmom:
+            new_cathode.add_site_property("magmom",
+                                          self.site_properties["magmom"])
+        else:
+            magmom = [site["tot"] for site in out.magnetization]
+            new_cathode.add_site_property("magmom", magmom)
 
         # Update the lattice
         self.modify_lattice(new_cathode.lattice)
