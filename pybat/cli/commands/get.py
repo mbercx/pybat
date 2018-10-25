@@ -58,7 +58,7 @@ def get_structure(directory, write_cif=False):
         structure.to("cif", "structure.cif")
 
 
-def get_cathode(directory, write_cif=False):
+def get_cathode(directory, write_cif=False, ignore_magmom=False):
     """
     Construct a .json file of the updated Cathode from a geometry
     optimization, based on the initial_cathode.json file and the output of a
@@ -71,6 +71,9 @@ def get_cathode(directory, write_cif=False):
         OUTCAR and CONTCAR file.
         write_cif (bool): Flag that determines whether a .cif file of the
         cathode structure is written to the directory.
+        ignore_magmom (bool): Flag that indicates that the final magnetic
+        moments of the optimized structure should be ignored. This means
+        that the magnetic moments of the initial structure will be used.
 
     Returns:
         None
@@ -79,7 +82,7 @@ def get_cathode(directory, write_cif=False):
     directory = os.path.abspath(directory)
     cathode = Cathode.from_file(os.path.join(directory,
                                              "initial_cathode.json"))
-    cathode.update_sites(directory)
+    cathode.update_sites(directory, ignore_magmom=ignore_magmom)
 
     cathode.to("json", "final_cathode.json")
 

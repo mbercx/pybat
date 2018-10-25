@@ -321,6 +321,10 @@ class Cathode(Structure):
         Args:
             directory (str): Directory in which the geometry optimization
                 output files (i.e. CONTCAR and OUTCAR) are stores.
+            ignore_magmom (bool): Flag that indicates that the final magnetic
+                moments of the optimized structure should be ignored. This means
+                that the magnetic moments of the Cathode structure will
+                remain the same.
         """
 
         new_cathode = Cathode.from_file(os.path.join(directory, "CONTCAR"))
@@ -366,7 +370,7 @@ class Cathode(Structure):
         ]
 
         # Start with adding the first cation
-        inequiv_cations = [cation_indices[0],]
+        inequiv_cations = [cation_indices[0], ]
 
         for index in cation_indices[1:]:
 
@@ -569,9 +573,10 @@ class LiRichCathode(Cathode):
                     oxygen_dimers.append(oxygen_pair)
 
             if len(oxygen_dimers) > 12:
-                raise Warning("Found more than 12 oxygen pairs around a single "
-                              "site. This can be caused by the use of a small "
-                              "unit cell. Results may not be useful.")
+                raise Warning(
+                    "Found more than 12 oxygen pairs around a single "
+                    "site. This can be caused by the use of a small "
+                    "unit cell. Results may not be useful.")
 
             return oxygen_dimers
 
@@ -645,11 +650,9 @@ class LiRichCathode(Cathode):
                                   self.sites[ineq_dimer[1]]]
 
                             if symmops.are_symmetrically_equivalent(d1, d2):
-
                                 inequivalent = False
 
                         if inequivalent:
-
                             ineq_dimers.append(dimer)
             else:
                 raise NotImplementedError()
@@ -708,7 +711,7 @@ class LiRichCathode(Cathode):
 
         dimers = self.find_oxygen_dimers()
 
-        noneq_dimer_lists = [[dimer,] for dimer in self.find_noneq_dimers()]
+        noneq_dimer_lists = [[dimer, ] for dimer in self.find_noneq_dimers()]
 
         for dimer in dimers:
 
@@ -720,7 +723,6 @@ class LiRichCathode(Cathode):
                       self.sites[noneq_dimer_list[0][1]]]
 
                 if symmops.are_symmetrically_equivalent(d1, d2):
-
                     noneq_dimer_list.append(dimer)
 
         return noneq_dimer_lists
