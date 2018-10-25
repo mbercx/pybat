@@ -335,7 +335,7 @@ def cathode(directory, ignore_magmom, write_cif):
     from pybat.cli.commands.get import get_cathode
 
     get_cathode(directory=directory,
-                ignore_magmom=not(ignore_magmom),
+                ignore_magmom=ignore_magmom,
                 write_cif=write_cif)
 
 
