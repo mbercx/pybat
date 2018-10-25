@@ -7,7 +7,7 @@ import os
 import shutil
 
 from pybat.core import Cathode, LiRichCathode
-from pybat.sets import BulkRelaxSet, PybatNEBSet
+from pybat.sets import BulkSCFSet, BulkRelaxSet, PybatNEBSet
 from monty.serialization import loadfn
 from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
@@ -35,6 +35,66 @@ DFT_FUNCTIONAL = "PBE_54"
 def _load_yaml_config(filename):
     config = loadfn(os.path.join(MODULE_DIR, "%s.yaml" % filename))
     return config
+
+
+def scf(structure_file, calculation_dir="", is_metal=False,
+        hse_calculation=False):
+    """
+    Set up a standard scf calculation. Always uses the tetrahedron method to
+    calculate accurate total energies.
+
+    Args:
+        structure_file (str): Path to the Cathode structure file, either
+            relative or absolute.
+        calculation_dir (str): Path to the directory in which to set up the
+            VASP calculation.
+        hse_calculation (bool): Flag that indicates that a hybrid HSE06
+            functional should be used for the geometry optimization.
+    """
+
+    # Import the structure as a Cathode instance from the structure file
+    structure_file = os.path.abspath(structure_file)
+    structure = Cathode.from_file(structure_file).as_ordered_structure()
+
+    # Check if a magnetic moment was not provided for the sites. If not, make
+    # sure it is zero for the calculations.
+    if "magmom" not in structure.site_properties.keys():
+        structure.add_site_property("magmom", [0] * len(structure.sites))
+
+    # Set up the calculation
+    user_incar_settings = {}
+
+    if hse_calculation:
+
+        hse_config = _load_yaml_config("HSESet")
+        user_incar_settings.update(hse_config["INCAR"])
+
+        if calculation_dir == "":
+            # Set up the calculation directory
+            current_dir = os.path.dirname(".")
+            calculation_dir = os.path.join(current_dir, "hse_scf")
+
+    else:
+
+        dftu_config = _load_yaml_config("DFTUSet")
+        user_incar_settings.update(dftu_config["INCAR"])
+
+        if calculation_dir == "":
+            # Set up the calculation directory
+            current_dir = os.path.dirname(".")
+            calculation_dir = os.path.join(current_dir, "dftu_scf")
+
+    # Set up the geometry optimization
+    scf_calculation = BulkSCFSet(structure=structure,
+                                 user_incar_settings=user_incar_settings,
+                                 potcar_functional=DFT_FUNCTIONAL)
+
+    # Write the input files to the geometry optimization directory
+    scf_calculation.write_input(calculation_dir)
+    shutil.copy(structure_file,
+                os.path.join(calculation_dir, "initial_cathode.json"))
+
+    return calculation_dir
 
 
 def relax(structure_file, calculation_dir="", is_metal=False,
@@ -103,7 +163,6 @@ def relax(structure_file, calculation_dir="", is_metal=False,
                 os.path.join(calculation_dir, "initial_cathode.json"))
 
     return calculation_dir
-
 
 
 def transition(directory, is_metal=False, is_migration=False,
