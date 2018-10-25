@@ -332,8 +332,9 @@ class Cathode(Structure):
         out = Outcar(os.path.join(directory, "OUTCAR"))
 
         if ignore_magmom:
-            new_cathode.add_site_property("magmom",
-                                          self.site_properties["magmom"])
+            magmom = [site.properties["magmom"] for site in self.sites
+                      if site.species_and_occu != Composition()]
+            new_cathode.add_site_property("magmom", magmom)
         else:
             magmom = [site["tot"] for site in out.magnetization]
             new_cathode.add_site_property("magmom", magmom)
