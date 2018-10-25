@@ -104,6 +104,62 @@ def run_custodian(directory):
     c = Custodian(handlers, jobs, max_errors=10)
     c.run()
 
+def scf_workflow(structure_file, directory="",
+                   hse_calculation=False, in_custodian=False):
+    """
+
+    Args:
+        structure_file:
+        is_metal:
+        hse_calculation:
+        in_custodian:
+
+    Returns:
+
+    """
+
+    # Set up the directory in which to perform the calculation
+    current_dir = os.getcwd()
+
+    # If no directory was provided
+    if directory == "":
+
+        if hse_calculation:
+            directory = os.path.join(current_dir, "hse_scf")
+        else:
+            directory = os.path.join(current_dir, "dftu_scf")
+
+    # Create the PyTask that sets up the calculation
+    setup_scf = PyTask(
+        func="pybat.cli.commands.setup.scf",
+        kwargs={"structure_file": structure_file,
+                "calculation_dir": directory,
+                "hse_calculation": hse_calculation}
+    )
+
+    # Create the PyTask that runs the calculation
+    if in_custodian:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_custodian",
+            kwargs={"directory": directory}
+        )
+    else:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_vasp",
+            kwargs={"directory": directory}
+        )
+
+    # Combine the two FireTasks into one FireWork
+    scf_firework = Firework(tasks=[setup_scf, run_vasp],
+                              name="SCF calculation",
+                              spec={"_launch_dir": current_dir})
+
+    # Create the workflow
+    workflow = Workflow(fireworks=[scf_firework,],
+                        name=structure_file + " SCF calculation")
+
+    LAUNCHPAD.add_wf(workflow)
+
 def relax_workflow(structure_file, directory="", is_metal=False,
                    hse_calculation=False, in_custodian=False):
     """
@@ -319,7 +375,6 @@ def noneq_dimers_workflow(structure_file, distance, is_metal=False,
     dimer_lists = lirich.list_noneq_dimers()
 
     for dimer_list in dimer_lists:
-
 
         # Find the dimer closest to the center of the lattice. Just for
         # visualization purposes.
