@@ -58,7 +58,8 @@ def get_structure(directory, write_cif=False):
         structure.to("cif", "structure.cif")
 
 
-def get_cathode(directory, write_cif=False, ignore_magmom=False):
+def get_cathode(directory, to_current_dir=False, write_cif=False,
+                ignore_magmom=False):
     """
     Construct a .json file of the updated Cathode from a geometry
     optimization, based on the initial_cathode.json file and the output of a
@@ -84,10 +85,15 @@ def get_cathode(directory, write_cif=False, ignore_magmom=False):
                                              "initial_cathode.json"))
     cathode.update_sites(directory, ignore_magmom=ignore_magmom)
 
-    cathode.to("json", "final_cathode.json")
+    if to_current_dir:
+        filename = os.path.join(os.getcwd(), "final_cathode")
+    else:
+        filename = os.path.join(directory, "final_cathode")
+
+    cathode.to("json", filename + ".json")
 
     if write_cif:
-        cathode.to("cif", "final_cathode.cif")
+        cathode.to("cif", filename + ".cif")
 
 
 def get_barrier(directory):
