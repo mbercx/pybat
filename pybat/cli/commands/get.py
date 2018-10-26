@@ -68,13 +68,15 @@ def get_cathode(directory, to_current_dir=False, write_cif=False,
 
     Args:
         directory (str): Directory in which the geometry optimization
-        calculation was performed. Must contain the initial_cathode.json,
-        OUTCAR and CONTCAR file.
+            calculation was performed. Must contain the initial_cathode.json,
+            OUTCAR and CONTCAR file.
+        to_current_dir (bool): Write the output final_cathode files to the
+            current workinf directory.
         write_cif (bool): Flag that determines whether a .cif file of the
-        cathode structure is written to the directory.
+            cathode structure is written to the directory.
         ignore_magmom (bool): Flag that indicates that the final magnetic
-        moments of the optimized structure should be ignored. This means
-        that the magnetic moments of the initial structure will be used.
+            moments of the optimized structure should be ignored. This means
+            that the magnetic moments of the initial structure will be used.
 
     Returns:
         None
