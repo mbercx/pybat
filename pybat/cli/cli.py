@@ -386,6 +386,23 @@ def workflow():
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--directory", "-d", default="")
+@click.option("--hse_calculation", "-H", is_flag=True)
+@click.option("--in_custodian", "-C", is_flag=True)
+def sc(structure_file, directory, hse_calculation, in_custodian):
+    """
+    Set up an SCF calculation workflow.
+    """
+    from pybat.workflow import scf_workflow
+
+    scf_workflow(structure_file=structure_file,
+                 directory=directory,
+                 hse_calculation=hse_calculation,
+                 in_custodian=in_custodian)
+
+
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--directory", "-d", default="")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
