@@ -388,7 +388,7 @@ def workflow():
 @click.option("--directory", "-d", default="")
 @click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-C", is_flag=True)
-def sc(structure_file, directory, hse_calculation, in_custodian):
+def scf(structure_file, directory, hse_calculation, in_custodian):
     """
     Set up an SCF calculation workflow.
     """
