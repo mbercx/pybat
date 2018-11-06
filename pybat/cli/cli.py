@@ -474,8 +474,8 @@ def relax(structure_file, directory, is_metal, dftu_values, hse_calculation,
     )
 
     relax_workflow(structure_file=structure_file,
-                   is_metal=is_metal,
                    directory=directory,
+                   is_metal=is_metal,
                    dftu_values=dftu_values,
                    hse_calculation=hse_calculation,
                    in_custodian=in_custodian)
