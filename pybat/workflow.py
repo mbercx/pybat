@@ -197,6 +197,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
         kwargs={"structure_file": structure_file,
                 "calculation_dir": directory,
                 "is_metal": is_metal,
+                "dftu_values": dftu_values,
                 "hse_calculation": hse_calculation}
     )
 
