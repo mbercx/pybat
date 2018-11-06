@@ -188,8 +188,10 @@ def relax_workflow(structure_file, directory="", is_metal=False,
 
         if hse_calculation:
             directory = os.path.join(current_dir, "hse_relax")
+            number_nodes = "4nodes"
         else:
             directory = os.path.join(current_dir, "dftu_relax")
+            number_nodes = "1nodes"
 
     # Create the PyTask that sets up the calculation
     setup_relax = PyTask(
@@ -216,7 +218,8 @@ def relax_workflow(structure_file, directory="", is_metal=False,
     # Combine the two FireTasks into one FireWork
     relax_firework = Firework(tasks=[setup_relax, run_vasp],
                               name="Geometry optimization",
-                              spec={"_launch_dir": current_dir})
+                              spec={"_launch_dir": current_dir,
+                                    "_category": number_nodes})
 
     # Create the workflow
     workflow = Workflow(fireworks=[relax_firework, ],
