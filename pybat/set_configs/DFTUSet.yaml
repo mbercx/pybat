@@ -1,4 +1,4 @@
-# PBE+U settings for VASP calculations
+# PBE+U settings for VASP calculations. Indicated standard U values for PBE+U calculation
 INCAR:
   LDAU: true
   LDAUJ:

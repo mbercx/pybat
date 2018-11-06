@@ -104,13 +104,13 @@ def run_custodian(directory):
     c = Custodian(handlers, jobs, max_errors=10)
     c.run()
 
-def scf_workflow(structure_file, directory="",
-                   hse_calculation=False, in_custodian=False):
+
+def scf_workflow(structure_file, directory="", write_chgcar=False,
+                 dftu_values=None, hse_calculation=False, in_custodian=False):
     """
 
     Args:
         structure_file:
-        is_metal:
         hse_calculation:
         in_custodian:
 
@@ -134,6 +134,8 @@ def scf_workflow(structure_file, directory="",
         func="pybat.cli.commands.setup.scf",
         kwargs={"structure_file": structure_file,
                 "calculation_dir": directory,
+                "write_chgcar": write_chgcar,
+                "dftu_values": dftu_values,
                 "hse_calculation": hse_calculation}
     )
 
@@ -151,22 +153,26 @@ def scf_workflow(structure_file, directory="",
 
     # Combine the two FireTasks into one FireWork
     scf_firework = Firework(tasks=[setup_scf, run_vasp],
-                              name="SCF calculation",
-                              spec={"_launch_dir": current_dir})
+                            name="SCF calculation",
+                            spec={"_launch_dir": current_dir})
 
     # Create the workflow
-    workflow = Workflow(fireworks=[scf_firework,],
+    workflow = Workflow(fireworks=[scf_firework, ],
                         name=structure_file + " SCF calculation")
 
     LAUNCHPAD.add_wf(workflow)
 
+
 def relax_workflow(structure_file, directory="", is_metal=False,
-                   hse_calculation=False, in_custodian=False):
+                   dftu_values=False, hse_calculation=False,
+                   in_custodian=False):
     """
 
     Args:
         structure_file:
+        directory:
         is_metal:
+        dftu_values:
         hse_calculation:
         in_custodian:
 
@@ -190,7 +196,8 @@ def relax_workflow(structure_file, directory="", is_metal=False,
         func="pybat.cli.commands.setup.relax",
         kwargs={"structure_file": structure_file,
                 "calculation_dir": directory,
-                "is_metal":is_metal,
+                "is_metal": is_metal,
+                "dftu_values": dftu_values,
                 "hse_calculation": hse_calculation}
     )
 
@@ -212,7 +219,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
                               spec={"_launch_dir": current_dir})
 
     # Create the workflow
-    workflow = Workflow(fireworks=[relax_firework,],
+    workflow = Workflow(fireworks=[relax_firework, ],
                         name=structure_file + " Geometry optimization")
 
     LAUNCHPAD.add_wf(workflow)
@@ -348,7 +355,7 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
 
 def noneq_dimers_workflow(structure_file, distance, is_metal=False,
-                         hse_calculation=False, in_custodian=False):
+                          hse_calculation=False, in_custodian=False):
     """
     Run dimer calculations for all the nonequivalent dimers in a structure.
 
@@ -383,19 +390,19 @@ def noneq_dimers_workflow(structure_file, distance, is_metal=False,
         for dimer in dimer_list:
 
             dimer_center = Dimer(lirich, dimer).center
-            lattice_center = np.sum(lirich.lattice.matrix, 0)/3
+            lattice_center = np.sum(lirich.lattice.matrix, 0) / 3
 
-            dist_to_center = np.linalg.norm(dimer_center-lattice_center)
+            dist_to_center = np.linalg.norm(dimer_center - lattice_center)
 
             if dist_to_center < central_dimer[1]:
                 central_dimer = [dimer, dist_to_center]
 
         dimer_workflow(structure_file=structure_file,
-                      dimer_indices=central_dimer[0],
-                      distance=distance,
-                      is_metal=is_metal,
-                      hse_calculation=hse_calculation,
-                      in_custodian=in_custodian)
+                       dimer_indices=central_dimer[0],
+                       distance=distance,
+                       is_metal=is_metal,
+                       hse_calculation=hse_calculation,
+                       in_custodian=in_custodian)
 
 
 def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
@@ -427,8 +434,8 @@ def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
 
     for dimer in dimer_list:
         dimer_workflow(structure_file=structure_file,
-                      dimer_indices=dimer,
-                      distance=distance,
-                      is_metal=is_metal,
-                      hse_calculation=hse_calculation,
-                      in_custodian=in_custodian)
+                       dimer_indices=dimer,
+                       distance=distance,
+                       is_metal=is_metal,
+                       hse_calculation=hse_calculation,
+                       in_custodian=in_custodian)

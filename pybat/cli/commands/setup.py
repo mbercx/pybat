@@ -5,6 +5,7 @@
 import numpy as np
 import os
 import shutil
+import pdb
 
 from pybat.core import Cathode, LiRichCathode
 from pybat.sets import BulkSCFSet, BulkRelaxSet, PybatNEBSet
@@ -37,7 +38,8 @@ def _load_yaml_config(filename):
     return config
 
 
-def scf(structure_file, calculation_dir="", hse_calculation=False):
+def scf(structure_file, calculation_dir="", write_chgcar=False,
+        dftu_values=None, hse_calculation=False):
     """
     Set up a standard scf calculation. Always uses the tetrahedron method to
     calculate accurate total energies.
@@ -45,6 +47,7 @@ def scf(structure_file, calculation_dir="", hse_calculation=False):
     Args:
         structure_file (str): Path to the Cathode structure file, either
             relative or absolute.
+        write_chgcar (bool): Write out the charge
         calculation_dir (str): Path to the directory in which to set up the
             VASP calculation.
         hse_calculation (bool): Flag that indicates that a hybrid HSE06
@@ -78,10 +81,17 @@ def scf(structure_file, calculation_dir="", hse_calculation=False):
         dftu_config = _load_yaml_config("DFTUSet")
         user_incar_settings.update(dftu_config["INCAR"])
 
+        if not dftu_values is None:
+            user_incar_settings.update({"LDAUU": dftu_values})
+
         if calculation_dir == "":
             # Set up the calculation directory
             current_dir = os.path.dirname(".")
             calculation_dir = os.path.join(current_dir, "dftu_scf")
+
+    # Set charge density to be written if requested
+    if write_chgcar:
+        user_incar_settings.update({"LCHARG": True})
 
     # Set up the geometry optimization
     scf_calculation = BulkSCFSet(structure=structure,
@@ -96,7 +106,7 @@ def scf(structure_file, calculation_dir="", hse_calculation=False):
     return calculation_dir
 
 
-def relax(structure_file, calculation_dir="", is_metal=False,
+def relax(structure_file, calculation_dir="", is_metal=False, dftu_values=None,
           hse_calculation=False):
     """
     Set up a standard geometry optimization calculation of a Cathode
@@ -110,6 +120,10 @@ def relax(structure_file, calculation_dir="", is_metal=False,
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV.
+        dftu_values (dict): Dictionary of LDAUU values, e.g. either
+            {"LDAUU":{"O":{"Fe":5}}} to set LDAUU for Fe to 5 in an oxide,
+            or {"LDAUU":{"Fe":5}} to set LDAUU to 5 regardless of the input
+            structure.
         hse_calculation (bool): Flag that indicates that a hybrid HSE06
             functional should be used for the geometry optimization.
     """
@@ -141,6 +155,9 @@ def relax(structure_file, calculation_dir="", is_metal=False,
 
         dftu_config = _load_yaml_config("DFTUSet")
         user_incar_settings.update(dftu_config["INCAR"])
+
+        if not dftu_values is None:
+            user_incar_settings.update({"LDAUU": dftu_values})
 
         if calculation_dir == "":
             # Set up the calculation directory

@@ -2,3 +2,5 @@ pymatgen
 numpy
 scipy
 click
+fireworks
+custodian

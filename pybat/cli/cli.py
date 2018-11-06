@@ -96,20 +96,57 @@ def setup():
 @click.option("--calculation_dir", "-d", default="",
               help="The directory in which to set up the calculation. "
                    "Default is FUNCTIONAL_relax.")
+@click.option("--write_chgcar", "-C", is_flag=True)
+@click.option("--dftu_values", "-D", default=None)
+@click.option("--hse_calculation", "-H", is_flag=True)
+def scf(structure_file, calculation_dir, write_chgcar, dftu_values,
+        hse_calculation):
+    """
+    Set up a geometry optimization for a structure.
+    """
+    from pybat.cli.commands.setup import scf
+
+    # Turn dftu_values string into a dictionary
+    dftu_values = dftu_values.split(" ")
+    dftu_values = dict(
+        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
+    )
+
+    scf(structure_file=structure_file,
+        calculation_dir=calculation_dir,
+        write_chgcar=write_chgcar,
+        dftu_values=dftu_values,
+        hse_calculation=hse_calculation)
+
+
+@setup.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--calculation_dir", "-d", default="",
+              help="The directory in which to set up the calculation. "
+                   "Default is FUNCTIONAL_relax.")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
+@click.option("--dftu_values", "-D", default=None)
 @click.option("--hse_calculation", "-H", is_flag=True)
-def relax(structure_file, calculation_dir, is_metal, hse_calculation):
+def relax(structure_file, calculation_dir, is_metal, dftu_values,
+          hse_calculation):
     """
     Set up a geometry optimization for a structure.
     """
     from pybat.cli.commands.setup import relax
 
+    # Turn dftu_values string into a dictionary
+    dftu_values = dftu_values.split(" ")
+    dftu_values = dict(
+        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
+    )
+
     relax(structure_file=structure_file,
           calculation_dir=calculation_dir,
           is_metal=is_metal,
+          dftu_values=dftu_values,
           hse_calculation=hse_calculation)
 
 
@@ -388,16 +425,27 @@ def workflow():
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--directory", "-d", default="")
+@click.option("--write_chgcar", "-C", is_flag=True)
+@click.option("--dftu_values", "-D", default=None)
 @click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-C", is_flag=True)
-def scf(structure_file, directory, hse_calculation, in_custodian):
+def scf(structure_file, directory, write_chgcar, dftu_values, hse_calculation,
+        in_custodian):
     """
     Set up an SCF calculation workflow.
     """
     from pybat.workflow import scf_workflow
 
+    # Turn dftu_values string into a dictionary
+    dftu_values = dftu_values.split(" ")
+    dftu_values = dict(
+        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
+    )
+
     scf_workflow(structure_file=structure_file,
                  directory=directory,
+                 write_chgcar=write_chgcar,
+                 dftu_values=dftu_values,
                  hse_calculation=hse_calculation,
                  in_custodian=in_custodian)
 
@@ -409,18 +457,26 @@ def scf(structure_file, directory, hse_calculation, in_custodian):
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
+@click.option("--dftu_values", "-D", default=None)
 @click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-C", is_flag=True)
-def relax(structure_file, directory, is_metal, hse_calculation,
+def relax(structure_file, directory, is_metal, dftu_values, hse_calculation,
           in_custodian):
     """
     Set up a geometry optimization workflow.
     """
     from pybat.workflow import relax_workflow
 
+    # Turn dftu_values string into a dictionary
+    dftu_values = dftu_values.split(" ")
+    dftu_values = dict(
+        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
+    )
+
     relax_workflow(structure_file=structure_file,
                    is_metal=is_metal,
                    directory=directory,
+                   dftu_values=dftu_values,
                    hse_calculation=hse_calculation,
                    in_custodian=in_custodian)
 
