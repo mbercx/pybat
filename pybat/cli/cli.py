@@ -107,10 +107,12 @@ def scf(structure_file, calculation_dir, write_chgcar, dftu_values,
     from pybat.cli.commands.setup import scf
 
     # Turn dftu_values string into a dictionary
-    dftu_values = dftu_values.split(" ")
-    dftu_values = dict(
-        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
-    )
+    if not dftu_values is None:
+        dftu_values = dftu_values.split(" ")
+        dftu_values = dict(
+            zip(dftu_values[::2],
+                [float(number) for number in dftu_values[1::2]])
+        )
 
     scf(structure_file=structure_file,
         calculation_dir=calculation_dir,
@@ -138,10 +140,12 @@ def relax(structure_file, calculation_dir, is_metal, dftu_values,
     from pybat.cli.commands.setup import relax
 
     # Turn dftu_values string into a dictionary
-    dftu_values = dftu_values.split(" ")
-    dftu_values = dict(
-        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
-    )
+    if not dftu_values is None:
+        dftu_values = dftu_values.split(" ")
+        dftu_values = dict(
+            zip(dftu_values[::2],
+                [float(number) for number in dftu_values[1::2]])
+        )
 
     relax(structure_file=structure_file,
           calculation_dir=calculation_dir,
@@ -437,10 +441,12 @@ def scf(structure_file, directory, write_chgcar, dftu_values, hse_calculation,
     from pybat.workflow import scf_workflow
 
     # Turn dftu_values string into a dictionary
-    dftu_values = dftu_values.split(" ")
-    dftu_values = dict(
-        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
-    )
+    if not dftu_values is None:
+        dftu_values = dftu_values.split(" ")
+        dftu_values = dict(
+            zip(dftu_values[::2],
+                [float(number) for number in dftu_values[1::2]])
+        )
 
     scf_workflow(structure_file=structure_file,
                  directory=directory,
@@ -468,10 +474,12 @@ def relax(structure_file, directory, is_metal, dftu_values, hse_calculation,
     from pybat.workflow import relax_workflow
 
     # Turn dftu_values string into a dictionary
-    dftu_values = dftu_values.split(" ")
-    dftu_values = dict(
-        zip(dftu_values[::2], [float(number) for number in dftu_values[1::2]])
-    )
+    if not dftu_values is None:
+        dftu_values = dftu_values.split(" ")
+        dftu_values = dict(
+            zip(dftu_values[::2],
+                [float(number) for number in dftu_values[1::2]])
+        )
 
     relax_workflow(structure_file=structure_file,
                    directory=directory,
