@@ -182,7 +182,8 @@ def relax(structure_file, calculation_dir="", is_metal=False, dftu_values=None,
 
 
 def transition(directory, is_metal=False, is_migration=False,
-               hse_calculation=False, optimize_initial=False):
+               dftu_values=None, hse_calculation=False,
+               optimize_initial=False):
     """
     This script will set up the geometry optimizations for a transition
     structure, i.e. using ISIF = 2. It is assumed that the initial structure
@@ -230,6 +231,9 @@ def transition(directory, is_metal=False, is_migration=False,
 
         dftu_config = _load_yaml_config("DFTUSet")
         user_incar_settings.update(dftu_config["INCAR"])
+
+        if not dftu_values is None:
+            user_incar_settings.update({"LDAUU": dftu_values})
 
     # If requested, set up the initial structure optimization calculation
     if optimize_initial:

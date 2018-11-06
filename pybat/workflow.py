@@ -233,7 +233,8 @@ def relax_workflow(structure_file, directory="", is_metal=False,
 
 
 def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
-                   is_metal=False, hse_calculation=False, in_custodian=False):
+                   is_metal=False, dftu_values=None, hse_calculation=False,
+                   in_custodian=False):
     """
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
@@ -269,6 +270,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     transition(directory=dimer_dir,
                is_metal=is_metal,
                is_migration=False,
+               dftu_values=dftu_values,
                hse_calculation=hse_calculation)
 
     # Set up the FireTask for the custodian run, if requested
@@ -362,7 +364,8 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
 
 def noneq_dimers_workflow(structure_file, distance, is_metal=False,
-                          hse_calculation=False, in_custodian=False):
+                          dftu_values=None, hse_calculation=False,
+                          in_custodian=False):
     """
     Run dimer calculations for all the nonequivalent dimers in a structure.
 
@@ -408,6 +411,7 @@ def noneq_dimers_workflow(structure_file, distance, is_metal=False,
                        dimer_indices=central_dimer[0],
                        distance=distance,
                        is_metal=is_metal,
+                       dftu_values=dftu_values,
                        hse_calculation=hse_calculation,
                        in_custodian=in_custodian)
 
