@@ -121,6 +121,11 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
     # Set up the directory in which to perform the calculation
     current_dir = os.getcwd()
 
+    if hse_calculation:
+        number_nodes = "4nodes"
+    else:
+        number_nodes = "1nodes"
+
     # If no directory was provided
     if directory == "":
 
@@ -154,7 +159,8 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
     # Combine the two FireTasks into one FireWork
     scf_firework = Firework(tasks=[setup_scf, run_vasp],
                             name="SCF calculation",
-                            spec={"_launch_dir": current_dir})
+                            spec={"_launch_dir": current_dir,
+                                  "_category": number_nodes})
 
     # Create the workflow
     workflow = Workflow(fireworks=[scf_firework, ],
