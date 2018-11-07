@@ -124,7 +124,7 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
     if hse_calculation:
         number_nodes = "4nodes"
     else:
-        number_nodes = "1nodes"
+        number_nodes = "1node"
 
     # If no directory was provided
     if directory == "":
@@ -192,7 +192,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
     if hse_calculation:
         number_nodes = "4nodes"
     else:
-        number_nodes = "1nodes"
+        number_nodes = "1node"
 
     # If no directory was provided
     if directory == "":
@@ -201,7 +201,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
             directory = os.path.join(current_dir, "hse_relax")
         else:
             directory = os.path.join(current_dir, "dftu_relax")
-            number_nodes = "1nodes"
+            number_nodes = "1node"
 
     # Create the PyTask that sets up the calculation
     setup_relax = PyTask(
