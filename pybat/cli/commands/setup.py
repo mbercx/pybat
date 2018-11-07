@@ -91,7 +91,11 @@ def scf(structure_file, calculation_dir="", write_chgcar=False,
 
     # Set charge density to be written if requested
     if write_chgcar:
-        user_incar_settings.update({"LCHARG": True})
+        user_incar_settings.update({"LCHARG": True, "LAECHG": True})
+
+        # For the HSE06 calculation, also increase the FFT grids, etc...
+        if hse_calculation:
+            user_incar_settings.update({"PRECFOCK": "Accurate"})
 
     # Set up the geometry optimization
     scf_calculation = BulkSCFSet(structure=structure,
