@@ -433,7 +433,7 @@ def workflow():
 @click.option("--write_chgcar", "-C", is_flag=True)
 @click.option("--dftu_values", "-U", default=None)
 @click.option("--hse_calculation", "-H", is_flag=True)
-@click.option("--in_custodian", "-C", is_flag=True)
+@click.option("--in_custodian", "-c", is_flag=True)
 def scf(structure_file, directory, write_chgcar, dftu_values, hse_calculation,
         in_custodian):
     """
@@ -466,7 +466,7 @@ def scf(structure_file, directory, write_chgcar, dftu_values, hse_calculation,
                    "smearing of 0.2 eV.")
 @click.option("--dftu_values", "-U", default=None)
 @click.option("--hse_calculation", "-H", is_flag=True)
-@click.option("--in_custodian", "-C", is_flag=True)
+@click.option("--in_custodian", "-c", is_flag=True)
 def relax(structure_file, directory, is_metal, dftu_values, hse_calculation,
           in_custodian):
     """
@@ -500,7 +500,7 @@ def relax(structure_file, directory, is_metal, dftu_values, hse_calculation,
                    "smearing of 0.2 eV.")
 @click.option("--dftu_values", "-U", default=None)
 @click.option("--hse_calculation", "-H", is_flag=True)
-@click.option("--in_custodian", "-C", is_flag=True)
+@click.option("--in_custodian", "-c", is_flag=True)
 def dimer(structure_file, dimer_indices, distance, is_metal,
           dftu_values, hse_calculation, in_custodian):
     """
@@ -534,7 +534,7 @@ def dimer(structure_file, dimer_indices, distance, is_metal,
                    "smearing of 0.2 eV.")
 @click.option("--dftu_values", "-U", default=None)
 @click.option("--hse_calculation", "-H", is_flag=True)
-@click.option("--in_custodian", "-C", is_flag=True)
+@click.option("--in_custodian", "-c", is_flag=True)
 def noneq_dimers(structure_file, distance, is_metal,
                  dftu_values, hse_calculation,
                  in_custodian):
