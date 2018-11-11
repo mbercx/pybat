@@ -10,12 +10,14 @@ import os
 import numpy as np
 
 from monty.io import zopen
-from monty.json import MSONable
+from monty.json import jsanitize, MSONable
 from pymatgen.core import Structure, Composition, Molecule, Site, Element
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.analysis.transition_state import NEBAnalysis
+from pymatgen.util.plotting import pretty_plot
 
 """
 Module that contains tools to represent and calculate the properties of
@@ -76,6 +78,8 @@ class Cathode(Structure):
     want to look at coordinations and neighbors. Another advantage is that
     we can consider the empty cation sites for final positions of transition
     metal migrations.
+
+    There was a reason
 
     """
 
@@ -315,8 +319,8 @@ class Cathode(Structure):
         """
         Based on the CONTCAR and OUTCAR of a geometry optimization, update the
         site coordinates and magnetic moments that were optimized. Note that
-        this method relies on the cation configuration of the not having
-        changed.
+        this method relies on the cation configuration of the cathode not
+        having changed.
 
         Args:
             directory (str): Directory in which the geometry optimization
@@ -1053,6 +1057,160 @@ class Dimer(MSONable):
                    dimer_indices=d["dimer_indices"])
 
 
+class DimerNEBAnalysis(NEBAnalysis):
+    """
+    Subclass of the NEBAnalysis class in order to change the plotting of the
+    barriers, as well as allowing for saving the NEB analysis to a json file.
+    """
+
+    def __init__(self, r, energies, forces, structures, spline_options=None,
+                 dimer_indices=None):
+        super().__init__(
+            r, energies, forces, structures, spline_options
+        )
+        self._dimer_indices = dimer_indices
+
+    @property
+    def dimer_indices(self):
+        return self._dimer_indices
+
+    @dimer_indices.setter
+    def dimer_indices(self, indices):
+        self._dimer_indices = indices
+
+    def as_dict(self):
+        """
+        Dict representation of NEBAnalysis.
+
+        Returns:
+            JSON serializable dict representation.
+        """
+        return {"@module": self.__class__.__module__,
+                "@class": self.__class__.__name__,
+                'r': jsanitize(self.r),
+                'energies': jsanitize(self.energies),
+                'forces': jsanitize(self.forces),
+                'structures': [s.as_dict() for s in self.structures],
+                "dimer_indices": self.dimer_indices}
+
+    def to(self, fmt="json", filename=None):
+
+        if fmt == "json":
+            if filename:
+                with zopen(filename, "wt", encoding='utf8') as file:
+                    return json.dump(self.as_dict(), file)
+            else:
+                return json.dumps(self.as_dict())
+        else:
+            raise NotImplementedError("Currently only json format is "
+                                      "supported.")
+
+    @classmethod
+    def from_dir(cls, root_dir, relaxation_dirs=None, **kwargs):
+        """
+
+        Args:
+            root_dir:
+            relaxation_dirs:
+            **kwargs:
+
+        Returns:
+
+        """
+
+        neb = super().from_dir(root_dir, relaxation_dirs, **kwargs)
+
+        indices = tuple(
+            [int(el) for el in
+             os.path.abspath(root_dir).split('/')[-1].split('_')
+             if all([is_number(c) for c in el])]
+        )
+
+        dimer_neb = DimerNEBAnalysis(r=neb.r, energies=neb.energies,
+                                     forces=neb.forces,
+                                     structures=neb.structure,
+                                     dimer_indices=indices)
+        return dimer_neb
+
+    @classmethod
+    def from_str(cls, input_string, fmt="json"):
+        """
+        Initialize a DimerNEBAnalysis from a string.
+
+        Currently only supports 'json' formats.
+
+        Args:
+            input_string (str): String from which the object is initialized.
+            fmt (str): Format of the string representation.
+
+        Returns:
+            (*pybat.core.DimerNEBAnalysis*)
+        """
+        if fmt == "json":
+            d = json.loads(input_string)
+            return cls.from_dict(d)
+        else:
+            raise NotImplementedError('Only json format has been '
+                                      'implemented.')
+
+    @classmethod
+    def from_file(cls, filename):
+
+        with zopen(filename) as file:
+            contents = file.read()
+
+        return cls.from_str(contents)
+
+    @classmethod
+    def from_dict(cls, d):
+
+        return cls(r=d['r'], energies=d["energies"], forces=d["forces"],
+                   structures=d["structures"],
+                   dimer_indices=d["dimer_indices"])
+
+    def get_plot(self,  label_barrier=True):
+        """
+        Returns the NEB plot. Uses Henkelman's approach of spline fitting
+        each section of the reaction path based on tangent force and energies.
+
+        Args:
+            label_barrier (bool): Whether to label the maximum barrier.
+
+        Returns:
+            matplotlib.pyplot object.
+        """
+        plt = pretty_plot(12, 8)
+
+        x = np.ndarray(
+            [s.distance_matrix[self.dimer_indices] for s in self.structures]
+        )
+
+        y = self.spline(x) * 1000
+
+        relative_energies = self.energies - self.energies[0]
+
+        plt.plot(self.r , relative_energies * 1000, 'ro',
+                 x, y, 'k-', linewidth=2, markersize=10)
+
+        plt.xlabel("Dimer Distance")
+        plt.ylabel("Energy (meV)")
+        plt.ylim((np.min(y) - 10, np.max(y) * 1.02 + 20))
+
+        if label_barrier:
+            data = zip(x * scale, y)
+            barrier = max(data, key=lambda d: d[1])
+            plt.plot([0, barrier[0]], [barrier[1], barrier[1]], 'k--')
+            plt.annotate('%.0f meV' % (np.max(y) - np.min(y)),
+                         xy=(barrier[0] / 2, barrier[1] * 1.02),
+                         xytext=(barrier[0] / 2, barrier[1] * 1.02),
+                         horizontalalignment='center')
+
+
+        plt.tight_layout()
+        return plt
+
+
+# SO Plagiarism
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)
@@ -1093,3 +1251,11 @@ def permute(iterable, permutation):
         raise ValueError("Permutation is ill-defined.")
 
     return [iterable[index - 1] for index in permutation]
+
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False

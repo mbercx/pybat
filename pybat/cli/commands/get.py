@@ -3,6 +3,7 @@
 # Distributed under the terms of the MIT License
 
 import os
+import pdb
 
 from pybat.core import Cathode
 from pymatgen import Structure
@@ -50,7 +51,7 @@ def get_structure(directory, write_cif=False):
         # give the user a warning and assign magnetic moment zero to all sites.
         print("WARNING: Could not assign the magnetic moments found in the "
               "OUTCAR file. They may be missing.")
-        structure.add_site_property("magmom", len(structure.sites)*[0])
+        structure.add_site_property("magmom", len(structure.sites) * [0])
 
     structure.to("json", "structure.json")
 
@@ -71,7 +72,7 @@ def get_cathode(directory, to_current_dir=False, write_cif=False,
             calculation was performed. Must contain the initial_cathode.json,
             OUTCAR and CONTCAR file.
         to_current_dir (bool): Write the output final_cathode files to the
-            current workinf directory.
+            current working directory.
         write_cif (bool): Flag that determines whether a .cif file of the
             cathode structure is written to the directory.
         ignore_magmom (bool): Flag that indicates that the final magnetic
@@ -98,18 +99,56 @@ def get_cathode(directory, to_current_dir=False, write_cif=False,
         cathode.to("cif", filename + ".cif")
 
 
-def get_barrier(directory):
+def get_barrier(directory, method="pymatgen"):
     """
     Plot the migration barrier of a transition in a directory.
     Args:
-        directory:
+        directory (str):
+        method (str):
 
     Returns:
 
     """
-    neb = NEBAnalysis.from_dir(directory, relaxation_dirs=('initial',
-                                                           'final'))
-    neb.get_plot().show()
+    if method == "pymatgen":
+        # The pymatgen.analysis.transition_state module has an object that
+        # allows you to
+
+        neb = NEBAnalysis.from_dir(directory, relaxation_dirs=('initial',
+                                                               'final'))
+        neb.get_plot().show()
+
+    if method == "dimers":
+        # This method makes some assumptions about the directory structure
+        # for it to work:
+        #
+        # - The image directories are two characters long, and there are no
+        # other directories which are two characters long.
+        # - The directory in which the nudged elastic band was performed
+        #  contains the dimer indices, delimited by '_', and with no other
+        # numbers delimited in such a way present.
+
+        raise NotImplementedError
+        #TODO
+
+        # dimer_indices = tuple(
+        #     [int(el) for el in os.getcwd().split('/')[-1].split('_')
+        #      if all([is_number(c) for c in el])]
+        # )
+        #
+        # image_dirs = [file for file in os.listdir(".") if len(file) == 2
+        #               and os.path.isdir(file)]
+        #
+        # data = [
+        #     (Structure.from_file(
+        #         os.path.join(image_dir, "final_cathode.json")
+        #     ).distance_matrix[dimer_indices],
+        #      Outcar(os.path.join(image_dir, "OUTCAR")).final_energy)
+        #     for image_dir in image_dirs
+        # ]
+        #
+        # sorted(data, key = lambda l : l[0])
+
+
 
 
 def get_voltage(directory, calculation="relax", functional=None):
@@ -142,4 +181,14 @@ def get_endiff(directory):
     final_energy = final_outcar.final_energy
 
     print("The energy difference is: ", end="")
-    print(str(final_energy-initial_energy) + " eV")
+    print(str(final_energy - initial_energy) + " eV")
+
+
+# SO plagiarism
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False

@@ -366,8 +366,13 @@ def structure(directory, write_cif):
 
 
 @get.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--directory", "-d", default=".")
-@click.option("--to_current_dir", "-c", is_flag=True)
+@click.option("--directory", "-d", default=".",
+              help="The directory which contains the required data for the "
+                   "final cathode JSON file input. This includes ")
+@click.option("--to_current_dir", "-c", is_flag=True,
+              help="Flag to indicate that the final cathode file should be "
+                   "witten to the current directory instead of the directory "
+                   "which contains the data.")
 @click.option("--ignore_magmom", "-i", is_flag=True)
 @click.option("--write_cif", "-w", is_flag=True)
 def cathode(directory, to_current_dir, ignore_magmom, write_cif):
@@ -385,14 +390,15 @@ def cathode(directory, to_current_dir, ignore_magmom, write_cif):
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
-def barrier(directory):
+@click.option("--method", "-M", default="pymatgen")
+def barrier(directory, method):
     """
     Combine the images of a NEB calculation to show the transition.
-
     """
     from pybat.cli.commands.get import get_barrier
 
-    get_barrier(directory=directory)
+    get_barrier(directory=directory,
+                method=method)
 
 
 @get.command(context_settings=CONTEXT_SETTINGS)
