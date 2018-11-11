@@ -162,9 +162,18 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
                             spec={"_launch_dir": current_dir,
                                   "_category": number_nodes})
 
+    # Set up a clear name for the workflow
+    cathode = LiRichCathode.from_file(structure_file)
+    workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
+
+    if hse_calculation:
+        workflow_name += " HSE06 "
+    else:
+        workflow_name += " PBE+U "
+
     # Create the workflow
     workflow = Workflow(fireworks=[scf_firework, ],
-                        name=structure_file + " SCF calculation")
+                        name=workflow_name)
 
     LAUNCHPAD.add_wf(workflow)
 

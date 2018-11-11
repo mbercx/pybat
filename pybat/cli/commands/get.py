@@ -5,7 +5,7 @@
 import os
 import pdb
 
-from pybat.core import Cathode
+from pybat.core import Cathode, DimerNEBAnalysis
 from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.analysis.transition_state import NEBAnalysis
@@ -127,26 +127,17 @@ def get_barrier(directory, method="pymatgen"):
         #  contains the dimer indices, delimited by '_', and with no other
         # numbers delimited in such a way present.
 
-        raise NotImplementedError
-        #TODO
+        if os.path.exists(os.path.join(directory, "neb_data.json")):
+            neb = DimerNEBAnalysis.from_file(
+                os.path.join(directory, "neb_data.json")
+            )
+        else:
+            neb = DimerNEBAnalysis.from_dir(directory)
+            neb.to(os.path.join(directory, "neb_data.json"))
 
-        # dimer_indices = tuple(
-        #     [int(el) for el in os.getcwd().split('/')[-1].split('_')
-        #      if all([is_number(c) for c in el])]
-        # )
-        #
-        # image_dirs = [file for file in os.listdir(".") if len(file) == 2
-        #               and os.path.isdir(file)]
-        #
-        # data = [
-        #     (Structure.from_file(
-        #         os.path.join(image_dir, "final_cathode.json")
-        #     ).distance_matrix[dimer_indices],
-        #      Outcar(os.path.join(image_dir, "OUTCAR")).final_energy)
-        #     for image_dir in image_dirs
-        # ]
-        #
-        # sorted(data, key = lambda l : l[0])
+        neb.setup_spline({"saddle_point": "zero_slope"})
+        neb.get_plot(label_barrier=False).show()
+
 
 def get_voltage(directory, calculation="relax", functional=None):
     """
