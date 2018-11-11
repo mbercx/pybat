@@ -169,7 +169,7 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
     if hse_calculation:
         workflow_name += " HSE06 "
     else:
-        workflow_name += " PBE+U "
+        workflow_name += " PBE+U " + str(dftu_values)
 
     # Create the workflow
     workflow = Workflow(fireworks=[scf_firework, ],
