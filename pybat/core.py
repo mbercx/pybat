@@ -6,6 +6,7 @@ import itertools
 import math
 import json
 import os
+import pdb
 
 import numpy as np
 
@@ -18,6 +19,14 @@ from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.util.plotting import pretty_plot
+
+scipy_old_piecewisepolynomial = True
+try:
+    from scipy.interpolate import PiecewisePolynomial
+except ImportError:
+    from scipy.interpolate import CubicSpline
+
+    scipy_old_piecewisepolynomial = False
 
 """
 Module that contains tools to represent and calculate the properties of
@@ -1068,7 +1077,7 @@ class DimerNEBAnalysis(NEBAnalysis):
         super().__init__(
             r, energies, forces, structures, spline_options
         )
-        self._dimer_indices = dimer_indices
+        self._dimer_indices = tuple(dimer_indices)
 
     @property
     def dimer_indices(self):
@@ -1077,6 +1086,11 @@ class DimerNEBAnalysis(NEBAnalysis):
     @dimer_indices.setter
     def dimer_indices(self, indices):
         self._dimer_indices = indices
+
+    @property
+    def dimer_distances(self):
+        return np.array([s.distance_matrix[self.dimer_indices]
+                         for s in self.structures])
 
     def as_dict(self):
         """
@@ -1117,8 +1131,8 @@ class DimerNEBAnalysis(NEBAnalysis):
         Returns:
 
         """
-
-        neb = super().from_dir(root_dir, relaxation_dirs, **kwargs)
+        if relaxation_dirs is not None:
+            raise NotImplementedError
 
         indices = tuple(
             [int(el) for el in
@@ -1126,10 +1140,34 @@ class DimerNEBAnalysis(NEBAnalysis):
              if all([is_number(c) for c in el])]
         )
 
-        dimer_neb = DimerNEBAnalysis(r=neb.r, energies=neb.energies,
-                                     forces=neb.forces,
-                                     structures=neb.structure,
-                                     dimer_indices=indices)
+        neb = super().from_dir(root_dir, relaxation_dirs, **kwargs)
+
+        # Because the dimer indices are based on the internal indices of the
+        # Cathode object, we need to load the cathode json files to
+        # determine the distance between the dimers properly.
+        image_dirs = [file for file in os.listdir(root_dir)
+                      if len(file) == 2 and os.path.isdir(file)]
+
+        structures = [
+            Cathode.from_file(os.path.join(image_dir, "final_cathode.json"))
+            for image_dir in image_dirs
+        ]
+
+        # Sort the data according to the directory numbers
+        structure_data = sorted(
+            zip(image_dirs, structures),
+            key=lambda z: int(z[0])
+        )
+
+        dimer_neb = DimerNEBAnalysis(
+            r=neb.r,
+            energies=neb.energies,
+            forces=neb.forces,
+            structures=[el[1] for el in structure_data],
+            spline_options=neb.spline_options,
+            dimer_indices=indices,
+        )
+
         return dimer_neb
 
     @classmethod
@@ -1165,10 +1203,11 @@ class DimerNEBAnalysis(NEBAnalysis):
     def from_dict(cls, d):
 
         return cls(r=d['r'], energies=d["energies"], forces=d["forces"],
-                   structures=d["structures"],
+                   structures=[LiRichCathode.from_dict(structure) for
+                               structure in d["structures"]],
                    dimer_indices=d["dimer_indices"])
 
-    def get_plot(self,  label_barrier=True):
+    def get_plot(self, normalize_rnx_coodinate=True, label_barrier=True):
         """
         Returns the NEB plot. Uses Henkelman's approach of spline fitting
         each section of the reaction path based on tangent force and energies.
@@ -1181,30 +1220,30 @@ class DimerNEBAnalysis(NEBAnalysis):
         """
         plt = pretty_plot(12, 8)
 
-        x = np.ndarray(
-            [s.distance_matrix[self.dimer_indices] for s in self.structures]
-        )
-
-        y = self.spline(x) * 1000
+        spline_x = np.arange(0, np.max(self.r), 0.01)
+        spline_y = self.spline(spline_x) * 1000
 
         relative_energies = self.energies - self.energies[0]
 
-        plt.plot(self.r , relative_energies * 1000, 'ro',
-                 x, y, 'k-', linewidth=2, markersize=10)
+        plt.plot(self.r, relative_energies * 1000, 'ro',
+                 spline_x, spline_y, 'k-',
+                 linewidth=2,
+                 markersize=10)
 
-        plt.xlabel("Dimer Distance")
+        plt.xlabel("O-O Distance ($\mathrm{\AA}$)")
+        plt.xticks(self.r[::2], [str(round(d, 2)) for d in
+                                self.dimer_distances[::2]])
         plt.ylabel("Energy (meV)")
-        plt.ylim((np.min(y) - 10, np.max(y) * 1.02 + 20))
+        plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
 
         if label_barrier:
-            data = zip(x * scale, y)
+            data = zip(spline_x, spline_y)
             barrier = max(data, key=lambda d: d[1])
             plt.plot([0, barrier[0]], [barrier[1], barrier[1]], 'k--')
-            plt.annotate('%.0f meV' % (np.max(y) - np.min(y)),
+            plt.annotate('%.0f meV' % (np.max(spline_y) - np.min(spline_y)),
                          xy=(barrier[0] / 2, barrier[1] * 1.02),
                          xytext=(barrier[0] / 2, barrier[1] * 1.02),
                          horizontalalignment='center')
-
 
         plt.tight_layout()
         return plt

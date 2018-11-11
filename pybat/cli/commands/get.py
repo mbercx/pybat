@@ -148,9 +148,6 @@ def get_barrier(directory, method="pymatgen"):
         #
         # sorted(data, key = lambda l : l[0])
 
-
-
-
 def get_voltage(directory, calculation="relax", functional=None):
     """
     Calculate the voltage of a battery consisting of a cathode specified by the
