@@ -133,7 +133,7 @@ def get_barrier(directory, method="pymatgen"):
             )
         else:
             neb = DimerNEBAnalysis.from_dir(directory)
-            neb.to(os.path.join(directory, "neb_data.json"))
+            neb.to("json", os.path.join(directory, "neb_data.json"))
 
         neb.setup_spline({"saddle_point": "zero_slope"})
         neb.get_plot(label_barrier=False).show()
