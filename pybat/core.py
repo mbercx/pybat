@@ -1225,8 +1225,8 @@ class DimerNEBAnalysis(NEBAnalysis):
 
         relative_energies = self.energies - self.energies[0]
 
-        plt.plot(self.r, relative_energies * 1000, 'ro',
-                 spline_x, spline_y, 'k-',
+        plt.plot(spline_x, spline_y, 'k--',
+                 self.r, relative_energies * 1000, 'ro',
                  linewidth=2,
                  markersize=10)
 

@@ -1,3 +1,5 @@
+README.md
+setup.py
 pybat/__init__.py
 pybat/core.py
 pybat/sets.py
