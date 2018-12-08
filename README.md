@@ -1,2 +1,2 @@
 # pybat
-Package with cli tools to quickly manipulate structure files and set up NEB calculations for research on battery cathodes.
+Package with tools to quickly set up calculations and workflows to study materials for application as battery cathodes. Defines a `Cathode` object, a subclass of `pymatgen.core.Structure`, with several useful methods for manipulating cathode structures. The `LiRichCathode` object was designed with studying dimer formation in Li-Rich cathodes in mind. Based on the powerful [`fireworks`](https://materialsproject.github.io/fireworks/) package, pybat offers several command line interface commands for setting up calculations for research on battery cathodes. Currently still heavily in development!
