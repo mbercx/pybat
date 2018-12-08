@@ -240,9 +240,18 @@ def relax_workflow(structure_file, directory="", is_metal=False,
                               spec={"_launch_dir": current_dir,
                                     "_category": number_nodes})
 
+    # Set up a clear name for the workflow
+    cathode = LiRichCathode.from_file(structure_file)
+    workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
+
+    if hse_calculation:
+        workflow_name += " HSE06 "
+    else:
+        workflow_name += " PBE+U " + str(dftu_values)
+
     # Create the workflow
     workflow = Workflow(fireworks=[relax_firework, ],
-                        name=structure_file + " Geometry optimization")
+                        name=workflow_name)
 
     LAUNCHPAD.add_wf(workflow)
 
