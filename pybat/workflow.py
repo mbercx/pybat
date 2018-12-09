@@ -132,6 +132,9 @@ def check_pulay(directory, in_custodian, number_nodes, tol=1e-2):
         return FWAction()
 
     else:
+        print("Lattice vectors have changed significantly during geometry optimization. Performing "
+              "another full geometry optimization to make sure there were no Pulay stresses present.")
+
         # Create the ScriptTask that copies the CONTCAR to the POSCAR
         copy_contcar = ScriptTask.from_str(
             "cp " + os.path.join(directory, "CONTCAR") + " " + os.path.join(directory, "POSCAR")
@@ -272,6 +275,8 @@ def relax_workflow(structure_file, directory="", is_metal=False,
         else:
             directory = os.path.join(current_dir, "dftu_relax")
             number_nodes = "1node"
+    else:
+        directory = os.path.join(current_dir, directory)
 
     # Create the PyTask that sets up the calculation
     setup_relax = PyTask(
