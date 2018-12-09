@@ -18,7 +18,7 @@ from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, \
     UnconvergedErrorHandler
 from custodian.vasp.jobs import VaspJob
-from fireworks import Firework, LaunchPad, PyTask, Workflow
+from fireworks import Firework, LaunchPad, PyTask, Workflow, FWAction, ScriptTask
 
 """
 Workflow setup for the pybat package.
@@ -103,6 +103,67 @@ def run_custodian(directory):
 
     c = Custodian(handlers, jobs, max_errors=10)
     c.run()
+
+
+def check_pulay(directory, in_custodian, number_nodes, tol=1e-2):
+    """
+    Check if the lattice vectors of a structure have changed significantly during the geometry
+    optimization, which could indicate that there where Pulay stresses present. If so, start a new
+    geometry optimization with the final structure.
+
+    Returns:
+        FWAction
+
+    """
+    # Check if the lattice vectors have changed significantly
+
+    initial_cathode = LiRichCathode.from_file(
+        os.path.join(directory, "POSCAR")
+    )
+    final_cathode = LiRichCathode.from_file(
+        os.path.join(directory, "CONTCAR")
+    )
+
+    sum_differences = np.linalg.norm(
+        initial_cathode.lattice.matrix - final_cathode.lattice.matrix
+    )
+
+    if sum_differences < tol:
+        return FWAction()
+
+    else:
+        # Create the ScriptTask that copies the CONTCAR to the POSCAR
+        copy_contcar = ScriptTask.from_str(
+            "cp " + os.path.join(directory, "CONTCAR") + " " + os.path.join(directory, "POSCAR")
+        )
+
+        # Create the PyTask that runs the calculation
+        if in_custodian:
+            run_vasp = PyTask(
+                func="pybat.workflow.run_custodian",
+                kwargs={"directory": directory}
+            )
+        else:
+            run_vasp = PyTask(
+                func="pybat.workflow.run_vasp",
+                kwargs={"directory": directory}
+            )
+
+        # Create the PyTask that check the Pulay stresses again
+        pulay_task = PyTask(
+            func="pybat.workflow.check_pulay",
+            kwargs={"directory": directory,
+                    "in_custodian": in_custodian,
+                    "number_nodes": number_nodes}
+        )
+
+        # Combine the two FireTasks into one FireWork
+        relax_firework = Firework(tasks=[copy_contcar, run_vasp],
+                                  name="Pulay Step",
+                                  spec={"_launch_dir": directory,
+                                        "_category": number_nodes})
+
+        return FWAction(additions=relax_firework)
 
 
 def scf_workflow(structure_file, directory="", write_chgcar=False,
@@ -234,8 +295,16 @@ def relax_workflow(structure_file, directory="", is_metal=False,
             kwargs={"directory": directory}
         )
 
-    # Combine the two FireTasks into one FireWork
-    relax_firework = Firework(tasks=[setup_relax, run_vasp],
+    # Create the PyTask that check the Pulay stresses
+    pulay_task = PyTask(
+        func="pybat.workflow.check_pulay",
+        kwargs={"directory": directory,
+                "in_custodian": in_custodian,
+                "number_nodes": number_nodes}
+    )
+
+    # Combine the FireTasks into one FireWork
+    relax_firework = Firework(tasks=[setup_relax, run_vasp, pulay_task],
                               name="Geometry optimization",
                               spec={"_launch_dir": current_dir,
                                     "_category": number_nodes})
