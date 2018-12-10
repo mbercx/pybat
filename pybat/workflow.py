@@ -397,7 +397,14 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
             kwargs={"directory": os.path.join(dimer_dir, "final")}
         )
 
-    relax_firework = Firework(tasks=[setup_transition, run_relax],
+    # Extract the final cathode from the geometry optimization
+    get_cathode = PyTask(
+        func="pybat.cli.commands.get.get_cathode",
+        kwargs={"directory": dimer_dir,
+                "write_cif": True,}
+    )
+
+    relax_firework = Firework(tasks=[setup_transition, run_relax, get_cathode],
                               name="Dimer Geometry optimization",
                               spec={"_launch_dir": dimer_dir,
                                     "_category": "2nodes"})
@@ -413,10 +420,12 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     else:
         scf_dir = os.path.join( dimer_dir, "pbe_scf")
 
+    final_cathode = os.path.join(dimer_dir, "final_cathode.json")
+
     # Create the PyTask that sets up the SCF calculation
     setup_scf = PyTask(
         func="pybat.cli.commands.setup.scf",
-        kwargs={"structure_file": structure_file,
+        kwargs={"structure_file": final_cathode,
                 "calculation_dir": scf_dir,
                 "dftu_values": dftu_values,
                 "hse_calculation": hse_calculation}
@@ -437,8 +446,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     # Combine the two FireTasks into one FireWork
     scf_firework = Firework(tasks=[setup_scf, run_vasp],
                             name="SCF calculation",
-                            spec={"_launch_dir": current_dir,
-                                  "_category": number_nodes})
+                            spec={"_launch_dir": dimer_dir,
+                                  "_category": "1node"})
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + dimer_dir.split("/")[-1])
