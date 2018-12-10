@@ -121,7 +121,7 @@ def primitive_structure(structure_file, fmt="json"):
     Returns:
 
     """
-    cathode = Cathode.from_file(structure_file)
+    cathode  = Cathode.from_file(structure_file)
     spg = SpacegroupAnalyzer(cathode)
 
     prim_structure_file = structure_file.split(".")[0] + "_conv" + "." + fmt

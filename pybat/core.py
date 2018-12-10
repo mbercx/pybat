@@ -47,8 +47,8 @@ __date__ = "May 2018"
 # the basis of the dimer definition as well as it's environment.
 
 # Values for determining the neighbors of a site in a voronoi decomposition
-VORONOI_DIST_FACTOR = 1.3
-VORONOI_ANG_FACTOR = 0.7
+VORONOI_DIST_FACTOR = 1.4
+VORONOI_ANG_FACTOR = 0.6
 
 # Tuple of possible cations. This idea should work fine, considering the
 # fact that these cation elements rarely serve another purpose than being
