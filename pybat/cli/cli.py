@@ -309,7 +309,7 @@ def conv(structure_file, file_format):
 
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--file_format", "-F", default="cif")
+@click.option("--file_format", "-F", default="json")
 def prim(structure_file, file_format):
     """
     Convert a structure into the primitive unit cell.
@@ -324,7 +324,7 @@ def prim(structure_file, file_format):
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("cell", nargs=1)
 @click.argument("structure_file", nargs=1)
-@click.option("--file_format", "-F", default="cif")
+@click.option("--file_format", "-F", default="json")
 def supercell(cell, structure_file, file_format):
     """
     Convert a structure to a supercell.

@@ -94,7 +94,7 @@ def show_path(directory, filename):
     transition_structure.to("cif", filename + ".cif")
 
 
-def conventional_structure(structure_file, fmt="cif"):
+def conventional_structure(structure_file, fmt="json"):
     """
 
     Args:
@@ -104,14 +104,14 @@ def conventional_structure(structure_file, fmt="cif"):
     Returns:
 
     """
-    structure = Structure.from_file(structure_file)
-    spg = SpacegroupAnalyzer(structure)
+    cathode = Cathode.from_file(structure_file)
+    spg = SpacegroupAnalyzer(cathode)
 
     conv_structure_file = structure_file.split(".")[0] + "_conv" + "." + fmt
     spg.get_conventional_standard_structure().to(fmt, conv_structure_file)
 
 
-def primitive_structure(structure_file, fmt="cif"):
+def primitive_structure(structure_file, fmt="json"):
     """
 
     Args:
@@ -121,8 +121,8 @@ def primitive_structure(structure_file, fmt="cif"):
     Returns:
 
     """
-    structure = Structure.from_file(structure_file)
-    spg = SpacegroupAnalyzer(structure)
+    cathode = Cathode.from_file(structure_file)
+    spg = SpacegroupAnalyzer(cathode)
 
     prim_structure_file = structure_file.split(".")[0] + "_conv" + "." + fmt
     spg.get_primitive_standard_structure().to(fmt, prim_structure_file)
