@@ -62,6 +62,16 @@ else:
                             "in order to set up the configuration for "
                             "the workflows.")
 
+# TODO Create methods that return FireWorks, so the workflow methods can be modularized
+# At this point, it's becoming clear that the workflows are getting more and more extensive, and are simply
+# becoming less easy to grasp. It might be useful to create methods that set up the FireWorks (e.g. for a
+# relaxation, SCF calculations), and then call upon these methods in the workflow methods.
+
+# TODO Generale the functional input
+# Currently, we're still using hse_calculation, and more recently dftu_values, to determine the functional.
+# It would probably be better to simply have some kind of dictionary input that determines the functional
+# and parameters (if any), since soon we'll also be using SCAN. We don't want to have too many input
+# arguments for the various functions.
 
 def run_vasp(directory):
     """
@@ -358,18 +368,22 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
             should be run within a Custodian. Defaults to False.
     """
 
-    # Let the user define a dimer
+    # Let the user define a dimer, unless one is provided
     dimer_dir = define_dimer(structure_file=structure_file,
                              dimer_indices=dimer_indices,
                              distance=distance,
                              write_cif=True)
 
-    # Set up the transition calculation
-    transition(directory=dimer_dir,
-               is_metal=is_metal,
-               is_migration=False,
-               dftu_values=dftu_values,
-               hse_calculation=hse_calculation)
+    # Set up the FireTask that sets up the transition calculation
+    setup_transition = PyTask(
+        func="pybat.cli.commands.setup.transition",
+        kwargs={"directory": dimer_dir,
+                "is_metal": is_metal,
+                "is_migration": False,
+                "dftu_values": dftu_values,
+                "hse_calculation": hse_calculation}
+
+    )
 
     # Set up the FireTask for the custodian run, if requested
     if in_custodian:
@@ -383,10 +397,48 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
             kwargs={"directory": os.path.join(dimer_dir, "final")}
         )
 
-    relax_firework = Firework(tasks=[run_relax],
+    relax_firework = Firework(tasks=[setup_transition, run_relax],
                               name="Dimer Geometry optimization",
                               spec={"_launch_dir": dimer_dir,
                                     "_category": "2nodes"})
+
+    # Set up the SCF calculation following the relaxation, in order to get an accurate total energy
+    # Create the PyTask that sets up the calculation
+    if dftu_values:
+        scf_dir = os.path.join(
+            dimer_dir, "dftu_".join([k + str(d[k]) for k in dftu_values.keys()]).join("_scf")
+        )
+    elif hse_calculation:
+        scf_dir = os.path.join( dimer_dir, "hse_scf")
+    else:
+        scf_dir = os.path.join( dimer_dir, "pbe_scf")
+
+    # Create the PyTask that sets up the SCF calculation
+    setup_scf = PyTask(
+        func="pybat.cli.commands.setup.scf",
+        kwargs={"structure_file": structure_file,
+                "calculation_dir": scf_dir,
+                "dftu_values": dftu_values,
+                "hse_calculation": hse_calculation}
+    )
+
+    # Create the PyTask that runs the SCF calculation
+    if in_custodian:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_custodian",
+            kwargs={"directory": scf_dir}
+        )
+    else:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_vasp",
+            kwargs={"directory": scf_dir}
+        )
+
+    # Combine the two FireTasks into one FireWork
+    scf_firework = Firework(tasks=[setup_scf, run_vasp],
+                            name="SCF calculation",
+                            spec={"_launch_dir": current_dir,
+                                  "_category": number_nodes})
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + dimer_dir.split("/")[-1])
