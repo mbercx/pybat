@@ -10,6 +10,8 @@ from pymatgen.core import Structure
 from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
+from pybat.core import Cathode
+
 """
 Utility commands for the pybat package.
 
@@ -126,8 +128,12 @@ def primitive_structure(structure_file, fmt="cif"):
     spg.get_primitive_standard_structure().to(fmt, prim_structure_file)
 
 
-def make_supercell(structure_file, supercell, fmt="cif"):
+def make_supercell(structure_file, supercell, fmt="json"):
     """
+    Make a supercell of the Structure in the structure file.
+
+    #TODO Assumes the new structure must be of the same
+    class as the original, i.e. a Cathode is transformed into another cathode.
 
     Args:
         structure_file:
@@ -137,13 +143,16 @@ def make_supercell(structure_file, supercell, fmt="cif"):
     Returns:
 
     """
+
+
     # Turn into list TODO add checks
     supercell_list = [int(number) for number in supercell]
 
-    structure = Structure.from_file(structure_file)
-    structure.make_supercell(supercell_list)
+    # Load the structure as a Cathode
+    cathode = Cathode.from_file(structure_file)
+    cathode.make_supercell(supercell_list)
 
     super_structure_file = structure_file.split(".")[0] + "_" + supercell\
         + "." + fmt
 
-    structure.to(fmt, super_structure_file)
+    cathode.to(fmt, super_structure_file)
