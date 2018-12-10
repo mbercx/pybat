@@ -295,7 +295,7 @@ def showpath(directory, filename):
 
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--file_format", "-F", default="cif")
+@click.option("--file_format", "-F", default="json")
 def conv(structure_file, file_format):
     """
     Convert a structure into the conventional unit cell.
