@@ -384,7 +384,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                 "dftu_values": dftu_values,
                 "hse_calculation": hse_calculation}
 
-    )
+    ) # Random Comment
 
     # Set up the FireTask for the custodian run, if requested
     if in_custodian:
