@@ -420,7 +420,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     else:
         scf_dir = os.path.join( dimer_dir, "pbe_scf")
 
-    final_cathode = os.path.join(dimer_dir, "final_cathode.json")
+    final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
 
     # Create the PyTask that sets up the SCF calculation
     setup_scf = PyTask(
@@ -450,7 +450,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                                   "_category": "1node"})
 
     workflow = Workflow(fireworks=[relax_firework, scf_firework],
-                        name=structure_file + dimer_dir.split("/")[-1])
+                        name=structure_file + dimer_dir.split("/")[-1],
+                        links_dict={"relax_firework": [scf_firework]})
 
     LAUNCHPAD.add_wf(workflow)
 
