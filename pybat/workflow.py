@@ -62,6 +62,7 @@ else:
                             "in order to set up the configuration for "
                             "the workflows.")
 
+
 # TODO Create methods that return FireWorks, so the workflow methods can be modularized
 # At this point, it's becoming clear that the workflows are getting more and more extensive, and are simply
 # becoming less easy to grasp. It might be useful to create methods that set up the FireWorks (e.g. for a
@@ -401,7 +402,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     get_cathode = PyTask(
         func="pybat.cli.commands.get.get_cathode",
         kwargs={"directory": os.path.join(dimer_dir, "final"),
-                "write_cif": True,}
+                "write_cif": True, }
     )
 
     relax_firework = Firework(tasks=[setup_transition, run_relax, get_cathode],
@@ -413,12 +414,13 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     # Create the PyTask that sets up the calculation
     if dftu_values:
         scf_dir = os.path.join(
-            dimer_dir, "dftu_".join([k + str(dftu_values[k]) for k in dftu_values.keys()]).join("_scf")
+            dimer_dir, "dftu_" + "".join([k + str(dftu_values[k]) for k in dftu_values.keys()]) +
+                       "_scf"
         )
     elif hse_calculation:
-        scf_dir = os.path.join( dimer_dir, "hse_scf")
+        scf_dir = os.path.join(dimer_dir, "hse_scf")
     else:
-        scf_dir = os.path.join( dimer_dir, "pbe_scf")
+        scf_dir = os.path.join(dimer_dir, "pbe_scf")
 
     final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
 
