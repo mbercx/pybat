@@ -400,7 +400,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     # Extract the final cathode from the geometry optimization
     get_cathode = PyTask(
         func="pybat.cli.commands.get.get_cathode",
-        kwargs={"directory": dimer_dir,
+        kwargs={"directory": os.path.join(dimer_dir, "final"),
                 "write_cif": True,}
     )
 
