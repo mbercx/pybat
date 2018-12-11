@@ -449,7 +449,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                             spec={"_launch_dir": dimer_dir,
                                   "_category": "1node"})
 
-    workflow = Workflow(fireworks=[relax_firework],
+    workflow = Workflow(fireworks=[relax_firework, scf_firework],
                         name=structure_file + dimer_dir.split("/")[-1])
 
     LAUNCHPAD.add_wf(workflow)
