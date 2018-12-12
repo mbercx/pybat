@@ -386,7 +386,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     )
 
-    # Set up the FireTask for the custodian run, if requested
+    # Set up the FireTask for the custodian run, if requested (lala)
     if in_custodian:
         run_relax = PyTask(
             func="pybat.workflow.run_custodian",
