@@ -84,6 +84,7 @@ def run_vasp(directory):
         directory (str): Absolute path to the directory in which VASP should be
             run.
     """
+    print(directory)
 
     os.chdir(directory)
     subprocess.call(VASP_RUN_SCRIPT)
