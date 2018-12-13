@@ -93,7 +93,7 @@ def run_vasp(directory, number_nodes):
     number = re.sub('[^0-9]', '', number_nodes)
 
     os.chdir(directory)
-    subprocess.call(VASP_RUN_SCRIPT + " " + str(number_nodes))
+    subprocess.call(VASP_RUN_SCRIPT + " " + number)
 
 
 def run_custodian(directory):
