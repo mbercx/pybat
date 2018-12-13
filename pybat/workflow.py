@@ -88,7 +88,7 @@ def run_vasp(directory, number_nodes):
     Args:
         directory (str): Absolute path to the directory in which VASP should be
             run.
-        number_nodes (float):
+        number_nodes (str):
     """
     # Workaround for making number of nodes work on breniac #TODO
     number = ""
