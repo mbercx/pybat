@@ -92,6 +92,8 @@ def run_vasp(directory, number_nodes):
     """
     number = re.sub('[^0-9]', '', number_nodes)
 
+    print(number)
+
     os.chdir(directory)
     subprocess.call(VASP_RUN_SCRIPT + " " + number)
 
