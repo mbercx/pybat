@@ -99,6 +99,8 @@ def run_vasp(directory, number_nodes):
 
     os.environ["TOTAL_CORES"] = str(int(number) * 28)
 
+    print(VASP_RUN_SCRIPT)
+
     os.chdir(directory)
     subprocess.call(VASP_RUN_SCRIPT)
 
