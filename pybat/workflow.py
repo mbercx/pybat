@@ -88,11 +88,12 @@ def run_vasp(directory, number_nodes):
     Args:
         directory (str): Absolute path to the directory in which VASP should be
             run.
+        number_nodes (int)
     """
     print(directory)
 
     os.chdir(directory)
-    subprocess.call(VASP_RUN_SCRIPT)
+    subprocess.call(VASP_RUN_SCRIPT + str(number_nodes))
 
 
 def run_custodian(directory):
