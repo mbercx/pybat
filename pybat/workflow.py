@@ -2,7 +2,7 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
-import os
+import os, re
 import subprocess
 import shlex
 
@@ -90,10 +90,10 @@ def run_vasp(directory, number_nodes):
             run.
         number_nodes (int)
     """
-    print(directory)
+    number = re.sub('[^0-9]', '', number_nodes)
 
     os.chdir(directory)
-    subprocess.call(VASP_RUN_SCRIPT + str(number_nodes))
+    subprocess.call(VASP_RUN_SCRIPT + " " + str(number_nodes))
 
 
 def run_custodian(directory):
