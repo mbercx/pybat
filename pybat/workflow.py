@@ -68,13 +68,18 @@ else:
 # becoming less easy to grasp. It might be useful to create methods that set up the FireWorks (e.g. for a
 # relaxation, SCF calculations), and then call upon these methods in the workflow methods.
 
-# TODO Generale the functional input
+# TODO Generalize the functional input
 # Currently, we're still using hse_calculation, and more recently dftu_values, to determine the functional.
 # It would probably be better to simply have some kind of dictionary input that determines the functional
 # and parameters (if any), since soon we'll also be using SCAN. We don't want to have too many input
 # arguments for the various functions.
 
-def run_vasp(directory):
+# TODO Fix the custodian issue
+# Currently custodian does not terminate the previous job properly. This may be related to the
+# fact that the vasp run command is called in a script, and so custodian can only terminate the
+# script, not the actual vasp run.
+
+def run_vasp(directory, number_nodes):
     """
     Method that simply runs VASP in the directory that is specified. Mainly
     used to set up a PyTask that uses outputs from PyTasks in previous
@@ -161,7 +166,8 @@ def check_pulay(directory, in_custodian, number_nodes, tol=1e-2):
         else:
             run_vasp = PyTask(
                 func="pybat.workflow.run_vasp",
-                kwargs={"directory": directory}
+                kwargs={"directory": directory,
+                        "number_nodes": number_nodes}
             )
 
         # Create the PyTask that check the Pulay stresses again
@@ -229,7 +235,8 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
     else:
         run_vasp = PyTask(
             func="pybat.workflow.run_vasp",
-            kwargs={"directory": directory}
+            kwargs={"directory": directory,
+                    "number_nodes": number_nodes}
         )
 
     # Combine the two FireTasks into one FireWork
@@ -309,7 +316,8 @@ def relax_workflow(structure_file, directory="", is_metal=False,
     else:
         run_vasp = PyTask(
             func="pybat.workflow.run_vasp",
-            kwargs={"directory": directory}
+            kwargs={"directory": directory,
+                    "number_nodes": number_nodes}
         )
 
     # Create the PyTask that check the Pulay stresses
@@ -370,6 +378,11 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
             should be run within a Custodian. Defaults to False.
     """
 
+    if hse_calculation:
+        number_nodes = "4nodes"
+    else:
+        number_nodes = "1node"
+
     # Let the user define a dimer, unless one is provided
     dimer_dir = define_dimer(structure_file=structure_file,
                              dimer_indices=dimer_indices,
@@ -396,7 +409,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     else:
         run_relax = PyTask(
             func="pybat.workflow.run_vasp",
-            kwargs={"directory": os.path.join(dimer_dir, "final")}
+            kwargs={"directory": os.path.join(dimer_dir, "final"),
+                    "number_nodes": number_nodes}
         )
 
     # Extract the final cathode from the geometry optimization
@@ -443,7 +457,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     else:
         run_vasp = PyTask(
             func="pybat.workflow.run_vasp",
-            kwargs={"directory": scf_dir}
+            kwargs={"directory": scf_dir,
+                    "number_nodes": number_nodes}
         )
 
     # Combine the two FireTasks into one FireWork
@@ -486,6 +501,11 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
             should be run within a Custodian. Defaults to False.
     """
 
+    if hse_calculation:
+        number_nodes = "4nodes"
+    else:
+        number_nodes = "1node"
+
     # TODO Add setup steps to the workflow
     # In case adjustments need to made to the setup of certain calculations,
     #  after which the calculation needs to be rerun, not adding the setup
@@ -512,7 +532,8 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     else:
         run_relax = PyTask(
             func="pybat.workflow.run_vasp",
-            kwargs={"directory": os.path.join(migration_dir, "final")}
+            kwargs={"directory": os.path.join(migration_dir, "final"),
+                    "number_nodes": number_nodes}
         )
 
     relax_firework = Firework(tasks=[run_relax],
