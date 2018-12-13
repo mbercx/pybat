@@ -88,11 +88,16 @@ def run_vasp(directory, number_nodes):
     Args:
         directory (str): Absolute path to the directory in which VASP should be
             run.
-        number_nodes (int)
+        number_nodes (float):
     """
-    number = re.sub('[^0-9]', '', number_nodes)
+    # Workaround for making number of nodes work on breniac #TODO
+    number = ""
 
-    print(number)
+    for c in number_nodes:
+        if c.isalnum():
+            number += c
+
+    os.environ["TOTAL_CORES"] = str(int(number) * 28)
 
     os.chdir(directory)
     subprocess.call(VASP_RUN_SCRIPT + " " + number)
