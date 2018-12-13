@@ -271,7 +271,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
     """
 
     # Set up the directory in which to perform the calculation
-    current_dir = os.environ["PWD"]
+    current_dir = os.getcwd()
 
     if hse_calculation:
         number_nodes = "4nodes"
