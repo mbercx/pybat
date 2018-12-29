@@ -88,7 +88,8 @@ def run_vasp(directory, number_nodes):
     Args:
         directory (str): Absolute path to the directory in which VASP should be
             run.
-        number_nodes (str):
+        number_nodes (str):  #TODO
+
     """
     # Workaround for making number of nodes work on breniac #TODO
     number = ""
@@ -133,11 +134,22 @@ def run_custodian(directory):
     c.run()
 
 
-def check_pulay(directory, in_custodian, number_nodes, tol=1e-2):
+def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
     """
-    Check if the lattice vectors of a structure have changed significantly during the geometry
-    optimization, which could indicate that there where Pulay stresses present. If so, start a new
-    geometry optimization with the final structure.
+    Check if the lattice vectors of a structure have changed significantly during
+    the geometry optimization, which could indicate that there where Pulay stresses
+    present. If so, start a new geometry optimization with the final structure.
+
+    Args:
+        directory (str): Directory in which the geometry optimization calculation
+            was run.
+        in_custodian (bool): Flag that indicates wheter the calculation should be
+            run inside a Custodian.
+        number_nodes (): #TODO
+        tol (float): Tolerance that indicates the maximum change in norm for the
+            matrix defined by the cartesian coordinates of the lattice vectors.
+            If the norm changes more than the tolerance, another geometry optimization
+            is performed starting from the final geometry.
 
     Returns:
         FWAction
@@ -201,13 +213,24 @@ def check_pulay(directory, in_custodian, number_nodes, tol=1e-2):
 def scf_workflow(structure_file, directory="", write_chgcar=False,
                  dftu_values=None, hse_calculation=False, in_custodian=False):
     """
+    Set up a self consistent field calculation (SCF) workflow and add it to the
+    launchpad of the mongoDB server defined in the config file.
 
     Args:
-        structure_file:
-        hse_calculation:
-        in_custodian:
+        structure_file (str): Path to the geometry file of the structure.
+        directory (str): Directory in which the SCF calculation should be performed.
+        write_chgcar (bool): Flag that indicates whether the CHGCAR file should
+            be written.
+        dftu_values (dict): Dictionary that contains the effective U values that
+            should be used for the calculation for the various elements in the
+            structure.
+        hse_calculation (bool): Flag that indicates whether the HSE06 flavour of
+            hybrid functional should be used. # TODO Add settings option
+        in_custodian (bool): Flag that indicates wheter the calculation should be
+            run inside a Custodian.
 
     Returns:
+        None
 
     """
 
@@ -276,16 +299,25 @@ def relax_workflow(structure_file, directory="", is_metal=False,
                    dftu_values=False, hse_calculation=False,
                    in_custodian=False):
     """
+    Set up a geometry optimization workflow and add it to the launchpad of the
+    mongoDB server defined in the config file.
 
     Args:
-        structure_file:
-        directory:
-        is_metal:
-        dftu_values:
-        hse_calculation:
-        in_custodian:
+        structure_file (str): Path to the geometry file of the structure.
+        directory (str): Directory in which the SCF calculation should be performed.
+        is_metal (bool): Flag that indicates whether the material for which the
+            geometry optimization should be performed is metallic. Determines the
+            smearing method used.
+        dftu_values (dict): Dictionary that contains the effective U values that
+            should be used for the calculation for the various elements in the
+            structure.
+        hse_calculation (bool): Flag that indicates whether the HSE06 flavour of
+            hybrid functional should be used. # TODO Add settings option
+        in_custodian (bool): Flag that indicates wheter the calculation should be
+            run inside a Custodian.
 
     Returns:
+        None
 
     """
 
