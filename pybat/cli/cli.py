@@ -30,6 +30,23 @@ def main():
 #TODO Add checks for U-value input
 
 ##########
+# CONFIG #
+##########
+
+@main.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--settings", "-s", default="all",
+              help="Choice of settings to adjust. Defaults to \"all\", "
+                   "but the user can also choose to only change the settings "
+                   "for the \"server\", or the \"workflow\".")
+def config(settings):
+    """
+    Configure the workflows server and script.
+
+    """
+    from pybat.cli.commands.config import base
+    base(settings=settings)
+
+##########
 # DEFINE #
 ##########
 
@@ -263,20 +280,6 @@ def util():
 
     """
     pass
-
-
-@util.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--settings", "-s", default="all",
-              help="Choice of settings to adjust. Defaults to \"all\", "
-                   "but the user can also choose to only change the settings "
-                   "for the \"server\", or the \"workflow\".")
-def config(settings):
-    """
-    Configure the workflows server and script.
-
-    """
-    from pybat.cli.commands.util import config
-    config(settings=settings)
 
 
 @util.command(context_settings=CONTEXT_SETTINGS)
