@@ -50,14 +50,23 @@ def base(settings="all"):
                                                   "username: ")
         config_dict["SERVER"]["password"] = input("Please provide your "
                                                   "password: ")
+        #TODO Add server check
 
     if settings in ["workflow", "all"]:
+
+        script_path = ""
         script_path = input(
             "Please provide the full path to the workflow script: "
         )
-        if not os.path.exists(script_path):
-            raise FileNotFoundError("Could not find suggested path.")
-        elif not os.path.isabs(script_path):
+        while not os.path.exists(script_path):
+
+            script_path = input(
+                "Provided path does not exist. Please provide the full path to the "
+                "workflow script again: "
+            )
+
+        if not os.path.isabs(script_path):
+
             print("Provided path is not an absolute path. Finding absolute "
                   "path for proper configuration of the workflows...")
             script_path = os.path.abspath(script_path)
