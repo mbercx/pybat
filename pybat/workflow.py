@@ -95,16 +95,16 @@ def run_vasp(directory, number_nodes):
 
     """
     # Workaround for making number of nodes work on breniac #TODO
-    number = ""
+    # number = ""
+    #
+    # for c in number_nodes:
+    #     if c.isalnum():
+    #         number += c
 
-    for c in number_nodes:
-        if c.isalnum():
-            number += c
+    #os.environ["TOTAL_CORES"] = str(int(number) * 28)
 
-    os.environ["TOTAL_CORES"] = str(int(number) * 28)
-
-    with open("lala", "w") as file:
-        file.write(VASP_RUN_SCRIPT)
+    # with open("lala", "w") as file:
+    #     file.write(VASP_RUN_SCRIPT)
 
     os.chdir(directory)
     subprocess.call(VASP_RUN_SCRIPT)
