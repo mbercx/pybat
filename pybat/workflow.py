@@ -474,12 +474,14 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                               spec={"_launch_dir": dimer_dir,
                                     "_category": "2nodes"})
 
-    # Set up the SCF calculation following the relaxation, in order to get an accurate total energy
+    # Set up the SCF calculation following the relaxation, in order to get an accurate
+    # total energy
     # Create the PyTask that sets up the calculation
     if dftu_values:
         scf_dir = os.path.join(
-            dimer_dir, "dftu_" + "".join([k + str(dftu_values[k]) for k in dftu_values.keys()]) +
-                       "_scf"
+            dimer_dir,
+            "dftu_" + "".join([k + str(dftu_values[k]) for k in dftu_values.keys()]) +
+            "_scf"
         )
     elif hse_calculation:
         scf_dir = os.path.join(dimer_dir, "hse_scf")
