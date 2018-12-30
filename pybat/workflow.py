@@ -101,8 +101,6 @@ def run_vasp(directory, number_nodes):
     #     if c.isalnum():
     #         number += c
 
-    #os.environ["TOTAL_CORES"] = str(int(number) * 28)
-
     # with open("lala", "w") as file:
     #     file.write(VASP_RUN_SCRIPT)
 
