@@ -78,7 +78,7 @@ def script(script_path=None):
 
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as config_file:
-            config_dict = yaml.load(config_file.read())
+            config_dict = dict(yaml.load(config_file.read()))
     else:
         config_dict = {"SERVER": {}, "WORKFLOW": {}}
 
