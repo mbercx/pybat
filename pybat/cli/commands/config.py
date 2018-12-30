@@ -23,13 +23,13 @@ __date__ = "May 2018"
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
 
 
-def lpad(filename=None):
+def lpad(launchpad_file=None):
     """
     Script to set up the configuration of the launchpad for accessing the workflow
     server.
 
     Args:
-        filename (str): my_launchpad.yaml file from which to load the mongoDB database
+        launchpad_file (str): my_launchpad.yaml file from which to load the mongoDB database
             details.
 
     Returns:
@@ -45,8 +45,8 @@ def lpad(filename=None):
     else:
         config_dict = {"SERVER": {}, "WORKFLOW": {}}
 
-    if filename:
-        with open(filename, 'r') as launchpad_file:
+    if launchpad_file:
+        with open(launchpad_file, 'r') as launchpad_file:
             config_dict.update(yaml.load(launchpad_file.read()))
     else:
         config_dict["SERVER"]["host"] = input("Please provide the server "

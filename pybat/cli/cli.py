@@ -33,18 +33,28 @@ def main():
 # CONFIG #
 ##########
 
-@main.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--settings", "-s", default="all",
-              help="Choice of settings to adjust. Defaults to \"all\", "
-                   "but the user can also choose to only change the settings "
-                   "for the \"server\", or the \"workflow\".")
+
+@main.group(context_settings=CONTEXT_SETTINGS)
 def config(settings):
     """
     Configure the workflows server and script.
 
     """
-    from pybat.cli.commands.config import base
-    base(settings=settings)
+    pass
+
+
+@config.command(context_settings=CONTEXT_SETTINGS)
+@click.option("-l", "--launchpad_file", default="")
+def lpad(launchpad_file):
+    """
+    Configure the workflows server.
+
+    """
+    if launchpad_file == "":
+        launchpad_file = None
+    from pybat.cli.commands.config import lpad
+    lpad(launchpad_file=launchpad_file)
+
 
 ##########
 # DEFINE #
