@@ -82,6 +82,8 @@ def script(script_path=None):
     else:
         config_dict = {"SERVER": {}, "WORKFLOW": {}}
 
+    print(config_dict)
+
     if not script_path:
         script_path = input(
             "Please provide the full path to the workflow script: "
