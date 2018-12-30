@@ -99,6 +99,9 @@ def script(script_path=None):
                   "path for proper configuration of the workflows...")
             script_path = os.path.abspath(script_path)
 
+    else:
+        script_path = os.path.abspath(script_path)
+
     config_dict["WORKFLOW"]["script_path"] = script_path
 
     with Path(CONFIG_FILE) as config_file:
