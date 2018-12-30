@@ -22,6 +22,49 @@ __date__ = "May 2018"
 # Load the workflow configuration
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
 
+
+def lpad(filename=None):
+    """
+    Script to set up the configuration of the launchpad for accessing the workflow
+    server.
+
+    Args:
+        filename (str): my_launchpad.yaml file from which to load the mongoDB database
+            details.
+
+    Returns:
+        None
+
+    """
+    yaml = YAML()
+    yaml.default_flow_style = False
+
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as config_file:
+            config_dict = yaml.load(config_file.read())
+    else:
+        config_dict = {"SERVER": {}, "WORKFLOW": {}}
+
+    if filename:
+        with open(filename, 'r') as launchpad_file:
+            config_dict.update(yaml.load(launchpad_file.read()))
+    else:
+        config_dict["SERVER"]["host"] = input("Please provide the server "
+                                              "host: ")
+        config_dict["SERVER"]["port"] = input("Please provide the port "
+                                              "number: ")
+        config_dict["SERVER"]["name"] = input("Please provide the server "
+                                              "name: ")
+        config_dict["SERVER"]["username"] = input("Please provide your "
+                                                  "username: ")
+        config_dict["SERVER"]["password"] = input("Please provide your "
+                                                  "password: ")
+        # TODO Add server check
+
+    with Path(CONFIG_FILE) as config_file:
+        yaml.dump(config_dict, config_file)
+
+
 def base(settings="all"):
     """
     Script to set up the configuration of the workflow server and jobscripts.
@@ -50,11 +93,10 @@ def base(settings="all"):
                                                   "username: ")
         config_dict["SERVER"]["password"] = input("Please provide your "
                                                   "password: ")
-        #TODO Add server check
+        # TODO Add server check
 
     if settings in ["workflow", "all"]:
 
-        script_path = ""
         script_path = input(
             "Please provide the full path to the workflow script: "
         )
