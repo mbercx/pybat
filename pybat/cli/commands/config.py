@@ -104,6 +104,8 @@ def script(script_path=None):
 
     config_dict["WORKFLOW"]["script_path"] = script_path
 
+    print(config_dict)
+
     with Path(CONFIG_FILE) as config_file:
         yaml.dump(config_dict, config_file)
 
