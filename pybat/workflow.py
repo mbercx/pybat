@@ -426,6 +426,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
     """
+    # TODO Change naming scheme
 
     if hse_calculation:
         number_nodes = "4nodes"
@@ -520,7 +521,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     workflow = Workflow(fireworks=[relax_firework, scf_firework],
                         name=structure_file + dimer_dir.split("/")[-1],
-                        links_dict={"relax_firework": [scf_firework]})
+                        links_dict={relax_firework: [scf_firework]})
 
     LAUNCHPAD.add_wf(workflow)
 
