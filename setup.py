@@ -6,8 +6,6 @@ setup(
     packages=find_packages(exclude=["docs"]),
     install_requires=[
         "pymatgen",
-        "numpy",
-        "scipy",
         "click",
         "fireworks",
         "custodian"
