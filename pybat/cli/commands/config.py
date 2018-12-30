@@ -47,7 +47,7 @@ def lpad(launchpad_file=None):
 
     if launchpad_file:
         with open(launchpad_file, 'r') as launchpad_file:
-            config_dict.update(yaml.load(launchpad_file.read()))
+            config_dict["SERVER"].update(yaml.load(launchpad_file.read()))
     else:
         config_dict["SERVER"]["host"] = input("Please provide the server "
                                               "host: ")
