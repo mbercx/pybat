@@ -113,7 +113,7 @@ def script(script_path=None):
     pdb.set_trace()
 
     with Path(CONFIG_FILE) as config_file:
-        yaml.dump(config_dict, config_file)
+        yaml.dump(config_dict, config_file, default_flow_style=False)
 
 
 def base(settings="all"):
