@@ -35,7 +35,7 @@ def main():
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
-def config(settings):
+def config():
     """
     Configure the workflows server and script.
 
