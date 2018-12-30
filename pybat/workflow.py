@@ -47,7 +47,10 @@ if os.path.exists(CONFIG_FILE):
                 port=int(CONFIG["SERVER"].get("port", default=0)),
                 name=CONFIG["SERVER"].get("name", default=""),
                 username=CONFIG["SERVER"].get("username", default=""),
-                password=CONFIG["SERVER"].get("password", default="")
+                password=CONFIG["SERVER"].get("password", default=""),
+                ssl=CONFIG["SERVER"].get("ssl", default=False),
+                authsource=CONFIG["SERVER"].get("authsource", default=None)
+
             )
         except ServerSelectionTimeoutError:
             raise TimeoutError("Could not connect to server. Please make "
