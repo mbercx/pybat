@@ -108,7 +108,7 @@ def script(script_path=None):
         yaml.dump(config_dict, config_file)
 
 
-def test:
+def test():
     """
     Script to set up the configuration of the workflow server and jobscripts.
 
