@@ -56,6 +56,19 @@ def lpad(launchpad_file):
     lpad(launchpad_file=launchpad_file)
 
 
+@config.command(context_settings=CONTEXT_SETTINGS)
+@click.option("-l", "--script_path", default="")
+def script(script_path):
+    """
+    Configure the workflow script.
+
+    """
+    if script_path == "":
+        script_path = None
+    from pybat.cli.commands.config import script
+    script(script_path=script_path)
+
+
 ##########
 # DEFINE #
 ##########

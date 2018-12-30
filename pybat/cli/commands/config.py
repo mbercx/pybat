@@ -65,6 +65,46 @@ def lpad(launchpad_file=None):
         yaml.dump(config_dict, config_file)
 
 
+def script(script_path=None):
+    """
+    Script to set up the configuration of the workflow jobscript.
+
+    Returns:
+        None
+
+    """
+    yaml = YAML()
+    yaml.default_flow_style = False
+
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as config_file:
+            config_dict = yaml.load(config_file.read())
+    else:
+        config_dict = {"SERVER": {}, "WORKFLOW": {}}
+
+    if not script_path:
+        script_path = input(
+            "Please provide the full path to the workflow script: "
+        )
+        while not os.path.exists(script_path):
+
+            script_path = input(
+                "Provided path does not exist. Please provide the full path to the "
+                "workflow script again: "
+            )
+
+        if not os.path.isabs(script_path):
+
+            print("Provided path is not an absolute path. Finding absolute "
+                  "path for proper configuration of the workflows...")
+            script_path = os.path.abspath(script_path)
+
+    config_dict["WORKFLOW"]["script_path"] = script_path
+
+    with Path(CONFIG_FILE) as config_file:
+        yaml.dump(config_dict, config_file)
+
+
 def base(settings="all"):
     """
     Script to set up the configuration of the workflow server and jobscripts.
