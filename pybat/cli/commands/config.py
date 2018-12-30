@@ -108,7 +108,7 @@ def script(script_path=None):
         yaml.dump(config_dict, config_file)
 
 
-def base(settings="all"):
+def test:
     """
     Script to set up the configuration of the workflow server and jobscripts.
 
@@ -125,38 +125,12 @@ def base(settings="all"):
     else:
         config_dict = {"SERVER": {}, "WORKFLOW": {}}
 
-    if settings in ["server", "all"]:
-        config_dict["SERVER"]["host"] = input("Please provide the server "
-                                              "host: ")
-        config_dict["SERVER"]["port"] = input("Please provide the port "
-                                              "number: ")
-        config_dict["SERVER"]["name"] = input("Please provide the server "
-                                              "name: ")
-        config_dict["SERVER"]["username"] = input("Please provide your "
-                                                  "username: ")
-        config_dict["SERVER"]["password"] = input("Please provide your "
-                                                  "password: ")
-        # TODO Add server check
-
-    if settings in ["workflow", "all"]:
-
-        script_path = input(
-            "Please provide the full path to the workflow script: "
-        )
-        while not os.path.exists(script_path):
-
-            script_path = input(
-                "Provided path does not exist. Please provide the full path to the "
-                "workflow script again: "
-            )
-
-        if not os.path.isabs(script_path):
-
-            print("Provided path is not an absolute path. Finding absolute "
-                  "path for proper configuration of the workflows...")
-            script_path = os.path.abspath(script_path)
-
-        config_dict["WORKFLOW"]["script_path"] = script_path
+    config_dict["SERVER"]["host"] = "1"
+    config_dict["SERVER"]["port"] = "2"
+    config_dict["SERVER"]["name"] = "3"
+    config_dict["SERVER"]["username"] = "4"
+    config_dict["SERVER"]["password"] = "5"
+    config_dict["WORKFLOW"]["script_path"] = "job.sh"
 
     with Path(CONFIG_FILE) as config_file:
         yaml.dump(config_dict, config_file)

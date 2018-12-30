@@ -68,11 +68,12 @@ def script(script_path):
     from pybat.cli.commands.config import script
     script(script_path=script_path)
 
-@config.command(context_settings=CONTEXT_SETTINGS)
-def base():
-    from pybat.cli.commands.config import base
 
-    base(settings="all")
+@config.command(context_settings=CONTEXT_SETTINGS)
+def test():
+    from pybat.cli.commands.config import test
+
+    test()
 
 ##########
 # DEFINE #
