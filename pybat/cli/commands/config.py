@@ -45,8 +45,6 @@ def lpad(launchpad_file=None):
     else:
         config_dict = {"SERVER": {}, "WORKFLOW": {}}
 
-    pdb.set_trace()
-
     if launchpad_file:
         with open(launchpad_file, 'r') as launchpad_file:
             config_dict["SERVER"].update(yaml.load(launchpad_file.read()))
@@ -62,8 +60,6 @@ def lpad(launchpad_file=None):
         config_dict["SERVER"]["password"] = input("Please provide your "
                                                   "password: ")
         # TODO Add server checks
-
-    pdb.set_trace()
 
     with Path(CONFIG_FILE) as config_file:
         yaml.dump(config_dict, config_file)
@@ -86,8 +82,6 @@ def script(script_path=None):
     else:
         config_dict = {"SERVER": {}, "WORKFLOW": {}}
 
-    pdb.set_trace()
-
     if not script_path:
         script_path = input(
             "Please provide the full path to the workflow script: "
@@ -108,12 +102,10 @@ def script(script_path=None):
     else:
         script_path = os.path.abspath(script_path)
 
-    config_dict["WORKFLOW"]["script_path"] = script_path
-
-    pdb.set_trace()
+    config_dict["WORKFLOW"].update({"script_path": script_path})
 
     with Path(CONFIG_FILE) as config_file:
-        yaml.dump(config_dict, config_file, default_flow_style=False)
+        yaml.dump(config_dict, config_file)
 
 
 def base(settings="all"):
