@@ -67,20 +67,22 @@ else:
 
 
 # TODO Create methods that return FireWorks, so the workflow methods can be modularized
-# At this point, it's becoming clear that the workflows are getting more and more extensive, and are simply
-# becoming less easy to grasp. It might be useful to create methods that set up the FireWorks (e.g. for a
-# relaxation, SCF calculations), and then call upon these methods in the workflow methods.
+# At this point, it's becoming clear that the workflows are getting more and more
+# extensive, and are simply becoming less easy to grasp. It might be useful to create
+# methods that set up the FireWorks (e.g. for a relaxation, SCF calculations), and
+# then call upon these methods in the workflow methods.
 
 # TODO Generalize the functional input
-# Currently, we're still using hse_calculation, and more recently dftu_values, to determine the functional.
-# It would probably be better to simply have some kind of dictionary input that determines the functional
-# and parameters (if any), since soon we'll also be using SCAN. We don't want to have too many input
-# arguments for the various functions.
+# Currently, we're still using hse_calculation, and more recently dftu_values, to
+# determine the functional. It would probably be better to simply have some kind
+# of dictionary input that determines the functional and parameters (if any), since
+# soon we'll also be using SCAN. We don't want to have too many input arguments for
+# the various functions.
 
 # TODO Fix the custodian issue
-# Currently custodian does not terminate the previous job properly. This may be related to the
-# fact that the vasp run command is called in a script, and so custodian can only terminate the
-# script, not the actual vasp run.
+# Currently custodian does not terminate the previous job properly. This may be related
+# to the fact that the vasp run command is called in a script, and so custodian can
+# only terminate the script, not the actual vasp run.
 
 def run_vasp(directory, number_nodes):
     """
@@ -165,12 +167,14 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
         return FWAction()
 
     else:
-        print("Lattice vectors have changed significantly during geometry optimization. Performing "
-              "another full geometry optimization to make sure there were no Pulay stresses present.")
+        print(
+            "Lattice vectors have changed significantly during geometry optimization. Performing "
+            "another full geometry optimization to make sure there were no Pulay stresses present.")
 
         # Create the ScriptTask that copies the CONTCAR to the POSCAR
         copy_contcar = ScriptTask.from_str(
-            "cp " + os.path.join(directory, "CONTCAR") + " " + os.path.join(directory, "POSCAR")
+            "cp " + os.path.join(directory, "CONTCAR") + " " + os.path.join(directory,
+                                                                            "POSCAR")
         )
 
         # Create the PyTask that runs the calculation
