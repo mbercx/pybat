@@ -199,7 +199,7 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
         )
 
         # Combine the two FireTasks into one FireWork
-        relax_firework = Firework(tasks=[copy_contcar, run_vasp],
+        relax_firework = Firework(tasks=[copy_contcar, run_vasp, pulay_task],
                                   name="Pulay Step",
                                   spec={"_launch_dir": directory,
                                         "_category": number_nodes})
