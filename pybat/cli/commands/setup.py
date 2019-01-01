@@ -38,8 +38,8 @@ def _load_yaml_config(filename):
     return config
 
 
-def scf(structure_file, calculation_dir="", write_chgcar=False,
-        dftu_values=None, hse_calculation=False):
+def scf(structure_file, functional=("pbe", {}), calculation_dir="",
+        write_chgcar=False):
     """
     Set up a standard scf calculation. Always uses the tetrahedron method to
     calculate accurate total energies.
@@ -47,11 +47,14 @@ def scf(structure_file, calculation_dir="", write_chgcar=False,
     Args:
         structure_file (str): Path to the Cathode structure file, either
             relative or absolute.
-        write_chgcar (bool): Write out the charge
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         calculation_dir (str): Path to the directory in which to set up the
             VASP calculation.
-        hse_calculation (bool): Flag that indicates that a hybrid HSE06
-            functional should be used for the geometry optimization.
+        write_chgcar (bool): Write out the charge
+
     """
 
     # Import the structure as a Cathode instance from the structure file
@@ -66,43 +69,32 @@ def scf(structure_file, calculation_dir="", write_chgcar=False,
     # Set up the calculation
     user_incar_settings = {}
 
-    if hse_calculation:
+    # Functional
+    if functional[0] != "pbe":
 
-        hse_config = _load_yaml_config("HSESet")
-        user_incar_settings.update(hse_config["INCAR"])
+        functional_config = _load_yaml_config(functional[0] + "Set")
+        functional_config["INCAR"].update(functional[1])
+        user_incar_settings.update(functional_config["INCAR"])
 
-        if calculation_dir == "":
-            # Set up the calculation directory
-            current_dir = os.path.dirname(".")
-            calculation_dir = os.path.join(current_dir, "hse_scf")
-
-    else:
-
-        dftu_config = _load_yaml_config("DFTUSet")
-        user_incar_settings.update(dftu_config["INCAR"])
-
-        if not dftu_values is None:
-            user_incar_settings.update({"LDAUU": dftu_values})
-
-        if calculation_dir == "":
-            # Set up the calculation directory
-            current_dir = os.path.dirname(".")
-            calculation_dir = os.path.join(current_dir, "dftu_scf")
+    if calculation_dir == "":
+        # Set up the calculation directory
+        current_dir = os.path.dirname(".")
+        calculation_dir = os.path.join(current_dir, functional[0] + "_scf")
 
     # Set charge density to be written if requested
     if write_chgcar:
         user_incar_settings.update({"LCHARG": True, "LAECHG": True})
 
         # For the HSE06 calculation, also increase the FFT grids, etc...
-        if hse_calculation:
+        if functional[0] == "hse":
             user_incar_settings.update({"PRECFOCK": "Accurate"})
 
-    # Set up the geometry optimization
+    # Set up the BulkSCFSet
     scf_calculation = BulkSCFSet(structure=structure,
                                  user_incar_settings=user_incar_settings,
                                  potcar_functional=DFT_FUNCTIONAL)
 
-    # Write the input files to the geometry optimization directory
+    # Write the input files to the SCF calculation directory
     scf_calculation.write_input(calculation_dir)
     shutil.copy(structure_file,
                 os.path.join(calculation_dir, "initial_cathode.json"))
@@ -110,8 +102,8 @@ def scf(structure_file, calculation_dir="", write_chgcar=False,
     return calculation_dir
 
 
-def relax(structure_file, calculation_dir="", is_metal=False, dftu_values=None,
-          hse_calculation=False):
+def relax(structure_file, functional=("pbe", {}), calculation_dir="",
+          is_metal=False):
     """
     Set up a standard geometry optimization calculation of a Cathode
     structure. Optimizes both the atomic positions as well as the unit cell.
@@ -119,17 +111,16 @@ def relax(structure_file, calculation_dir="", is_metal=False, dftu_values=None,
     Args:
         structure_file (str): Path to the Cathode structure file, either
             relative or absolute.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         calculation_dir (str): Path to the directory in which to set up the
             VASP calculation.
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV.
-        dftu_values (dict): Dictionary of LDAUU values, e.g. either
-            {"LDAUU":{"O":{"Fe":5}}} to set LDAUU for Fe to 5 in an oxide,
-            or {"LDAUU":{"Fe":5}} to set LDAUU to 5 regardless of the input
-            structure.
-        hse_calculation (bool): Flag that indicates that a hybrid HSE06
-            functional should be used for the geometry optimization.
+
     """
 
     # Import the structure as a Cathode instance from the structure file
@@ -142,31 +133,18 @@ def relax(structure_file, calculation_dir="", is_metal=False, dftu_values=None,
         structure.add_site_property("magmom", [0] * len(structure.sites))
 
     # Set up the calculation
-
     user_incar_settings = {}
 
-    if hse_calculation:
+    # Functional
+    if functional[0] != "pbe":
+        functional_config = _load_yaml_config(functional[0] + "Set")
+        functional_config["INCAR"].update(functional[1])
+        user_incar_settings.update(functional_config["INCAR"])
 
-        hse_config = _load_yaml_config("HSESet")
-        user_incar_settings.update(hse_config["INCAR"])
-
-        if calculation_dir == "":
-            # Set up the calculation directory
-            current_dir = os.path.dirname(".")
-            calculation_dir = os.path.join(current_dir, "hse_relax")
-
-    else:
-
-        dftu_config = _load_yaml_config("DFTUSet")
-        user_incar_settings.update(dftu_config["INCAR"])
-
-        if not dftu_values is None:
-            user_incar_settings.update({"LDAUU": dftu_values})
-
-        if calculation_dir == "":
-            # Set up the calculation directory
-            current_dir = os.path.dirname(".")
-            calculation_dir = os.path.join(current_dir, "dftu_relax")
+    if calculation_dir == "":
+        # Set up the calculation directory
+        current_dir = os.path.dirname(".")
+        calculation_dir = os.path.join(current_dir, functional[0] + "_scf")
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
@@ -185,9 +163,8 @@ def relax(structure_file, calculation_dir="", is_metal=False, dftu_values=None,
     return calculation_dir
 
 
-def transition(directory, is_metal=False, is_migration=False,
-               dftu_values=None, hse_calculation=False,
-               optimize_initial=False):
+def transition(directory, functional=("pbe", {}), is_metal=False,
+               is_migration=False, optimize_initial=False):
     """
     This script will set up the geometry optimizations for a transition
     structure, i.e. using ISIF = 2. It is assumed that the initial structure
@@ -218,26 +195,17 @@ def transition(directory, is_metal=False, is_migration=False,
                                         [0] * len(initial_cathode.sites))
 
     # Set up the calculations
-
     user_incar_settings = {"ISIF": 2}
+
+    # Functional
+    if functional[0] != "pbe":
+        functional_config = _load_yaml_config(functional[0] + "Set")
+        functional_config["INCAR"].update(functional[1])
+        user_incar_settings.update(functional_config["INCAR"])
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
         user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
-
-    # Load the correct INCAR settings for the chosen functional
-    if hse_calculation:
-
-        hse_config = _load_yaml_config("HSESet")
-        user_incar_settings.update(hse_config["INCAR"])
-
-    else:
-
-        dftu_config = _load_yaml_config("DFTUSet")
-        user_incar_settings.update(dftu_config["INCAR"])
-
-        if not dftu_values is None:
-            user_incar_settings.update({"LDAUU": dftu_values})
 
     # If requested, set up the initial structure optimization calculation
     if optimize_initial:
@@ -260,7 +228,6 @@ def transition(directory, is_metal=False, is_migration=False,
         potcar_functional=DFT_FUNCTIONAL,
         user_incar_settings=user_incar_settings
     )
-
     final_optimization.write_input(os.path.join(directory, "final"))
 
     # Write the initial structure of the final Cathode to the optimization
@@ -281,8 +248,7 @@ def transition(directory, is_metal=False, is_migration=False,
         host_scf.write_input(os.path.join(directory, "host"))
 
 
-def neb(directory, nimages=8, is_metal=False, is_migration=False,
-        hse_calculation=False):
+def neb(directory, nimages=8, is_metal=False, is_migration=False):
     """
     Set up the NEB calculation from the initial and final structures.
 
