@@ -129,6 +129,46 @@ def run_custodian(directory):
     c.run()
 
 
+def create_scf_fw(structure_file, directory, write_chgcar, dftu_values,
+                  hse_calculation, in_custodian, number_nodes):
+    """
+    Create a FireWork for performing an SCF calculation
+
+    Returns:
+
+    """
+    # Create the PyTask that sets up the calculation
+    setup_scf = PyTask(
+        func="pybat.cli.commands.setup.scf",
+        kwargs={"structure_file": structure_file,
+                "calculation_dir": directory,
+                "write_chgcar": write_chgcar,
+                "dftu_values": dftu_values,
+                "hse_calculation": hse_calculation}
+    )
+
+    # Create the PyTask that runs the calculation
+    if in_custodian:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_custodian",
+            kwargs={"directory": directory}
+        )
+    else:
+        run_vasp = PyTask(
+            func="pybat.workflow.run_vasp",
+            kwargs={"directory": directory,
+                    "number_nodes": number_nodes}
+        )
+
+    # Combine the two FireTasks into one FireWork
+    scf_firework = Firework(tasks=[setup_scf, run_vasp],
+                            name="SCF calculation",
+                            spec={"_launch_dir": os.getcwd(),
+                                  "_category": number_nodes})
+
+    return scf_firework
+
+
 def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
     """
     Check if the lattice vectors of a structure have changed significantly during
@@ -247,34 +287,12 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
         else:
             directory = os.path.join(current_dir, "dftu_scf")
 
-    # Create the PyTask that sets up the calculation
-    setup_scf = PyTask(
-        func="pybat.cli.commands.setup.scf",
-        kwargs={"structure_file": structure_file,
-                "calculation_dir": directory,
-                "write_chgcar": write_chgcar,
-                "dftu_values": dftu_values,
-                "hse_calculation": hse_calculation}
-    )
-
-    # Create the PyTask that runs the calculation
-    if in_custodian:
-        run_vasp = PyTask(
-            func="pybat.workflow.run_custodian",
-            kwargs={"directory": directory}
-        )
-    else:
-        run_vasp = PyTask(
-            func="pybat.workflow.run_vasp",
-            kwargs={"directory": directory,
-                    "number_nodes": number_nodes}
-        )
-
     # Combine the two FireTasks into one FireWork
-    scf_firework = Firework(tasks=[setup_scf, run_vasp],
-                            name="SCF calculation",
-                            spec={"_launch_dir": current_dir,
-                                  "_category": number_nodes})
+    scf_firework = create_scf_fw(
+        structure_file=structure_file, directory=directory, write_chgcar=write_chgcar,
+        dftu_values=dftu_values, hse_calculation=hse_calculation,
+        in_custodian=in_custodian, number_nodes=number_nodes
+    )
 
     # Set up a clear name for the workflow
     cathode = LiRichCathode.from_file(structure_file)
@@ -441,7 +459,6 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                 "is_migration": False,
                 "dftu_values": dftu_values,
                 "hse_calculation": hse_calculation}
-
     )
 
     # Set up the FireTask for the custodian run, if requested (lala)
