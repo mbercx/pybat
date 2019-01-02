@@ -72,12 +72,7 @@ else:
 # methods that set up the FireWorks (e.g. for a relaxation, SCF calculations), and
 # then call upon these methods in the workflow methods.
 
-# TODO Generalize the functional input
-# Currently, we're still using hse_calculation, and more recently dftu_values, to
-# determine the functional. It would probably be better to simply have some kind
-# of dictionary input that determines the functional and parameters (if any), since
-# soon we'll also be using SCAN. We don't want to have too many input arguments for
-# the various functions.
+# TODO Turn run_vasp/run_custodian into FireTasks
 
 # TODO Fix the custodian issue
 # Currently custodian does not terminate the previous job properly. This may be related
@@ -129,8 +124,8 @@ def run_custodian(directory):
     c.run()
 
 
-def create_scf_fw(structure_file, directory, write_chgcar, dftu_values,
-                  hse_calculation, in_custodian, number_nodes):
+def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custodian,
+                  number_nodes):
     """
     Create a FireWork for performing an SCF calculation
 
@@ -141,27 +136,26 @@ def create_scf_fw(structure_file, directory, write_chgcar, dftu_values,
     setup_scf = PyTask(
         func="pybat.cli.commands.setup.scf",
         kwargs={"structure_file": structure_file,
+                "functional": functional,
                 "calculation_dir": directory,
-                "write_chgcar": write_chgcar,
-                "dftu_values": dftu_values,
-                "hse_calculation": hse_calculation}
+                "write_chgcar": write_chgcar,}
     )
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        run_vasp = PyTask(
+        vasprun = PyTask(
             func="pybat.workflow.run_custodian",
             kwargs={"directory": directory}
         )
     else:
-        run_vasp = PyTask(
+        vasprun = PyTask(
             func="pybat.workflow.run_vasp",
             kwargs={"directory": directory,
                     "number_nodes": number_nodes}
         )
 
     # Combine the two FireTasks into one FireWork
-    scf_firework = Firework(tasks=[setup_scf, run_vasp],
+    scf_firework = Firework(tasks=[setup_scf, vasprun],
                             name="SCF calculation",
                             spec={"_launch_dir": os.getcwd(),
                                   "_category": number_nodes})
@@ -247,22 +241,21 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
         return FWAction(additions=relax_firework)
 
 
-def scf_workflow(structure_file, directory="", write_chgcar=False,
-                 dftu_values=None, hse_calculation=False, in_custodian=False):
+def scf_workflow(structure_file, functional=("pbe", {}), directory="",
+                 write_chgcar=False, in_custodian=False):
     """
     Set up a self consistent field calculation (SCF) workflow and add it to the
     launchpad of the mongoDB server defined in the config file.
 
     Args:
         structure_file (str): Path to the geometry file of the structure.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         directory (str): Directory in which the SCF calculation should be performed.
         write_chgcar (bool): Flag that indicates whether the CHGCAR file should
             be written.
-        dftu_values (dict): Dictionary that contains the effective U values that
-            should be used for the calculation for the various elements in the
-            structure.
-        hse_calculation (bool): Flag that indicates whether the HSE06 flavour of
-            hybrid functional should be used. # TODO Add settings option
         in_custodian (bool): Flag that indicates wheter the calculation should be
             run inside a Custodian.
 
@@ -274,34 +267,26 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
     # Set up the directory in which to perform the calculation
     current_dir = os.getcwd()
 
-    if hse_calculation:
+    if functional[0] == "hse":
         number_nodes = "4nodes"
     else:
         number_nodes = "1node"
 
-    # If no directory was provided
+    # If no directory was provided, set it up according to the functional
     if directory == "":
-
-        if hse_calculation:
-            directory = os.path.join(current_dir, "hse_scf")
-        else:
-            directory = os.path.join(current_dir, "dftu_scf")
+        directory = os.path.join(current_dir, functional[0] + "_scf")
 
     # Combine the two FireTasks into one FireWork
     scf_firework = create_scf_fw(
-        structure_file=structure_file, directory=directory, write_chgcar=write_chgcar,
-        dftu_values=dftu_values, hse_calculation=hse_calculation,
+        structure_file=structure_file, functional=functional,
+        directory=directory, write_chgcar=write_chgcar,
         in_custodian=in_custodian, number_nodes=number_nodes
     )
 
     # Set up a clear name for the workflow
     cathode = LiRichCathode.from_file(structure_file)
     workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
-
-    if hse_calculation:
-        workflow_name += " HSE06 "
-    else:
-        workflow_name += " PBE+U " + str(dftu_values)
+    workflow_name += print(functional)
 
     # Create the workflow
     workflow = Workflow(fireworks=[scf_firework, ],
@@ -310,24 +295,22 @@ def scf_workflow(structure_file, directory="", write_chgcar=False,
     LAUNCHPAD.add_wf(workflow)
 
 
-def relax_workflow(structure_file, directory="", is_metal=False,
-                   dftu_values=False, hse_calculation=False,
-                   in_custodian=False):
+def relax_workflow(structure_file, functional=("pbe", {}), directory="",
+                   is_metal=False, in_custodian=False):
     """
     Set up a geometry optimization workflow and add it to the launchpad of the
     mongoDB server defined in the config file.
 
     Args:
         structure_file (str): Path to the geometry file of the structure.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         directory (str): Directory in which the SCF calculation should be performed.
         is_metal (bool): Flag that indicates whether the material for which the
             geometry optimization should be performed is metallic. Determines the
             smearing method used.
-        dftu_values (dict): Dictionary that contains the effective U values that
-            should be used for the calculation for the various elements in the
-            structure.
-        hse_calculation (bool): Flag that indicates whether the HSE06 flavour of
-            hybrid functional should be used. # TODO Add settings option
         in_custodian (bool): Flag that indicates wheter the calculation should be
             run inside a Custodian.
 
@@ -339,19 +322,14 @@ def relax_workflow(structure_file, directory="", is_metal=False,
     # Set up the directory in which to perform the calculation
     current_dir = os.getcwd()
 
-    if hse_calculation:
+    if functional[0] == "hse":
         number_nodes = "4nodes"
     else:
         number_nodes = "1node"
 
-    # If no directory was provided
+    # If no directory was provided, set it up according to the functional
     if directory == "":
-
-        if hse_calculation:
-            directory = os.path.join(current_dir, "hse_relax")
-        else:
-            directory = os.path.join(current_dir, "dftu_relax")
-            number_nodes = "1node"
+        directory = os.path.join(current_dir, functional[0] + "_relax")
     else:
         directory = os.path.join(current_dir, directory)
 
@@ -359,10 +337,9 @@ def relax_workflow(structure_file, directory="", is_metal=False,
     setup_relax = PyTask(
         func="pybat.cli.commands.setup.relax",
         kwargs={"structure_file": structure_file,
+                "functional":functional,
                 "calculation_dir": directory,
-                "is_metal": is_metal,
-                "dftu_values": dftu_values,
-                "hse_calculation": hse_calculation}
+                "is_metal": is_metal}
     )
 
     # Create the PyTask that runs the calculation
@@ -395,11 +372,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
     # Set up a clear name for the workflow
     cathode = LiRichCathode.from_file(structure_file)
     workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
-
-    if hse_calculation:
-        workflow_name += " HSE06 "
-    else:
-        workflow_name += " PBE+U " + str(dftu_values)
+    workflow_name += print(functional)
 
     # Create the workflow
     workflow = Workflow(fireworks=[relax_firework, ],
@@ -409,8 +382,7 @@ def relax_workflow(structure_file, directory="", is_metal=False,
 
 
 def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
-                   is_metal=False, dftu_values=None, hse_calculation=False,
-                   in_custodian=False):
+                   functional=("pbe", {}), is_metal=False, in_custodian=False):
     """
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
@@ -426,21 +398,19 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
             dimer. If no indices are provided, the user will be prompted.
         distance (float): Final distance between the oxygen atoms. If no
             distance is provided, the user will be prompted.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV. Defaults to False.
-        dftu_values (dict): Dictionary that contains the effective U values that
-            should be used for the calculation for the various elements in the
-            structure.
-        hse_calculation (bool): Flag that indicates that the hybrid functional
-            HSE06 should be used to calculate the exchange-correlation
-            energy. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
     """
     # TODO Change naming scheme
 
-    if hse_calculation:
+    if functional[0] == "hse":
         number_nodes = "4nodes"
     else:
         number_nodes = "1node"
@@ -455,10 +425,9 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     setup_transition = PyTask(
         func="pybat.cli.commands.setup.transition",
         kwargs={"directory": dimer_dir,
+                "functional":functional,
                 "is_metal": is_metal,
-                "is_migration": False,
-                "dftu_values": dftu_values,
-                "hse_calculation": hse_calculation}
+                "is_migration": False}
     )
 
     # Set up the FireTask for the custodian run, if requested (lala)
@@ -489,46 +458,22 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     # Set up the SCF calculation following the relaxation, in order to get an accurate
     # total energy
     # Create the PyTask that sets up the calculation
-    if dftu_values:
+    if functional[0] == "pbeu":
         scf_dir = os.path.join(
             dimer_dir,
-            "dftu_" + "".join([k + str(dftu_values[k]) for k in dftu_values.keys()]) +
+            "pbeu_" +
+            "".join([k + str(functional[1][k]) for k in functional[1].keys()]) +
             "_scf"
         )
-    elif hse_calculation:
-        scf_dir = os.path.join(dimer_dir, "hse_scf")
     else:
-        scf_dir = os.path.join(dimer_dir, "pbe_scf")
+        scf_dir = os.path.join(dimer_dir, functional[0] + "_scf")
 
     final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
 
-    # Create the PyTask that sets up the SCF calculation
-    setup_scf = PyTask(
-        func="pybat.cli.commands.setup.scf",
-        kwargs={"structure_file": final_cathode,
-                "calculation_dir": scf_dir,
-                "dftu_values": dftu_values,
-                "hse_calculation": hse_calculation}
-    )
-
-    # Create the PyTask that runs the SCF calculation
-    if in_custodian:
-        run_vasp = PyTask(
-            func="pybat.workflow.run_custodian",
-            kwargs={"directory": scf_dir}
-        )
-    else:
-        run_vasp = PyTask(
-            func="pybat.workflow.run_vasp",
-            kwargs={"directory": scf_dir,
-                    "number_nodes": number_nodes}
-        )
-
-    # Combine the two FireTasks into one FireWork
-    scf_firework = Firework(tasks=[setup_scf, run_vasp],
-                            name="SCF calculation",
-                            spec={"_launch_dir": dimer_dir,
-                                  "_category": "1node"})
+    scf_firework = create_scf_fw(
+        structure_file=final_cathode, functional=functional,
+        directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
+        number_nodes=number_nodes)
 
     workflow = Workflow(fireworks=[relax_firework, scf_firework],
                         name=structure_file + dimer_dir.split("/")[-1],
@@ -538,7 +483,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
 
 def migration_workflow(structure_file, migration_indices=(0, 0),
-                       is_metal=False, hse_calculation=False,
+                       functional=("pbe", {}), is_metal=False,
                        in_custodian=False):
     """
     Set up a workflow that calculates the thermodynamics for a migration in
@@ -554,17 +499,18 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
         migration_indices (tuple): Tuple of the indices which designate the
             migrating site and the vacant site to which the cation will
             migrate. If no indices are provided, the user will be prompted.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV. Defaults to False.
-        hse_calculation (bool): Flag that indicates that the hybrid functional
-            HSE06 should be used to calculate the exchange-correlation
-            energy. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
     """
 
-    if hse_calculation:
+    if functional[0] == "hse":
         number_nodes = "4nodes"
     else:
         number_nodes = "1node"
@@ -582,9 +528,9 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
     # Set up the transition calculation
     transition(directory=migration_dir,
+               functional=functional,
                is_metal=is_metal,
-               is_migration=False,
-               hse_calculation=hse_calculation)
+               is_migration=False)
 
     # Set up the FireTask for the custodian run, if requested
     if in_custodian:

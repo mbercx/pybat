@@ -362,7 +362,7 @@ def supercell(cell, structure_file, file_format):
 
 #######
 # GET #
-#######v
+#######
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
