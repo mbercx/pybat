@@ -27,7 +27,7 @@ def main():
     """
     pass
 
-#TODO Add checks for U-value input
+# TODO Add checks for U-value input
 
 ##########
 # CONFIG #
@@ -458,64 +458,62 @@ def workflow():
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.option("--directory", "-d", default="")
 @click.option("--write_chgcar", "-C", is_flag=True)
-@click.option("--dftu_values", "-U", default=None)
-@click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-c", is_flag=True)
-def scf(structure_file, directory, write_chgcar, dftu_values, hse_calculation,
-        in_custodian):
+def scf(structure_file, functional, directory, write_chgcar, in_custodian):
     """
     Set up an SCF calculation workflow.
     """
     from pybat.workflow import scf_workflow
 
-    # Turn dftu_values string into a dictionary
-    if not dftu_values is None:
-        dftu_values = dftu_values.split(" ")
-        dftu_values = dict(
-            zip(dftu_values[::2],
-                [float(number) for number in dftu_values[1::2]])
-        )
-
     scf_workflow(structure_file=structure_file,
+                 functional=string_to_functional(functional),
                  directory=directory,
                  write_chgcar=write_chgcar,
-                 dftu_values=dftu_values,
-                 hse_calculation=hse_calculation,
                  in_custodian=in_custodian)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.option("--directory", "-d", default="")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-@click.option("--dftu_values", "-U", default=None)
-@click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-c", is_flag=True)
-def relax(structure_file, directory, is_metal, dftu_values, hse_calculation,
-          in_custodian):
+def relax(structure_file, functional, directory, is_metal, in_custodian):
     """
     Set up a geometry optimization workflow.
     """
     from pybat.workflow import relax_workflow
 
-    # Turn dftu_values string into a dictionary
-    if not dftu_values is None:
-        dftu_values = dftu_values.split(" ")
-        dftu_values = dict(
-            zip(dftu_values[::2],
-                [float(number) for number in dftu_values[1::2]])
-        )
-
     relax_workflow(structure_file=structure_file,
+                   functional=functional,
                    directory=directory,
                    is_metal=is_metal,
-                   dftu_values=dftu_values,
-                   hse_calculation=hse_calculation,
                    in_custodian=in_custodian)
 
 
@@ -523,68 +521,66 @@ def relax(structure_file, directory, is_metal, dftu_values, hse_calculation,
 @click.argument("structure_file", nargs=1)
 @click.option("--dimer_indices", "-i", default=(0, 0))
 @click.option("--distance", "-d", default=float(0))
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-@click.option("--dftu_values", "-U", default=None)
-@click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-c", is_flag=True)
-def dimer(structure_file, dimer_indices, distance, is_metal,
-          dftu_values, hse_calculation, in_custodian):
+def dimer(structure_file, dimer_indices, distance, functional, is_metal,
+          in_custodian):
     """
     Set up dimer calculation workflows.
     """
     from pybat.workflow import dimer_workflow
 
-    # Turn dftu_values string into a dictionary
-    if not dftu_values is None:
-        dftu_values = dftu_values.split(" ")
-        dftu_values = dict(
-            zip(dftu_values[::2],
-                [float(number) for number in dftu_values[1::2]])
-        )
-
     dimer_workflow(structure_file=structure_file,
                    dimer_indices=dimer_indices,
                    distance=distance,
+                   functional=string_to_functional(functional),
                    is_metal=is_metal,
-                   dftu_values=dftu_values,
-                   hse_calculation=hse_calculation,
                    in_custodian=in_custodian)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--distance", "-d", default=float(1.4))
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-@click.option("--dftu_values", "-U", default=None)
-@click.option("--hse_calculation", "-H", is_flag=True)
 @click.option("--in_custodian", "-c", is_flag=True)
-def noneq_dimers(structure_file, distance, is_metal,
-                 dftu_values, hse_calculation,
-                 in_custodian):
+def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian):
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
     from pybat.workflow import noneq_dimers_workflow
 
-    # Turn dftu_values string into a dictionary
-    if not dftu_values is None:
-        dftu_values = dftu_values.split(" ")
-        dftu_values = dict(
-            zip(dftu_values[::2],
-                [float(number) for number in dftu_values[1::2]])
-        )
-
     noneq_dimers_workflow(structure_file=structure_file,
-                          is_metal=is_metal,
                           distance=distance,
-                          dftu_values=dftu_values,
-                          hse_calculation=hse_calculation,
+                          functional=string_to_functional(functional),
+                          is_metal=is_metal,
                           in_custodian=in_custodian)
 
 
@@ -598,60 +594,6 @@ def test():
     Scripts or methods in the testing phase!
     """
     pass
-
-
-@test.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("structure_file", nargs=1)
-@click.option("--directory", "-d", default="")
-@click.option("--hse_calculation", "-H", is_flag=True)
-@click.option("--in_custodian", "-C", is_flag=True)
-def workflow(structure_file, directory, hse_calculation, in_custodian):
-    """
-    Testing for the workflow scripts.
-    """
-    from pybat.workflow import scf_workflow
-
-    scf_workflow(structure_file=structure_file,
-                 directory=directory,
-                 hse_calculation=hse_calculation,
-                 in_custodian=in_custodian)
-
-
-@test.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("site_index", nargs=1)
-@click.argument("structure_file", nargs=1)
-@click.option("--distance", "-d", default=float(1.4))
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
-@click.option("--hse_calculation", "-H", is_flag=True)
-@click.option("--in_custodian", "-C", is_flag=True)
-def dimers(site_index, structure_file, distance, is_metal, hse_calculation,
-           in_custodian):
-    """
-    Testing for the workflow scripts.
-
-    """
-    from pybat.workflow import site_dimers_workflow
-
-    site_dimers_workflow(structure_file=structure_file,
-                         site_index=site_index,
-                         distance=distance,
-                         is_metal=is_metal,
-                         hse_calculation=hse_calculation,
-                         in_custodian=in_custodian)
-
-
-@test.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--option_dict", "-d", default="pbe")
-def input(option_dict):
-    """
-    Testing input types for options
-    """
-    d = string_to_functional(option_dict)
-    print(d[0])
-    print(d[1])
 
 
 # Utility scripts
