@@ -18,7 +18,8 @@ from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, \
     UnconvergedErrorHandler
 from custodian.vasp.jobs import VaspJob
-from fireworks import Firework, LaunchPad, PyTask, Workflow, FWAction, ScriptTask
+from fireworks import FiretaskBase, Firework, LaunchPad, PyTask, Workflow, FWAction, \
+    ScriptTask
 
 """
 Workflow setup for the pybat package.
@@ -60,10 +61,15 @@ if os.path.exists(CONFIG_FILE):
         VASP_RUN_COMMAND = "bash " + VASP_RUN_SCRIPT
 else:
     raise FileNotFoundError("No configuration file found in user's home "
-                            "directory. Please use pybat workflow setup "
+                            "directory. Please use pybat config  "
                             "in order to set up the configuration for "
                             "the workflows.")
 
+# TODO Extend configuration and make the whole configuration setup more user friendly
+# Currently the user is not guided to the workflow setup when attempting to use
+# pybat workflows, this should change and be tested. Moreover, careful additions should
+# be made to make sure all user-specific configuration elements are easily configured
+# and implemented in the code.
 
 # TODO Create methods that return FireWorks, so the workflow methods can be modularized
 # At this point, it's becoming clear that the workflows are getting more and more
@@ -78,49 +84,63 @@ else:
 # to the fact that the vasp run command is called in a script, and so custodian can
 # only terminate the script, not the actual vasp run.
 
-def run_vasp(directory, number_nodes):
-    """
-    Method that simply runs VASP in the directory that is specified. Mainly
-    used to set up a PyTask that uses outputs from PyTasks in previous
-    FireWorks to run VASP in the appropriate directory.
+# TODO Add UnitTests!
+# It's really getting time to do this. Think about what unit tests you need and make a
+# test suite.
 
-    Args:
-        directory (str): Absolute path to the directory in which VASP should be
-            run.
-        number_nodes (str):  #TODO
+
+class VaspTask(FiretaskBase):
+    """
+    Firetask that represents a VASP calculation run.
+    """
+    required_params = ["directory"]
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the VaspTask.
+        """
+
+        super(VaspTask).__init__(*args, **kwargs)
+
+    def run_task(self, fw_spec):
+
+        os.chdir(self["directory"])
+        subprocess.call(VASP_RUN_SCRIPT)
+
+
+class CustodianTask(FiretaskBase):
+    """
+    Firetask that represents a calculation run inside a Custodian.
 
     """
     # Workaround for making number of nodes work on breniac #TODO
+    required_params = ["directory"]
 
-    os.chdir(directory)
-    subprocess.call(VASP_RUN_SCRIPT)
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the VaspTask.
+        """
 
+        super(CustodianTask).__init__(*args, **kwargs)
 
-def run_custodian(directory):
-    """
-    Run VASP under supervision of a custodian in a certain directory.
+    def run_task(self, fw_spec):
 
-    Args:
-        directory (str): Absolute path to the directory in which VASP should be
-            run.
-    """
+        directory = os.path.abspath(self["directory"])
+        os.chdir(directory)
 
-    directory = os.path.abspath(directory)
-    os.chdir(directory)
+        output = os.path.join(directory, "out")
+        vasp_cmd = shlex.split(VASP_RUN_COMMAND)
 
-    output = os.path.join(directory, "out")
-    vasp_cmd = shlex.split(VASP_RUN_COMMAND)
+        handlers = [VaspErrorHandler(output_filename=output),
+                    UnconvergedErrorHandler(output_filename=output)]
 
-    handlers = [VaspErrorHandler(output_filename=output),
-                UnconvergedErrorHandler(output_filename=output)]
+        jobs = [VaspJob(vasp_cmd=vasp_cmd,
+                        output_file=output,
+                        stderr_file=output,
+                        auto_npar=False)]
 
-    jobs = [VaspJob(vasp_cmd=vasp_cmd,
-                    output_file=output,
-                    stderr_file=output,
-                    auto_npar=False)]
-
-    c = Custodian(handlers, jobs, max_errors=10)
-    c.run()
+        c = Custodian(handlers, jobs, max_errors=10)
+        c.run()
 
 
 def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custodian,
@@ -212,16 +232,10 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
 
         # Create the PyTask that runs the calculation
         if in_custodian:
-            vasprun = PyTask(
-                func="pybat.workflow.run_custodian",
-                kwargs={"directory": directory}
-            )
+            vasprun = VaspTask(kwargs={"directory": directory})
         else:
-            vasprun = PyTask(
-                func="pybat.workflow.run_vasp",
-                kwargs={"directory": directory,
-                        "number_nodes": number_nodes}
-            )
+            vasprun = CustodianTask(kwargs={"directory": directory,
+                                            "number_nodes": number_nodes})
 
         # Create the PyTask that check the Pulay stresses again
         pulay_task = PyTask(
