@@ -55,6 +55,9 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
             VASP calculation.
         write_chgcar (bool): Write out the charge
 
+    Returns:
+        str: Path to the directory in which the calculation is set up.
+
     """
 
     # Import the structure as a Cathode instance from the structure file
@@ -120,6 +123,9 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV.
 
+    Returns:
+        str: Path to the directory in which the calculation is set up.
+
     """
 
     # Import the structure as a Cathode instance from the structure file
@@ -165,7 +171,7 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
 def transition(directory, functional=("pbe", {}), is_metal=False,
                is_migration=False, optimize_initial=False):
     """
-    This script will set up the geometry optimizations for a transition
+    Script that sets up the geometry optimizations for a transition
     structure, i.e. using ISIF = 2. It is assumed that the initial structure
     is already optimized, unless the user specifically requests its
     optimization.
@@ -356,6 +362,12 @@ def neb(directory, functional=("pbe", {}), nimages=8, is_metal=False,
 
     user_incar_settings = {}
 
+    # Set up the functional
+    if functional[0] != "pbe":
+        functional_config = _load_yaml_config(functional[0] + "Set")
+        functional_config["INCAR"].update(functional[1])
+        user_incar_settings.update(functional_config["INCAR"])
+
     # Add the standard Methfessel-Paxton smearing for metals
     if is_metal:
         user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
@@ -368,101 +380,6 @@ def neb(directory, functional=("pbe", {}), nimages=8, is_metal=False,
 
     # Make a file to visualize the transition
     neb_calculation.visualize_transition()
-
-
-def dimers(structure_file, dimer_distance=1.4,
-           is_metal=False, hse_calculation=False):
-    """
-    Set up the geometric optimizations for the non-equivalent dimer formations
-    in a Li-Rich cathode material.
-
-    Args:
-        structure_file (str): Structure file of the cathode material. Note
-            that the structure file should be a json format file that is
-            derived from the Cathode class, i.e. it should contain the cation
-            configuration of the structure.
-        dimer_distance (float): Final distance in angstroms between the oxygen
-            atoms in oxygen pair.
-        hse_calculation (bool): Flag that indicates that the hybrid functional
-            HSE06 should be used to calculate the exchange-correlation energy.
-
-    """
-    raise NotImplementedError
-
-    # TODO FIX
-
-    # Load the cathode structure
-    cathode = LiRichCathode.from_file(structure_file)
-
-    # Find the non-equivalent dimers
-    dimers = cathode.find_noneq_dimers()
-
-    # Set up the calculations
-    user_incar_settings = {"ISIF": 2}
-
-    # Add the standard Methfessel-Paxton smearing for metals
-    if is_metal:
-        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
-
-    # Load the correct INCAR settings for the chosen functional
-    if hse_calculation:
-
-        hse_config = _load_yaml_config("HSESet")
-        user_incar_settings.update(hse_config["INCAR"])
-
-    else:
-
-        dftu_config = _load_yaml_config("DFTUSet")
-        user_incar_settings.update(dftu_config["INCAR"])
-
-    # Set up the geometry optimization for the initial structure
-    try:
-        os.mkdir("initial")
-    except FileExistsError:
-        pass
-
-    initial_optimization = BulkRelaxSet(
-        structure=cathode.as_structure(),
-        potcar_functional=DFT_FUNCTIONAL,
-        user_incar_settings=user_incar_settings
-    )
-
-    initial_optimization.write_input("initial")
-
-    # Set up the geometry optimization calculations for the various dimers
-    for dimer in dimers:
-
-        # Set up the dimer directory
-        dimer_directory = "".join(str(dimer.indices[0]) + "_"
-                                  + str(dimer.indices[1]))
-        final_dir = os.path.join(dimer_directory, "final")
-
-        try:
-            os.mkdir(dimer_directory)
-            os.mkdir(final_dir)
-        except FileExistsError:
-            pass
-
-        # Write the molecule representing the dimer to the dimer directory
-        dimer.visualize_dimer_environment(os.path.join(dimer_directory,
-                                                       "dimer.xyz"))
-
-        # Set up the dimer structure, i.e. move the oxygen pair closer together
-        dimer_structure = cathode.copy()
-        dimer_structure.change_site_distance(site_indices=dimer.indices,
-                                             distance=dimer_distance)
-        if hse_calculation:
-            raise NotImplementedError("HSE06 calculation not implemented yet.")
-
-        # Set up the geometry optimization for the dimer structure
-        dimer_optimization = BulkRelaxSet(
-            structure=dimer_structure.as_structure(),
-            potcar_functional=DFT_FUNCTIONAL,
-            user_incar_settings=user_incar_settings
-        )
-
-        # Write the calculation files to the 'final' directory
-        dimer_optimization.write_input(final_dir)
 
 
 ###########
