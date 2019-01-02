@@ -171,15 +171,14 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
 def transition(directory, functional=("pbe", {}), is_metal=False,
                is_migration=False, optimize_initial=False):
     """
-    Script that sets up the geometry optimizations for a transition
-    structure, i.e. using ISIF = 2. It is assumed that the initial structure
-    is already optimized, unless the user specifically requests its
-    optimization.
+    Set up the geometry optimizations for a transition for a structure, i.e. using
+    ISIF = 2. By default, it is assumed that the initial structure is already
+    optimized, unless the user specifically requests its optimization.
 
     If requested, a charge density calculation will be set up for the
     "host structure", i.e. the structure with vacancies at the initial and
-    final locations of the migrating ion. This is used later to provide an
-    estimated path for the nudged elastic band calculations.
+    final locations of the migrating ion. This can be used later to provide an
+    estimated path for the nudged elastic band calculations. (WIP)
 
     Args:
         directory (str): Directory in which the transition calculations should be
@@ -327,7 +326,7 @@ def neb(directory, functional=("pbe", {}), nimages=8, is_metal=False,
             else:
                 raise ValueError("Number of magnetic moments in OUTCAR file "
                                  "do not match the number of sites!")
-    else:
+    except BaseException:
         raise FileNotFoundError("Could not find required structure "
                                 "information in " + initial_dir + ".")
 
@@ -397,12 +396,15 @@ def find_transition_cathodes(directory, initial_contains="init.json",
     moments, as well as the vacant Sites in the Cathode.
 
     Args:
-        directory:
-        initial_contains:
-        final_contains:
+        directory (str): Path to the directory in which the initial and final
+            cathode structure files should be present.
+        initial_contains (str): String that is present in the initial Cathode structure
+            file.
+        final_contains (str): String that is present in the final Cathode structure
+            file.
 
     Returns:
-        Tuple of the initial and final pybat.core.Cathode's
+        tuple: Tuple of the initial and final pybat.core.Cathode's
 
     """
     directory = os.path.abspath(directory)
@@ -445,11 +447,11 @@ def find_migrating_ion(initial_structure, final_structure):
     correspond for the algorithm to work.
 
     Args:
-        initial_structure:
-        final_structure:
+        initial_structure (Cathode): Initial cathode structure.
+        final_structure (Cathode): Final cathode structure.
 
     Returns:
-        (int) Index of the migrating site
+        int: Index of the migrating site.
 
     """
 
