@@ -50,7 +50,6 @@ if os.path.exists(CONFIG_FILE):
                 password=CONFIG["SERVER"].get("password", default=""),
                 ssl=CONFIG["SERVER"].get("ssl", default=False),
                 authsource=CONFIG["SERVER"].get("authsource", default=None)
-
             )
         except ServerSelectionTimeoutError:
             raise TimeoutError("Could not connect to server. Please make "
