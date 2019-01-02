@@ -65,6 +65,7 @@ else:
                             "in order to set up the configuration for "
                             "the workflows.")
 
+
 # TODO Extend configuration and make the whole configuration setup more user friendly
 # Currently the user is not guided to the workflow setup when attempting to use
 # pybat workflows, this should change and be tested. Moreover, careful additions should
@@ -92,6 +93,11 @@ else:
 class VaspTask(FiretaskBase):
     """
     Firetask that represents a VASP calculation run.
+
+    Args:
+        directory (str): Directory in which the VASP calculation should be run.
+        number_nodes (int): Number of nodes that should be used.
+
     """
     required_params = ["directory"]
 
@@ -99,18 +105,24 @@ class VaspTask(FiretaskBase):
         """
         Initialize the VaspTask.
         """
-
         super(VaspTask).__init__(*args, **kwargs)
 
     def run_task(self, fw_spec):
 
         os.chdir(self["directory"])
-        subprocess.call(VASP_RUN_SCRIPT)
+        if self.get("number_nodes", default=None):
+            subprocess.call(VASP_RUN_SCRIPT + " " + str(self["number_nodes"]))
+        else:
+            subprocess.call(VASP_RUN_SCRIPT)
 
 
 class CustodianTask(FiretaskBase):
     """
     Firetask that represents a calculation run inside a Custodian.
+
+    Args:
+        directory (str): Directory in which the VASP calculation should be run.
+        number_nodes (int): Number of nodes that should be used.
 
     """
     # Workaround for making number of nodes work on breniac #TODO
@@ -118,13 +130,12 @@ class CustodianTask(FiretaskBase):
 
     def __init__(self, *args, **kwargs):
         """
-        Initialize the VaspTask.
+        Initialize the CustodianTask.
         """
 
         super(CustodianTask).__init__(*args, **kwargs)
 
     def run_task(self, fw_spec):
-
         directory = os.path.abspath(self["directory"])
         os.chdir(directory)
 
@@ -141,6 +152,100 @@ class CustodianTask(FiretaskBase):
 
         c = Custodian(handlers, jobs, max_errors=10)
         c.run()
+
+
+class PulayTask(FiretaskBase):
+    """
+    Check if the lattice vectors of a structure have changed significantly during
+    the geometry optimization, which could indicate that there where Pulay stresses
+    present. If so, start a new geometry optimization with the final structure.
+
+    Args:
+        directory (str): Directory in which the geometry optimization calculation
+            was run.
+        in_custodian (bool): Flag that indicates wheter the calculation should be
+            run inside a Custodian.
+        number_nodes (): #TODO
+        tolerance (float): Tolerance that indicates the maximum change in norm for the
+            matrix defined by the cartesian coordinates of the lattice vectors.
+            If the norm changes more than the tolerance, another geometry optimization
+            is performed starting from the final geometry.
+
+    Returns:
+        FWAction
+
+    """
+    required_params = ["directory"]
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the PulayTask.
+        """
+        super(PulayTask).__init__(*args, **kwargs)
+
+
+    def run_task(self, fw_spec):
+        """
+
+        Args:
+            fw_spec:
+
+        Returns:
+
+        """
+        # Extract the parameters into variables; this makes for cleaner code IMO
+        directory = self["directory"]
+        in_custodian = self.get("in_custodian", default=False)
+        number_nodes = self.get("number_nodes", default=None)
+        tolerance = self.get("tolerance", default=1e-2)
+
+        # Check if the lattice vectors have changed significantly
+        initial_cathode = LiRichCathode.from_file(
+            os.path.join(directory, "POSCAR")
+        )
+        final_cathode = LiRichCathode.from_file(
+            os.path.join(directory, "CONTCAR")
+        )
+
+        sum_differences = np.linalg.norm(
+            initial_cathode.lattice.matrix - final_cathode.lattice.matrix
+        )
+
+        if sum_differences < tolerance:
+            return FWAction()
+
+        else:
+            print("Lattice vectors have changed significantly during geometry "
+                  "optimization. Performing another full geometry optimization to "
+                  "make sure there were no Pulay stresses present.")
+
+            # Create the ScriptTask that copies the CONTCAR to the POSCAR
+            copy_contcar = ScriptTask.from_str(
+                "cp " + os.path.join(directory, "CONTCAR") +
+                " " + os.path.join(directory, "POSCAR")
+            )
+
+            # Create the PyTask that runs the calculation
+            if in_custodian:
+                vasprun = VaspTask(kwargs={"directory": directory})
+            else:
+                vasprun = CustodianTask(kwargs={"directory": directory,
+                                                "number_nodes": number_nodes})
+
+            # Create the PyTask that check the Pulay stresses again
+            pulay_task = PyTask(
+                func="pybat.workflow.check_pulay",
+                kwargs={"directory": directory,
+                        "in_custodian": in_custodian,
+                        "number_nodes": number_nodes}
+            )
+
+            # Combine the two FireTasks into one FireWork
+            relax_firework = Firework(tasks=[copy_contcar, vasprun, pulay_task],
+                                      name="Pulay Step",
+                                      spec={"_launch_dir": directory,
+                                            "_category": number_nodes})
+
+            return FWAction(additions=relax_firework)
 
 
 def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custodian,
@@ -162,16 +267,10 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = PyTask(
-            func="pybat.workflow.run_custodian",
-            kwargs={"directory": directory}
-        )
+        vasprun = VaspTask(kwargs={"directory": directory})
     else:
-        vasprun = PyTask(
-            func="pybat.workflow.run_vasp",
-            kwargs={"directory": directory,
-                    "number_nodes": number_nodes}
-        )
+        vasprun = CustodianTask(kwargs={"directory": directory,
+                                        "number_nodes": number_nodes})
 
     # Combine the two FireTasks into one FireWork
     scf_firework = Firework(tasks=[setup_scf, vasprun],
