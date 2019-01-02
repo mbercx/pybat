@@ -2,7 +2,7 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
-import os, re
+import os
 import subprocess
 import shlex
 
@@ -138,7 +138,7 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
         kwargs={"structure_file": structure_file,
                 "functional": functional,
                 "calculation_dir": directory,
-                "write_chgcar": write_chgcar,}
+                "write_chgcar": write_chgcar}
     )
 
     # Create the PyTask that runs the calculation
@@ -201,24 +201,24 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
         return FWAction()
 
     else:
-        print(
-            "Lattice vectors have changed significantly during geometry optimization. Performing "
-            "another full geometry optimization to make sure there were no Pulay stresses present.")
+        print("Lattice vectors have changed significantly during geometry "
+              "optimization. Performing another full geometry optimization to "
+              "make sure there were no Pulay stresses present.")
 
         # Create the ScriptTask that copies the CONTCAR to the POSCAR
         copy_contcar = ScriptTask.from_str(
-            "cp " + os.path.join(directory, "CONTCAR") + " " + os.path.join(directory,
-                                                                            "POSCAR")
+            "cp " + os.path.join(directory, "CONTCAR") +
+            " " + os.path.join(directory, "POSCAR")
         )
 
         # Create the PyTask that runs the calculation
         if in_custodian:
-            run_vasp = PyTask(
+            vasprun = PyTask(
                 func="pybat.workflow.run_custodian",
                 kwargs={"directory": directory}
             )
         else:
-            run_vasp = PyTask(
+            vasprun = PyTask(
                 func="pybat.workflow.run_vasp",
                 kwargs={"directory": directory,
                         "number_nodes": number_nodes}
@@ -233,7 +233,7 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
         )
 
         # Combine the two FireTasks into one FireWork
-        relax_firework = Firework(tasks=[copy_contcar, run_vasp, pulay_task],
+        relax_firework = Firework(tasks=[copy_contcar, vasprun, pulay_task],
                                   name="Pulay Step",
                                   spec={"_launch_dir": directory,
                                         "_category": number_nodes})
@@ -337,19 +337,19 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
     setup_relax = PyTask(
         func="pybat.cli.commands.setup.relax",
         kwargs={"structure_file": structure_file,
-                "functional":functional,
+                "functional": functional,
                 "calculation_dir": directory,
                 "is_metal": is_metal}
     )
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        run_vasp = PyTask(
+        vasprun = PyTask(
             func="pybat.workflow.run_custodian",
             kwargs={"directory": directory}
         )
     else:
-        run_vasp = PyTask(
+        vasprun = PyTask(
             func="pybat.workflow.run_vasp",
             kwargs={"directory": directory,
                     "number_nodes": number_nodes}
@@ -364,7 +364,7 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
     )
 
     # Combine the FireTasks into one FireWork
-    relax_firework = Firework(tasks=[setup_relax, run_vasp, pulay_task],
+    relax_firework = Firework(tasks=[setup_relax, vasprun, pulay_task],
                               name="Geometry optimization",
                               spec={"_launch_dir": current_dir,
                                     "_category": number_nodes})
@@ -425,7 +425,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     setup_transition = PyTask(
         func="pybat.cli.commands.setup.transition",
         kwargs={"directory": dimer_dir,
-                "functional":functional,
+                "functional": functional,
                 "is_metal": is_metal,
                 "is_migration": False}
     )

@@ -7,6 +7,7 @@ setup(
     install_requires=[
         "pymatgen",
         "click",
+        "pymongo",
         "fireworks",
         "custodian"
     ],
