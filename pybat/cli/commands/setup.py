@@ -69,15 +69,14 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
     # Set up the calculation
     user_incar_settings = {}
 
-    # Functional
+    # Set up the functional
     if functional[0] != "pbe":
-
         functional_config = _load_yaml_config(functional[0] + "Set")
         functional_config["INCAR"].update(functional[1])
         user_incar_settings.update(functional_config["INCAR"])
 
+    # Set up the calculation directory
     if calculation_dir == "":
-        # Set up the calculation directory
         current_dir = os.path.dirname(".")
         calculation_dir = os.path.join(current_dir, functional[0] + "_scf")
 
@@ -135,16 +134,16 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
     # Set up the calculation
     user_incar_settings = {}
 
-    # Functional
+    # Set up the functional
     if functional[0] != "pbe":
         functional_config = _load_yaml_config(functional[0] + "Set")
         functional_config["INCAR"].update(functional[1])
         user_incar_settings.update(functional_config["INCAR"])
 
+    # Set up the calculation directory
     if calculation_dir == "":
-        # Set up the calculation directory
         current_dir = os.path.dirname(".")
-        calculation_dir = os.path.join(current_dir, functional[0] + "_scf")
+        calculation_dir = os.path.join(current_dir, functional[0] + "_relax")
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
@@ -175,6 +174,24 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
     "host structure", i.e. the structure with vacancies at the initial and
     final locations of the migrating ion. This is used later to provide an
     estimated path for the nudged elastic band calculations.
+
+    Args:
+        directory (str): Directory in which the transition calculations should be
+            set up.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV.
+        is_migration (bool): Flag that indicates that the transition is a migration
+            of an atom in the structure.
+        optimize_initial (bool): Flag that indicates that the initial structure
+            should also be optimized.
+
+    Returns:
+        None
 
     """
     # Make sure the directory is written as an absolute path
@@ -248,9 +265,27 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
         host_scf.write_input(os.path.join(directory, "host"))
 
 
-def neb(directory, nimages=8, is_metal=False, is_migration=False):
+def neb(directory, functional=("pbe", {}), nimages=8, is_metal=False,
+        is_migration=False):
     """
     Set up the NEB calculation from the initial and final structures.
+
+    Args:
+        directory (str): Directory in which the transition calculations should be
+            set up.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        nimages (int): Number of images to use in the NEB calculation.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV.
+        is_migration (bool): Flag that indicates that the transition is a migration
+            of an atom in the structure.
+
+    Returns:
+        None
 
     """
     directory = os.path.abspath(directory)
@@ -286,7 +321,7 @@ def neb(directory, nimages=8, is_metal=False, is_migration=False):
             else:
                 raise ValueError("Number of magnetic moments in OUTCAR file "
                                  "do not match the number of sites!")
-    except:
+    else:
         raise FileNotFoundError("Could not find required structure "
                                 "information in " + initial_dir + ".")
 
