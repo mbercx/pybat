@@ -556,9 +556,8 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     LAUNCHPAD.add_wf(workflow)
 
 
-def noneq_dimers_workflow(structure_file, distance, is_metal=False,
-                          dftu_values=None, hse_calculation=False,
-                          in_custodian=False):
+def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
+                          is_metal=False, in_custodian=False):
     """
     Run dimer calculations for all the nonequivalent dimers in a structure.
 
@@ -569,15 +568,13 @@ def noneq_dimers_workflow(structure_file, distance, is_metal=False,
             configuration of the structure.
         distance (float): Final distance between the oxygen atoms. If no
             distance is provided, the user will be prompted.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV. Defaults to False.
-        dftu_values (dict): Dictionary that contains the effective U values that
-            should be used for the calculation for the various elements in the
-            structure.
-        hse_calculation (bool): Flag that indicates that the hybrid functional
-            HSE06 should be used to calculate the exchange-correlation
-            energy. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
     """
@@ -604,14 +601,14 @@ def noneq_dimers_workflow(structure_file, distance, is_metal=False,
         dimer_workflow(structure_file=structure_file,
                        dimer_indices=central_dimer[0],
                        distance=distance,
+                       functional=functional,
                        is_metal=is_metal,
-                       dftu_values=dftu_values,
-                       hse_calculation=hse_calculation,
                        in_custodian=in_custodian)
 
 
-def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
-                         hse_calculation=False, in_custodian=False):
+def site_dimers_workflow(structure_file, site_index, distance,
+                         functional=("pbe", {}), is_metal=False,
+                         in_custodian=False):
     """
     Run dimer calculations for all the dimers around a site.
 
@@ -624,12 +621,13 @@ def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
             be investigated. Corresponds to the internal Python index.
         distance (float): Final distance between the oxygen atoms. If no
             distance is provided, the user will be prompted.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV. Defaults to False.
-        hse_calculation (bool): Flag that indicates that the hybrid functional
-            HSE06 should be used to calculate the exchange-correlation
-            energy. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
     """
@@ -641,6 +639,6 @@ def site_dimers_workflow(structure_file, site_index, distance, is_metal=False,
         dimer_workflow(structure_file=structure_file,
                        dimer_indices=dimer,
                        distance=distance,
+                       functional=functional,
                        is_metal=is_metal,
-                       hse_calculation=hse_calculation,
                        in_custodian=in_custodian)
