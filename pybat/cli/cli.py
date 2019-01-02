@@ -57,7 +57,7 @@ def lpad(launchpad_file):
 
 
 @config.command(context_settings=CONTEXT_SETTINGS)
-@click.option("-l", "--script_path", default="")
+@click.option("-s", "--script_path", default="")
 def script(script_path):
     """
     Configure the workflow script.
