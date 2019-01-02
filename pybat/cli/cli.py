@@ -139,37 +139,47 @@ def setup():
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.argument("structure_file", nargs=1)
 @click.option("--calculation_dir", "-d", default="",
               help="The directory in which to set up the calculation. "
                    "Default is FUNCTIONAL_relax.")
 @click.option("--write_chgcar", "-C", is_flag=True)
-@click.option("--dftu_values", "-U", default=None)
-@click.option("--hse_calculation", "-H", is_flag=True)
-def scf(structure_file, calculation_dir, write_chgcar, dftu_values,
-        hse_calculation):
+def scf(structure_file, functional, calculation_dir, write_chgcar):
     """
     Set up a geometry optimization for a structure.
     """
     from pybat.cli.commands.setup import scf
 
-    # Turn dftu_values string into a dictionary
-    if not dftu_values is None:
-        dftu_values = dftu_values.split(" ")
-        dftu_values = dict(
-            zip(dftu_values[::2],
-                [float(number) for number in dftu_values[1::2]])
-        )
-
     scf(structure_file=structure_file,
+        functional=string_to_functional(functional),
         calculation_dir=calculation_dir,
-        write_chgcar=write_chgcar,
-        dftu_values=dftu_values,
-        hse_calculation=hse_calculation)
+        write_chgcar=write_chgcar)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.option("--calculation_dir", "-d", default="",
               help="The directory in which to set up the calculation. "
                    "Default is FUNCTIONAL_relax.")
@@ -177,28 +187,16 @@ def scf(structure_file, calculation_dir, write_chgcar, dftu_values,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-@click.option("--dftu_values", "-U", default=None)
-@click.option("--hse_calculation", "-H", is_flag=True)
-def relax(structure_file, calculation_dir, is_metal, dftu_values,
-          hse_calculation):
+def relax(structure_file, functional, calculation_dir, is_metal):
     """
     Set up a geometry optimization for a structure.
     """
     from pybat.cli.commands.setup import relax
 
-    # Turn dftu_values string into a dictionary
-    if not dftu_values is None:
-        dftu_values = dftu_values.split(" ")
-        dftu_values = dict(
-            zip(dftu_values[::2],
-                [float(number) for number in dftu_values[1::2]])
-        )
-
     relax(structure_file=structure_file,
+          functional=string_to_functional(functional),
           calculation_dir=calculation_dir,
-          is_metal=is_metal,
-          dftu_values=dftu_values,
-          hse_calculation=hse_calculation)
+          is_metal=is_metal)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -207,6 +205,17 @@ def relax(structure_file, calculation_dir, is_metal, dftu_values,
                    "first step in the transition path determination. Note "
                    "that this directory has to contain the structure files "
                    "for the initial and final state. ")
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
@@ -218,46 +227,18 @@ def relax(structure_file, calculation_dir, is_metal, dftu_values,
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
-@click.option("--hse_calculation", "-H", is_flag=True)
-@click.option("--optimize_initial", "-I", is_flag=True)
-def transition(directory, is_metal, is_migration, hse_calculation,
-               optimize_initial):
+def transition(directory, functional, is_metal, is_migration, optimize_initial):
     """
     Set up a the geometry optimizations for the initial and final state of a
     transition.
     """
-
     from pybat.cli.commands.setup import transition
 
     transition(directory=directory,
+               functional=functional,
                is_metal=is_metal,
                is_migration=is_migration,
-               hse_calculation=hse_calculation,
                optimize_initial=optimize_initial)
-
-
-@setup.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("structure_file", nargs=1)
-@click.option("dimer_distance", "-D", default=1.4)
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
-@click.option("hse_calculation", "-H", is_flag=True)
-def dimers(structure_file, dimer_distance, is_metal, hse_calculation):
-    """
-    Set up the dimer formation calculations for all nonequivalent dimers. Will
-    start from the initial cathode structure and set up the geometry
-    optimizations for the various dimer formations in a structure, each in its
-    own directory. Will also set up a geometry optimization for the initial
-    structure in the directory 'initial'.
-    """
-    from pybat.cli.commands.setup import dimers
-
-    dimers(structure_file=structure_file,
-           dimer_distance=dimer_distance,
-           is_metal=is_metal,
-           hse_calculation=hse_calculation)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -266,6 +247,17 @@ def dimers(structure_file, dimer_distance, is_metal, hse_calculation):
                    "first step in the transition path determination. Note "
                    "that this directory has to contain the structure files "
                    "for the initial and final state.")
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
 @click.option("--nimages", "-n", default=8,
               help="Number of images.")
 @click.option("--is_metal", "-m", is_flag=True,
@@ -279,8 +271,7 @@ def dimers(structure_file, dimer_distance, is_metal, hse_calculation):
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
-@click.option("--hse_calculation", "-H", is_flag=True)
-def neb(directory, nimages, is_metal, is_migration, hse_calculation):
+def neb(directory, functional, nimages, is_metal, is_migration):
     """
     Set up the Nudged Elastic Band calculation based on the output in the
     initial and final directory.
@@ -291,10 +282,10 @@ def neb(directory, nimages, is_metal, is_migration, hse_calculation):
     from pybat.cli.commands.setup import neb
 
     neb(directory=directory,
+        functional=functional,
         nimages=nimages,
         is_metal=is_metal,
-        is_migration=is_migration,
-        hse_calculation=hse_calculation)
+        is_migration=is_migration)
 
 
 ###########
@@ -650,3 +641,47 @@ def dimers(site_index, structure_file, distance, is_metal, hse_calculation,
                          is_metal=is_metal,
                          hse_calculation=hse_calculation,
                          in_custodian=in_custodian)
+
+
+@test.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--option_dict", "-d", default="pbe")
+def input(option_dict):
+    """
+    Testing input types for options
+    """
+    d = string_to_functional(option_dict)
+    print(d[0])
+    print(d[1])
+
+
+# Utility scripts
+
+
+def string_to_functional(dict_string):
+    """
+    Turn input string for function option into a (string, dictionary) representing
+    the functional to be used in calculations.
+
+    Args:
+        dict_string: String that provides the string/float pairs, separated by a
+            space.
+
+    Returns:
+        tuple: Tuple of (String that represents the functional, Dictionary of
+            string/float pairs).
+
+    """
+    dict_pairs = dict_string.split(" ")
+
+    functional = dict_pairs[0]
+    functional_dict = dict(
+        zip(dict_pairs[1::2], [float(number) for number in dict_pairs[2::2]])
+    )
+
+    # Turn functional string into dict
+    if functional == "pbeu":
+        pbeu_dict = dict()
+        pbeu_dict["LDAUU"] = functional_dict
+        return functional, pbeu_dict
+    else:
+        return functional, functional_dict
