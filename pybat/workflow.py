@@ -96,7 +96,6 @@ class VaspTask(FiretaskBase):
 
     Args:
         directory (str): Directory in which the VASP calculation should be run.
-        number_nodes (int): Number of nodes that should be used.
 
     """
     required_params = ["directory"]
@@ -110,10 +109,7 @@ class VaspTask(FiretaskBase):
     def run_task(self, fw_spec):
 
         os.chdir(self["directory"])
-        if self.get("number_nodes", default=None):
-            subprocess.call(VASP_RUN_SCRIPT + " " + str(self["number_nodes"]))
-        else:
-            subprocess.call(VASP_RUN_SCRIPT)
+        subprocess.call(VASP_RUN_SCRIPT)
 
 
 class CustodianTask(FiretaskBase):
