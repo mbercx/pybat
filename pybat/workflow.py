@@ -375,6 +375,7 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
     cathode = LiRichCathode.from_file(structure_file)
     workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
     print(workflow_name)
+    print(functional)
     workflow_name += print(functional)
 
     # Create the workflow
