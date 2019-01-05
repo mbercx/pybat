@@ -1,5 +1,0 @@
-pymatgen
-click
-pymongo
-fireworks
-custodian
