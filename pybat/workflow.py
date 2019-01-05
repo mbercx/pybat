@@ -5,6 +5,7 @@
 import os
 import subprocess
 import shlex
+import pybat
 
 import numpy as np
 
@@ -99,7 +100,7 @@ class VaspTask(FiretaskBase):
 
     """
     required_params = ["directory"]
-    _fw_name = "VaspTask"
+    _fw_name = {{pybat.workflow.VaspTask}}
 
     def run_task(self, fw_spec):
 
@@ -119,7 +120,7 @@ class CustodianTask(FiretaskBase):
     """
     # Workaround for making number of nodes work on breniac #TODO
     required_params = ["directory"]
-    _fw_name = "CustodianTask"
+    _fw_name = {{pybat.workflow.CustodianTask}}
 
     def run_task(self, fw_spec):
         directory = os.path.abspath(self["directory"])
@@ -247,9 +248,9 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = VaspTask(directory=directory)
-    else:
         vasprun = CustodianTask(directory=directory)
+    else:
+        vasprun = VaspTask(directory=directory)
 
     # Combine the two FireTasks into one FireWork
     scf_firework = Firework(tasks=[setup_scf, vasprun],
@@ -310,9 +311,9 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
 
         # Create the PyTask that runs the calculation
         if in_custodian:
-            vasprun = VaspTask(directory=directory)
-        else:
             vasprun = CustodianTask(directory=directory)
+        else:
+            vasprun = VaspTask(directory=directory)
 
         # Create the PyTask that check the Pulay stresses again
         pulay_task = PyTask(
@@ -434,9 +435,9 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = VaspTask(directory=directory)
-    else:
         vasprun = CustodianTask(directory=directory)
+    else:
+        vasprun = VaspTask(directory=directory)
 
     # Create the PyTask that check the Pulay stresses
     pulay_task = PyTask(
@@ -515,9 +516,9 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = VaspTask(directory=os.path.join(dimer_dir, "final"))
-    else:
         vasprun = CustodianTask(directory=os.path.join(dimer_dir, "final"))
+    else:
+        vasprun = VaspTask(directory=os.path.join(dimer_dir, "final"))
 
     # Extract the final cathode from the geometry optimization
     get_cathode = PyTask(
@@ -610,9 +611,9 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = VaspTask(directory=os.path.join(migration_dir, "final"))
-    else:
         vasprun = CustodianTask(directory=os.path.join(migration_dir, "final"))
+    else:
+        vasprun = VaspTask(directory=os.path.join(migration_dir, "final"))
 
     relax_firework = Firework(tasks=[vasprun],
                               name="Migration Geometry optimization",
