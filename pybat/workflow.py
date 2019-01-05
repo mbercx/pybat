@@ -100,12 +100,6 @@ class VaspTask(FiretaskBase):
     """
     required_params = ["directory"]
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the VaspTask.
-        """
-        super(VaspTask).__init__(*args, **kwargs)
-
     def run_task(self, fw_spec):
 
         os.chdir(self["directory"])
@@ -124,13 +118,6 @@ class CustodianTask(FiretaskBase):
     """
     # Workaround for making number of nodes work on breniac #TODO
     required_params = ["directory"]
-
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the CustodianTask.
-        """
-
-        super(CustodianTask).__init__(*args, **kwargs)
 
     def run_task(self, fw_spec):
         directory = os.path.abspath(self["directory"])
@@ -173,12 +160,6 @@ class PulayTask(FiretaskBase):
 
     """
     required_params = ["directory"]
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the PulayTask.
-        """
-        super(PulayTask).__init__(*args, **kwargs)
-
 
     def run_task(self, fw_spec):
         """
