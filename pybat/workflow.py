@@ -109,7 +109,8 @@ class VaspTask(FiretaskBase):
     def run_task(self, fw_spec):
 
         os.chdir(self["directory"])
-        subprocess.call(VASP_RUN_SCRIPT)
+        subprocess.call(fw_spec["_fw_env"]["vasp_prep"])
+        subprocess.call(fw_spec["_fw_env"]["vasp_command"])
 
 
 class CustodianTask(FiretaskBase):
