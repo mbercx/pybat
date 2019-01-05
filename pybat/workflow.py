@@ -245,10 +245,9 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = VaspTask(kwargs={"directory": directory})
+        vasprun = VaspTask(directory=directory)
     else:
-        vasprun = CustodianTask(kwargs={"directory": directory,
-                                        "number_nodes": number_nodes})
+        vasprun = CustodianTask(directory=directory)
 
     # Combine the two FireTasks into one FireWork
     scf_firework = Firework(tasks=[setup_scf, vasprun],
