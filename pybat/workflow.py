@@ -308,10 +308,9 @@ def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
 
         # Create the PyTask that runs the calculation
         if in_custodian:
-            vasprun = VaspTask(kwargs={"directory": directory})
+            vasprun = VaspTask(directory=directory)
         else:
-            vasprun = CustodianTask(kwargs={"directory": directory,
-                                            "number_nodes": number_nodes})
+            vasprun = CustodianTask(directory=directory)
 
         # Create the PyTask that check the Pulay stresses again
         pulay_task = PyTask(
@@ -433,16 +432,9 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = PyTask(
-            func="pybat.workflow.run_custodian",
-            kwargs={"directory": directory}
-        )
+        vasprun = VaspTask(directory=directory)
     else:
-        vasprun = PyTask(
-            func="pybat.workflow.run_vasp",
-            kwargs={"directory": directory,
-                    "number_nodes": number_nodes}
-        )
+        vasprun = CustodianTask(directory=directory)
 
     # Create the PyTask that check the Pulay stresses
     pulay_task = PyTask(
@@ -519,18 +511,11 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                 "is_migration": False}
     )
 
-    # Set up the FireTask for the custodian run, if requested (lala)
+    # Create the PyTask that runs the calculation
     if in_custodian:
-        run_relax = PyTask(
-            func="pybat.workflow.run_custodian",
-            kwargs={"directory": os.path.join(dimer_dir, "final")}
-        )
+        vasprun = VaspTask(directory=os.path.join(dimer_dir, "final"))
     else:
-        run_relax = PyTask(
-            func="pybat.workflow.run_vasp",
-            kwargs={"directory": os.path.join(dimer_dir, "final"),
-                    "number_nodes": number_nodes}
-        )
+        vasprun = CustodianTask(directory=os.path.join(dimer_dir, "final"))
 
     # Extract the final cathode from the geometry optimization
     get_cathode = PyTask(
@@ -539,7 +524,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                 "write_cif": True, }
     )
 
-    relax_firework = Firework(tasks=[setup_transition, run_relax, get_cathode],
+    relax_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
                               name="Dimer Geometry optimization",
                               spec={"_launch_dir": dimer_dir,
                                     "_category": "2nodes"})
@@ -621,23 +606,16 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
                is_metal=is_metal,
                is_migration=False)
 
-    # Set up the FireTask for the custodian run, if requested
+    # Create the PyTask that runs the calculation
     if in_custodian:
-        run_relax = PyTask(
-            func="pybat.workflow.run_custodian",
-            kwargs={"directory": os.path.join(migration_dir, "final")}
-        )
+        vasprun = VaspTask(directory=os.path.join(migration_dir, "final"))
     else:
-        run_relax = PyTask(
-            func="pybat.workflow.run_vasp",
-            kwargs={"directory": os.path.join(migration_dir, "final"),
-                    "number_nodes": number_nodes}
-        )
+        vasprun = CustodianTask(directory=os.path.join(migration_dir, "final"))
 
-    relax_firework = Firework(tasks=[run_relax],
+    relax_firework = Firework(tasks=[vasprun],
                               name="Migration Geometry optimization",
                               spec={"_launch_dir": migration_dir,
-                                    "_category": "2nodes"})
+                                    "_category": number_nodes})
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + migration_dir.split("/")[-1])
