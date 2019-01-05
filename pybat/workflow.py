@@ -108,9 +108,9 @@ class VaspTask(FiretaskBase):
         prep_commands = fw_spec["_fw_env"]["vasp_prep"].split(";")
 
         for command in prep_commands:
-            subprocess.run(command.strip(" ").split(" "), shell=True)
+            subprocess.run(command.strip(" "), shell=True)
 
-        subprocess.run(fw_spec["_fw_env"]["vasp_command"].split(" "), shell=True)
+        subprocess.run(fw_spec["_fw_env"]["vasp_command"], shell=True)
 
 
 class CustodianTask(FiretaskBase):
