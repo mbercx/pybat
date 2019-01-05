@@ -1,6 +1,5 @@
 pymatgen
-numpy
-scipy
 click
+pymongo
 fireworks
 custodian

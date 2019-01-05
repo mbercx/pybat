@@ -5,7 +5,6 @@
 import os
 import subprocess
 import shlex
-import pybat
 
 import numpy as np
 
@@ -100,7 +99,7 @@ class VaspTask(FiretaskBase):
 
     """
     required_params = ["directory"]
-    _fw_name = {{pybat.workflow.VaspTask}}
+    _fw_name = "{{pybat.workflow.VaspTask}}"
 
     def run_task(self, fw_spec):
 
@@ -120,7 +119,7 @@ class CustodianTask(FiretaskBase):
     """
     # Workaround for making number of nodes work on breniac #TODO
     required_params = ["directory"]
-    _fw_name = {{pybat.workflow.CustodianTask}}
+    _fw_name = "{{pybat.workflow.CustodianTask}}"
 
     def run_task(self, fw_spec):
         directory = os.path.abspath(self["directory"])
@@ -456,7 +455,7 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
     # Set up a clear name for the workflow
     cathode = LiRichCathode.from_file(structure_file)
     workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
-    workflow_name += print(functional)
+    workflow_name += str(functional)
 
     # Create the workflow
     workflow = Workflow(fireworks=[relax_firework, ],
