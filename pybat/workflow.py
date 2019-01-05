@@ -344,7 +344,7 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
         directory (str): Directory in which the SCF calculation should be performed.
         write_chgcar (bool): Flag that indicates whether the CHGCAR file should
             be written.
-        in_custodian (bool): Flag that indicates wheter the calculation should be
+        in_custodian (bool): Flag that indicates whether the calculation should be
             run inside a Custodian.
 
     Returns:
