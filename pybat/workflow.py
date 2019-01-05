@@ -99,6 +99,7 @@ class VaspTask(FiretaskBase):
 
     """
     required_params = ["directory"]
+    _fw_name = "VaspTask"
 
     def run_task(self, fw_spec):
 
@@ -118,6 +119,7 @@ class CustodianTask(FiretaskBase):
     """
     # Workaround for making number of nodes work on breniac #TODO
     required_params = ["directory"]
+    _fw_name = "CustodianTask"
 
     def run_task(self, fw_spec):
         directory = os.path.abspath(self["directory"])

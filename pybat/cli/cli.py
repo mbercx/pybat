@@ -478,6 +478,8 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian):
     """
     from pybat.workflow import scf_workflow
 
+    print(in_custodian)
+
     scf_workflow(structure_file=structure_file,
                  functional=string_to_functional(functional),
                  directory=directory,
