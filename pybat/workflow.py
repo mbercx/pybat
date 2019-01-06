@@ -4,7 +4,6 @@
 
 import os
 import subprocess
-import shlex
 
 import numpy as np
 
@@ -93,7 +92,7 @@ class VaspTask(FiretaskBase):
     """
     Firetask that represents a VASP calculation run.
 
-    Args:
+    Required parameters:
         directory (str): Directory in which the VASP calculation should be run.
 
     """
@@ -110,7 +109,7 @@ class CustodianTask(FiretaskBase):
     """
     Firetask that represents a calculation run inside a Custodian.
 
-    Args:
+    Required parameters:
         directory (str): Directory in which the VASP calculation should be run.
 
     """
@@ -143,9 +142,11 @@ class PulayTask(FiretaskBase):
     the geometry optimization, which could indicate that there where Pulay stresses
     present. If so, start a new geometry optimization with the final structure.
 
-    Args:
+    Required parameters:
         directory (str): Directory in which the geometry optimization calculation
             was run.
+
+    Optional parameters:
         in_custodian (bool): Flag that indicates wheter the calculation should be
             run inside a Custodian.
         number_nodes (int): Number of nodes that should be used for the calculations.
