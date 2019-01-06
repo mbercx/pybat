@@ -235,7 +235,7 @@ def transition(directory, functional, is_metal, is_migration, optimize_initial):
     from pybat.cli.commands.setup import transition
 
     transition(directory=directory,
-               functional=functional,
+               functional=string_to_functional(functional),
                is_metal=is_metal,
                is_migration=is_migration,
                optimize_initial=optimize_initial)
@@ -282,7 +282,7 @@ def neb(directory, functional, nimages, is_metal, is_migration):
     from pybat.cli.commands.setup import neb
 
     neb(directory=directory,
-        functional=functional,
+        functional=string_to_functional(functional),
         nimages=nimages,
         is_metal=is_metal,
         is_migration=is_migration)
@@ -511,7 +511,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian):
     from pybat.workflow import relax_workflow
 
     relax_workflow(structure_file=structure_file,
-                   functional=functional,
+                   functional=string_to_functional(functional),
                    directory=directory,
                    is_metal=is_metal,
                    in_custodian=in_custodian)
