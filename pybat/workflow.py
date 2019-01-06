@@ -57,13 +57,14 @@ if os.path.exists(CONFIG_FILE):
                                "sure the details of the server are correctly "
                                "set up.")
 
-        VASP_RUN_SCRIPT = CONFIG["WORKFLOW"].get("script_path", default="")
-        VASP_RUN_COMMAND = "bash " + VASP_RUN_SCRIPT
 else:
     raise FileNotFoundError("No configuration file found in user's home "
                             "directory. Please use pybat config  "
                             "in order to set up the configuration for "
                             "the workflows.")
+
+# TODO Add good description
+PULAY_TOLERANCE = 1e-2
 
 
 # TODO Extend configuration and make the whole configuration setup more user friendly
@@ -77,8 +78,6 @@ else:
 # extensive, and are simply becoming less easy to grasp. It might be useful to create
 # methods that set up the FireWorks (e.g. for a relaxation, SCF calculations), and
 # then call upon these methods in the workflow methods.
-
-# TODO Turn run_vasp/run_custodian into FireTasks
 
 # TODO Fix the custodian issue
 # Currently custodian does not terminate the previous job properly. This may be related
@@ -113,10 +112,8 @@ class CustodianTask(FiretaskBase):
 
     Args:
         directory (str): Directory in which the VASP calculation should be run.
-        number_nodes (int): Number of nodes that should be used.
 
     """
-    # Workaround for making number of nodes work on breniac #TODO
     required_params = ["directory"]
     _fw_name = "{{pybat.workflow.CustodianTask}}"
 
@@ -125,7 +122,8 @@ class CustodianTask(FiretaskBase):
         os.chdir(directory)
 
         output = os.path.join(directory, "out")
-        vasp_cmd = shlex.split(VASP_RUN_COMMAND)
+        # TODO Make the output file more general
+        vasp_cmd = fw_spec["_fw_env"]["vasp_command"]
 
         handlers = [VaspErrorHandler(output_filename=output),
                     UnconvergedErrorHandler(output_filename=output)]
@@ -150,7 +148,9 @@ class PulayTask(FiretaskBase):
             was run.
         in_custodian (bool): Flag that indicates wheter the calculation should be
             run inside a Custodian.
-        number_nodes (): #TODO
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
         tolerance (float): Tolerance that indicates the maximum change in norm for the
             matrix defined by the cartesian coordinates of the lattice vectors.
             If the norm changes more than the tolerance, another geometry optimization
@@ -161,6 +161,7 @@ class PulayTask(FiretaskBase):
 
     """
     required_params = ["directory"]
+    _fw_name = "{{pybat.workflow.PulayTask}}"
 
     def run_task(self, fw_spec):
         """
@@ -175,7 +176,7 @@ class PulayTask(FiretaskBase):
         directory = self["directory"]
         in_custodian = self.get("in_custodian", default=False)
         number_nodes = self.get("number_nodes", default=None)
-        tolerance = self.get("tolerance", default=1e-2)
+        tolerance = self.get("tolerance", default=PULAY_TOLERANCE)
 
         # Check if the lattice vectors have changed significantly
         initial_cathode = LiRichCathode.from_file(
@@ -207,8 +208,7 @@ class PulayTask(FiretaskBase):
             if in_custodian:
                 vasprun = VaspTask(kwargs={"directory": directory})
             else:
-                vasprun = CustodianTask(kwargs={"directory": directory,
-                                                "number_nodes": number_nodes})
+                vasprun = CustodianTask(kwargs={"directory": directory})
 
             # Create the PyTask that check the Pulay stresses again
             pulay_task = PyTask(
@@ -218,11 +218,15 @@ class PulayTask(FiretaskBase):
                         "number_nodes": number_nodes}
             )
 
+            # Only add number of nodes to spec if specified
+            firework_spec = {"_launch_dir": directory}
+            if number_nodes:
+                firework_spec.update({"_category": str(number_nodes) + "nodes"})
+
             # Combine the two FireTasks into one FireWork
             relax_firework = Firework(tasks=[copy_contcar, vasprun, pulay_task],
                                       name="Pulay Step",
-                                      spec={"_launch_dir": directory,
-                                            "_category": number_nodes})
+                                      spec=firework_spec)
 
             return FWAction(additions=relax_firework)
 
@@ -232,7 +236,23 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
     """
     Create a FireWork for performing an SCF calculation
 
+    Args:
+        structure_file (str): Path to the geometry file of the structure.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        directory (str): Directory in which the SCF calculation should be performed.
+        write_chgcar (bool): Flag that indicates whether the CHGCAR file should
+            be written.
+        in_custodian (bool): Flag that indicates whether the calculation should be
+            run inside a Custodian.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
+
     Returns:
+        Firework: A firework that represents an SCF calculation.
 
     """
     # Create the PyTask that sets up the calculation
@@ -250,15 +270,20 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
     else:
         vasprun = VaspTask(directory=directory)
 
+    # Only add number of nodes to spec if specified
+    firework_spec = {"_launch_dir": os.getcwd()}
+    if number_nodes:
+        firework_spec.update({"_category": str(number_nodes) + "nodes"})
+
     # Combine the two FireTasks into one FireWork
     scf_firework = Firework(tasks=[setup_scf, vasprun],
                             name="SCF calculation",
-                            spec={"_launch_dir": os.getcwd(),
-                                  "_category": number_nodes})
+                            spec=firework_spec)
 
     return scf_firework
 
 
+# TODO Remove this class when the PulayTask is working properly
 def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
     """
     Check if the lattice vectors of a structure have changed significantly during
@@ -357,9 +382,9 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
     current_dir = os.getcwd()
 
     if functional[0] == "hse":
-        number_nodes = "4nodes"
+        number_nodes = 4
     else:
-        number_nodes = "1node"
+        number_nodes = 1
 
     # If no directory was provided, set it up according to the functional
     if directory == "":
@@ -412,9 +437,9 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
     current_dir = os.getcwd()
 
     if functional[0] == "hse":
-        number_nodes = "4nodes"
+        number_nodes = 4
     else:
-        number_nodes = "1node"
+        number_nodes = 1
 
     # If no directory was provided, set it up according to the functional
     if directory == "":
@@ -438,18 +463,20 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
         vasprun = VaspTask(directory=directory)
 
     # Create the PyTask that check the Pulay stresses
-    pulay_task = PyTask(
-        func="pybat.workflow.check_pulay",
-        kwargs={"directory": directory,
-                "in_custodian": in_custodian,
-                "number_nodes": number_nodes}
-    )
+    pulay_task = PulayTask(directory=directory,
+                           in_custodian=in_custodian,
+                           number_nodes=number_nodes,
+                           tol=PULAY_TOLERANCE)
+
+    # Only add number of nodes to spec if specified
+    firework_spec = {"_launch_dir": os.getcwd()}
+    if number_nodes:
+        firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
     # Combine the FireTasks into one FireWork
     relax_firework = Firework(tasks=[setup_relax, vasprun, pulay_task],
                               name="Geometry optimization",
-                              spec={"_launch_dir": current_dir,
-                                    "_category": number_nodes})
+                              spec=firework_spec)
 
     # Set up a clear name for the workflow
     cathode = LiRichCathode.from_file(structure_file)
@@ -493,9 +520,9 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     # TODO Change naming scheme
 
     if functional[0] == "hse":
-        number_nodes = "4nodes"
+        number_nodes = 4
     else:
-        number_nodes = "1node"
+        number_nodes = 1
 
     # Let the user define a dimer, unless one is provided
     dimer_dir = define_dimer(structure_file=structure_file,
@@ -522,13 +549,17 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     get_cathode = PyTask(
         func="pybat.cli.commands.get.get_cathode",
         kwargs={"directory": os.path.join(dimer_dir, "final"),
-                "write_cif": True, }
+                "write_cif": True}
     )
+
+    # Only add number of nodes to spec if specified
+    firework_spec = {"_launch_dir": os.getcwd()}
+    if number_nodes:
+        firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
     relax_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
                               name="Dimer Geometry optimization",
-                              spec={"_launch_dir": dimer_dir,
-                                    "_category": "2nodes"})
+                              spec=firework_spec)
 
     # Set up the SCF calculation following the relaxation, in order to get an accurate
     # total energy
@@ -548,7 +579,8 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
     scf_firework = create_scf_fw(
         structure_file=final_cathode, functional=functional,
         directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
-        number_nodes=number_nodes)
+        number_nodes=number_nodes
+    )
 
     workflow = Workflow(fireworks=[relax_firework, scf_firework],
                         name=structure_file + dimer_dir.split("/")[-1],
@@ -586,9 +618,9 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     """
 
     if functional[0] == "hse":
-        number_nodes = "4nodes"
+        number_nodes = 4
     else:
-        number_nodes = "1node"
+        number_nodes = 1
 
     # TODO Add setup steps to the workflow
     # In case adjustments need to made to the setup of certain calculations,
@@ -613,10 +645,14 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     else:
         vasprun = VaspTask(directory=os.path.join(migration_dir, "final"))
 
+    # Only add number of nodes to spec if specified
+    firework_spec = {"_launch_dir": os.getcwd()}
+    if number_nodes:
+        firework_spec.update({"_category": str(number_nodes) + "nodes"})
+
     relax_firework = Firework(tasks=[vasprun],
                               name="Migration Geometry optimization",
-                              spec={"_launch_dir": migration_dir,
-                                    "_category": number_nodes})
+                              spec=firework_spec)
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + migration_dir.split("/")[-1])
@@ -645,6 +681,10 @@ def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
             Methfessel-Paxton of 0.2 eV. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
+
+    Returns:
+        None
+
     """
 
     lirich = LiRichCathode.from_file(structure_file)
@@ -698,6 +738,10 @@ def site_dimers_workflow(structure_file, site_index, distance,
             Methfessel-Paxton of 0.2 eV. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
+
+    Returns:
+        None
+
     """
 
     lirich = LiRichCathode.from_file(structure_file)
