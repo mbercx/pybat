@@ -175,9 +175,9 @@ class PulayTask(FiretaskBase):
         """
         # Extract the parameters into variables; this makes for cleaner code IMO
         directory = self["directory"]
-        in_custodian = self.get("in_custodian", default=False)
-        number_nodes = self.get("number_nodes", default=None)
-        tolerance = self.get("tolerance", default=PULAY_TOLERANCE)
+        in_custodian = self.get("in_custodian", False)
+        number_nodes = self.get("number_nodes", None)
+        tolerance = self.get("tolerance", PULAY_TOLERANCE)
 
         # Check if the lattice vectors have changed significantly
         initial_cathode = LiRichCathode.from_file(
