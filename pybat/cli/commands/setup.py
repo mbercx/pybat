@@ -81,7 +81,9 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
     # Set up the calculation directory
     if calculation_dir == "":
         current_dir = os.path.dirname(".")
-        calculation_dir = os.path.join(current_dir, functional[0] + "_scf")
+        calculation_dir = os.path.join(
+            current_dir, functional[0] + str(functional[1]) + "_scf"
+        )
 
     # Set charge density to be written if requested
     if write_chgcar:
@@ -149,7 +151,9 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
     # Set up the calculation directory
     if calculation_dir == "":
         current_dir = os.path.dirname(".")
-        calculation_dir = os.path.join(current_dir, functional[0] + "_relax")
+        calculation_dir = os.path.join(
+            current_dir, functional[0] + str(functional[1]) + "_relax"
+        )
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
@@ -206,13 +210,14 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
     (initial_cathode, final_cathode) = find_transition_cathodes(
         directory)
 
-    # Check if a magnetic moment was not provided for the sites. If not, make
-    # sure it is zero for the calculations.
+    # Check if a magnetic moment was not provided for the sites
     if "magmom" not in initial_cathode.site_properties.keys():
+        # If not, set it to zero for all sites
         initial_cathode.add_site_property("magmom",
                                           [0] * len(initial_cathode.sites))
 
     if "magmom" not in final_cathode.site_properties.keys():
+        # If not, set it to zero for all sites
         final_cathode.add_site_property("magmom",
                                         [0] * len(initial_cathode.sites))
 
