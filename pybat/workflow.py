@@ -192,9 +192,11 @@ class PulayTask(FiretaskBase):
             initial_cathode.lattice.matrix - final_cathode.lattice.matrix
         )
 
+        # If the difference is small, return an empty FWAction
         if sum_differences < tolerance:
             return FWAction()
 
+        # Else, set up another geometry optimization
         else:
             print("Lattice vectors have changed significantly during geometry "
                   "optimization. Performing another full geometry optimization to "
@@ -208,9 +210,9 @@ class PulayTask(FiretaskBase):
 
             # Create the PyTask that runs the calculation
             if in_custodian:
-                vasprun = VaspTask(directory=directory)
-            else:
                 vasprun = CustodianTask(directory=directory)
+            else:
+                vasprun = VaspTask(directory=directory)
 
             # Create the PyTask that check the Pulay stresses again
             pulay_task = PulayTask(
