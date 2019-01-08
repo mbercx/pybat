@@ -43,13 +43,13 @@ if os.path.exists(CONFIG_FILE):
 
         try:
             LAUNCHPAD = LaunchPad(
-                host=CONFIG["SERVER"].get("host", default=""),
-                port=int(CONFIG["SERVER"].get("port", default=0)),
-                name=CONFIG["SERVER"].get("name", default=""),
-                username=CONFIG["SERVER"].get("username", default=""),
-                password=CONFIG["SERVER"].get("password", default=""),
-                ssl=CONFIG["SERVER"].get("ssl", default=False),
-                authsource=CONFIG["SERVER"].get("authsource", default=None)
+                host=CONFIG["SERVER"].get("host", ""),
+                port=int(CONFIG["SERVER"].get("port", 0)),
+                name=CONFIG["SERVER"].get("name", ""),
+                username=CONFIG["SERVER"].get("username", ""),
+                password=CONFIG["SERVER"].get("password", ""),
+                ssl=CONFIG["SERVER"].get("ssl", False),
+                authsource=CONFIG["SERVER"].get("authsource", None)
             )
         except ServerSelectionTimeoutError:
             raise TimeoutError("Could not connect to server. Please make "
@@ -117,6 +117,7 @@ class CustodianTask(FiretaskBase):
     _fw_name = "{{pybat.workflow.CustodianTask}}"
 
     def run_task(self, fw_spec):
+
         directory = os.path.abspath(self["directory"])
         os.chdir(directory)
 
@@ -147,7 +148,7 @@ class PulayTask(FiretaskBase):
             was run.
 
     Optional parameters:
-        in_custodian (bool): Flag that indicates wheter the calculation should be
+        in_custodian (bool): Flag that indicates whether the calculation should be
             run inside a Custodian.
         number_nodes (int): Number of nodes that should be used for the calculations.
             Is required to add the proper `_category` to the Firework generated, so
@@ -156,9 +157,6 @@ class PulayTask(FiretaskBase):
             matrix defined by the cartesian coordinates of the lattice vectors.
             If the norm changes more than the tolerance, another geometry optimization
             is performed starting from the final geometry.
-
-    Returns:
-        FWAction
 
     """
     required_params = ["directory"]
@@ -171,6 +169,7 @@ class PulayTask(FiretaskBase):
             fw_spec:
 
         Returns:
+            FWAction
 
         """
         # Extract the parameters into variables; this makes for cleaner code IMO
@@ -197,7 +196,7 @@ class PulayTask(FiretaskBase):
         else:
             print("Lattice vectors have changed significantly during geometry "
                   "optimization. Performing another full geometry optimization to "
-                  "make sure there were no Pulay stresses present.")
+                  "make sure there were no Pulay stresses present.\n\n")
 
             # Create the ScriptTask that copies the CONTCAR to the POSCAR
             copy_contcar = ScriptTask.from_str(
@@ -207,16 +206,13 @@ class PulayTask(FiretaskBase):
 
             # Create the PyTask that runs the calculation
             if in_custodian:
-                vasprun = VaspTask(kwargs={"directory": directory})
+                vasprun = VaspTask(directory=directory)
             else:
-                vasprun = CustodianTask(kwargs={"directory": directory})
+                vasprun = CustodianTask(directory=directory)
 
             # Create the PyTask that check the Pulay stresses again
-            pulay_task = PyTask(
-                func="pybat.workflow.check_pulay",
-                kwargs={"directory": directory,
-                        "in_custodian": in_custodian,
-                        "number_nodes": number_nodes}
+            pulay_task = PulayTask(
+                directory=directory, in_custodian=in_custodian, number_nodes=number_nodes
             )
 
             # Only add number of nodes to spec if specified
@@ -235,7 +231,7 @@ class PulayTask(FiretaskBase):
 def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custodian,
                   number_nodes):
     """
-    Create a FireWork for performing an SCF calculation
+    Create a FireWork for performing an SCF calculation.
 
     Args:
         structure_file (str): Path to the geometry file of the structure.
@@ -282,78 +278,6 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
                             spec=firework_spec)
 
     return scf_firework
-
-
-# TODO Remove this class when the PulayTask is working properly
-def pulay_check(directory, in_custodian, number_nodes, tol=1e-2):
-    """
-    Check if the lattice vectors of a structure have changed significantly during
-    the geometry optimization, which could indicate that there where Pulay stresses
-    present. If so, start a new geometry optimization with the final structure.
-
-    Args:
-        directory (str): Directory in which the geometry optimization calculation
-            was run.
-        in_custodian (bool): Flag that indicates wheter the calculation should be
-            run inside a Custodian.
-        number_nodes (): #TODO
-        tol (float): Tolerance that indicates the maximum change in norm for the
-            matrix defined by the cartesian coordinates of the lattice vectors.
-            If the norm changes more than the tolerance, another geometry optimization
-            is performed starting from the final geometry.
-
-    Returns:
-        FWAction
-
-    """
-    # Check if the lattice vectors have changed significantly
-
-    initial_cathode = LiRichCathode.from_file(
-        os.path.join(directory, "POSCAR")
-    )
-    final_cathode = LiRichCathode.from_file(
-        os.path.join(directory, "CONTCAR")
-    )
-
-    sum_differences = np.linalg.norm(
-        initial_cathode.lattice.matrix - final_cathode.lattice.matrix
-    )
-
-    if sum_differences < tol:
-        return FWAction()
-
-    else:
-        print("Lattice vectors have changed significantly during geometry "
-              "optimization. Performing another full geometry optimization to "
-              "make sure there were no Pulay stresses present.")
-
-        # Create the ScriptTask that copies the CONTCAR to the POSCAR
-        copy_contcar = ScriptTask.from_str(
-            "cp " + os.path.join(directory, "CONTCAR") +
-            " " + os.path.join(directory, "POSCAR")
-        )
-
-        # Create the PyTask that runs the calculation
-        if in_custodian:
-            vasprun = CustodianTask(directory=directory)
-        else:
-            vasprun = VaspTask(directory=directory)
-
-        # Create the PyTask that check the Pulay stresses again
-        pulay_task = PyTask(
-            func="pybat.workflow.check_pulay",
-            kwargs={"directory": directory,
-                    "in_custodian": in_custodian,
-                    "number_nodes": number_nodes}
-        )
-
-        # Combine the two FireTasks into one FireWork
-        relax_firework = Firework(tasks=[copy_contcar, vasprun, pulay_task],
-                                  name="Pulay Step",
-                                  spec={"_launch_dir": directory,
-                                        "_category": number_nodes})
-
-        return FWAction(additions=relax_firework)
 
 
 def scf_workflow(structure_file, functional=("pbe", {}), directory="",
@@ -616,6 +540,7 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
             Methfessel-Paxton of 0.2 eV. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
+
     """
 
     if functional[0] == "hse":
