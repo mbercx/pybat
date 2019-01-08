@@ -82,11 +82,13 @@ PULAY_TOLERANCE = 1e-2
 # Currently custodian does not terminate the previous job properly. This may be related
 # to the fact that the vasp run command is called in a script, and so custodian can
 # only terminate the script, not the actual vasp run.
+# Should be fixed -> Test!
 
 # TODO Add UnitTests!
 # It's really getting time to do this. Think about what unit tests you need and make a
 # test suite.
 
+# region * Region 1 - Firetasks
 
 class VaspTask(FiretaskBase):
     """
@@ -227,6 +229,10 @@ class PulayTask(FiretaskBase):
 
             return FWAction(additions=relax_firework)
 
+# endregion
+
+# region * Region 2 - Fireworks
+
 
 def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custodian,
                   number_nodes):
@@ -279,6 +285,9 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
     return scf_firework
 
+# endregion
+
+#region * Region 3 - Workflows
 
 def scf_workflow(structure_file, functional=("pbe", {}), directory="",
                  write_chgcar=False, in_custodian=False):
@@ -680,3 +689,5 @@ def site_dimers_workflow(structure_file, site_index, distance,
                        functional=functional,
                        is_metal=is_metal,
                        in_custodian=in_custodian)
+
+#endregion
