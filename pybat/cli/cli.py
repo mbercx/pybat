@@ -472,17 +472,25 @@ def workflow():
 @click.option("--directory", "-d", default="")
 @click.option("--write_chgcar", "-C", is_flag=True)
 @click.option("--in_custodian", "-c", is_flag=True)
-def scf(structure_file, functional, directory, write_chgcar, in_custodian):
+@click.option("--number_nodes", "-n", default=0,
+              help="Number of nodes that should be used for the calculations. Is "
+                   "required to add the proper `_category` to the Firework generated, "
+                   "so it is picked up by the right Fireworker.")
+def scf(structure_file, functional, directory, write_chgcar, in_custodian, number_nodes):
     """
     Set up an SCF calculation workflow.
     """
     from pybat.workflow import scf_workflow
 
+    if number_nodes == 0:
+        number_nodes = None
+
     scf_workflow(structure_file=structure_file,
                  functional=string_to_functional(functional),
                  directory=directory,
                  write_chgcar=write_chgcar,
-                 in_custodian=in_custodian)
+                 in_custodian=in_custodian,
+                 number_nodes=number_nodes)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -504,17 +512,25 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian):
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
 @click.option("--in_custodian", "-c", is_flag=True)
-def relax(structure_file, functional, directory, is_metal, in_custodian):
+@click.option("--number_nodes", "-n", default=0,
+              help="Number of nodes that should be used for the calculations. Is "
+                   "required to add the proper `_category` to the Firework generated, "
+                   "so it is picked up by the right Fireworker.")
+def relax(structure_file, functional, directory, is_metal, in_custodian, number_nodes):
     """
     Set up a geometry optimization workflow.
     """
     from pybat.workflow import relax_workflow
 
+    if number_nodes == 0:
+        number_nodes = None
+
     relax_workflow(structure_file=structure_file,
                    functional=string_to_functional(functional),
                    directory=directory,
                    is_metal=is_metal,
-                   in_custodian=in_custodian)
+                   in_custodian=in_custodian,
+                   number_nodes=number_nodes)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -537,19 +553,27 @@ def relax(structure_file, functional, directory, is_metal, in_custodian):
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
 @click.option("--in_custodian", "-c", is_flag=True)
+@click.option("--number_nodes", "-n", default=0,
+              help="Number of nodes that should be used for the calculations. Is "
+                   "required to add the proper `_category` to the Firework generated, "
+                   "so it is picked up by the right Fireworker.")
 def dimer(structure_file, dimer_indices, distance, functional, is_metal,
-          in_custodian):
+          in_custodian, number_nodes):
     """
     Set up dimer calculation workflows.
     """
     from pybat.workflow import dimer_workflow
+
+    if number_nodes == 0:
+        number_nodes = None
 
     dimer_workflow(structure_file=structure_file,
                    dimer_indices=dimer_indices,
                    distance=distance,
                    functional=string_to_functional(functional),
                    is_metal=is_metal,
-                   in_custodian=in_custodian)
+                   in_custodian=in_custodian,
+                   number_nodes=number_nodes)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -571,17 +595,26 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
 @click.option("--in_custodian", "-c", is_flag=True)
-def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian):
+@click.option("--number_nodes", "-n", default=0,
+              help="Number of nodes that should be used for the calculations. Is "
+                   "required to add the proper `_category` to the Firework generated, "
+                   "so it is picked up by the right Fireworker.")
+def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
+                 number_nodes):
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
     from pybat.workflow import noneq_dimers_workflow
 
+    if number_nodes == 0:
+        number_nodes = None
+
     noneq_dimers_workflow(structure_file=structure_file,
                           distance=distance,
                           functional=string_to_functional(functional),
                           is_metal=is_metal,
-                          in_custodian=in_custodian)
+                          in_custodian=in_custodian,
+                          number_nodes=number_nodes)
 
 
 ########

@@ -78,11 +78,7 @@ PULAY_TOLERANCE = 1e-2
 # methods that set up the FireWorks (e.g. for a relaxation, SCF calculations), and
 # then call upon these methods in the workflow methods.
 
-# TODO Fix the custodian issue
-# Currently custodian does not terminate the previous job properly. This may be related
-# to the fact that the vasp run command is called in a script, and so custodian can
-# only terminate the script, not the actual vasp run.
-# Should be fixed -> Test!
+# TODO Fix the CustodianTask
 
 # TODO Add UnitTests!
 # It's really getting time to do this. Think about what unit tests you need and make a
@@ -289,10 +285,11 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
 # endregion
 
-#region * Region 3 - Workflows
+# region * Region 3 - Workflows
+
 
 def scf_workflow(structure_file, functional=("pbe", {}), directory="",
-                 write_chgcar=False, in_custodian=False):
+                 write_chgcar=False, in_custodian=False, number_nodes=None):
     """
     Set up a self consistent field calculation (SCF) workflow and add it to the
     launchpad of the mongoDB server defined in the config file.
@@ -308,6 +305,9 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
             be written.
         in_custodian (bool): Flag that indicates whether the calculation should be
             run inside a Custodian.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
 
     Returns:
         None
@@ -316,11 +316,6 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Set up the directory in which to perform the calculation
     current_dir = os.getcwd()
-
-    if functional[0] == "hse":
-        number_nodes = 4
-    else:
-        number_nodes = 1
 
     # If no directory was provided, set it up according to the functional
     if directory == "":
@@ -346,7 +341,7 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
 
 
 def relax_workflow(structure_file, functional=("pbe", {}), directory="",
-                   is_metal=False, in_custodian=False):
+                   is_metal=False, in_custodian=False, number_nodes=None):
     """
     Set up a geometry optimization workflow and add it to the launchpad of the
     mongoDB server defined in the config file.
@@ -363,6 +358,9 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
             smearing method used.
         in_custodian (bool): Flag that indicates wheter the calculation should be
             run inside a Custodian.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
 
     Returns:
         None
@@ -371,11 +369,6 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Set up the directory in which to perform the calculation
     current_dir = os.getcwd()
-
-    if functional[0] == "hse":
-        number_nodes = 4
-    else:
-        number_nodes = 1
 
     # If no directory was provided, set it up according to the functional
     if directory == "":
@@ -427,7 +420,8 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
 
 
 def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
-                   functional=("pbe", {}), is_metal=False, in_custodian=False):
+                   functional=("pbe", {}), is_metal=False, in_custodian=False,
+                   number_nodes=None):
     """
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
@@ -452,13 +446,12 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
             Methfessel-Paxton of 0.2 eV. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
+
     """
     # TODO Change naming scheme
-
-    if functional[0] == "hse":
-        number_nodes = 4
-    else:
-        number_nodes = 1
 
     # Let the user define a dimer, unless one is provided
     dimer_dir = define_dimer(structure_file=structure_file,
@@ -527,7 +520,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
 def migration_workflow(structure_file, migration_indices=(0, 0),
                        functional=("pbe", {}), is_metal=False,
-                       in_custodian=False):
+                       in_custodian=False, number_nodes=None):
     """
     Set up a workflow that calculates the thermodynamics for a migration in
     the current directory.
@@ -551,13 +544,11 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
             Methfessel-Paxton of 0.2 eV. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
 
     """
-
-    if functional[0] == "hse":
-        number_nodes = 4
-    else:
-        number_nodes = 1
 
     # TODO Add setup steps to the workflow
     # In case adjustments need to made to the setup of certain calculations,
@@ -598,7 +589,7 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
 
 def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
-                          is_metal=False, in_custodian=False):
+                          is_metal=False, in_custodian=False, number_nodes=None):
     """
     Run dimer calculations for all the nonequivalent dimers in a structure.
 
@@ -618,6 +609,9 @@ def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
             Methfessel-Paxton of 0.2 eV. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
 
     Returns:
         None
@@ -648,12 +642,13 @@ def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
                        distance=distance,
                        functional=functional,
                        is_metal=is_metal,
-                       in_custodian=in_custodian)
+                       in_custodian=in_custodian,
+                       number_nodes=number_nodes)
 
 
 def site_dimers_workflow(structure_file, site_index, distance,
                          functional=("pbe", {}), is_metal=False,
-                         in_custodian=False):
+                         in_custodian=False, number_nodes=None):
     """
     Run dimer calculations for all the dimers around a site.
 
@@ -675,6 +670,9 @@ def site_dimers_workflow(structure_file, site_index, distance,
             Methfessel-Paxton of 0.2 eV. Defaults to False.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
 
     Returns:
         None
@@ -690,6 +688,7 @@ def site_dimers_workflow(structure_file, site_index, distance,
                        distance=distance,
                        functional=functional,
                        is_metal=is_metal,
-                       in_custodian=in_custodian)
+                       in_custodian=in_custodian,
+                       number_nodes=number_nodes)
 
 #endregion
