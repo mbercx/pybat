@@ -80,7 +80,7 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
 
     # Set up the calculation directory
     if calculation_dir == "":
-        current_dir = os.path.dirname(".")
+        current_dir = os.getcwd()
         calculation_dir = os.path.join(
             current_dir, functional[0] + str(functional[1]) + "_scf"
         )
@@ -150,7 +150,7 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
 
     # Set up the calculation directory
     if calculation_dir == "":
-        current_dir = os.path.dirname(".")
+        current_dir = os.getcwd()
         calculation_dir = os.path.join(
             current_dir, functional[0] + str(functional[1]) + "_relax"
         )

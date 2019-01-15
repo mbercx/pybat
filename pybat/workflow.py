@@ -316,6 +316,12 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Set up the directory in which to perform the calculation
     current_dir = os.getcwd()
+    if directory == "":
+        directory = os.path.join(
+            current_dir, functional[0] + str(functional[1]) + "_scf"
+        )
+    else:
+        directory = os.path.abspath(directory)
 
     # If no directory was provided, set it up according to the functional
     if directory == "":
@@ -369,12 +375,12 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Set up the directory in which to perform the calculation
     current_dir = os.getcwd()
-
-    # If no directory was provided, set it up according to the functional
     if directory == "":
-        directory = os.path.join(current_dir, functional[0] + "_relax")
+        directory = os.path.join(
+            current_dir, functional[0] + str(functional[1]) + "_relax"
+        )
     else:
-        directory = os.path.join(current_dir, directory)
+        directory = os.path.abspath(directory)
 
     # Create the PyTask that sets up the calculation
     setup_relax = PyTask(
