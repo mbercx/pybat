@@ -215,9 +215,11 @@ class PulayTask(FiretaskBase):
                 directory=directory, in_custodian=in_custodian, number_nodes=number_nodes
             )
 
-            # Only add number of nodes to spec if specified
-            firework_spec = {"_launch_dir": directory}
-            if number_nodes:
+            # Add number of nodes to spec, or "none"
+            firework_spec = {"_launch_dir": os.getcwd()}
+            if number_nodes == 0:
+                firework_spec.update({"_category": "none"})
+            else:
                 firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
             # Combine the two FireTasks into one FireWork
@@ -271,9 +273,11 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
     else:
         vasprun = VaspTask(directory=directory)
 
-    # Only add number of nodes to spec if specified
+    # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes:
+    if number_nodes == 0:
+        firework_spec.update({"_category": "none"})
+    else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
     # Combine the two FireTasks into one FireWork
@@ -405,7 +409,9 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Only add number of nodes to spec if specified
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes:
+    if number_nodes == 0:
+        firework_spec.update({"_category": "none"})
+    else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
     # Combine the FireTasks into one FireWork
@@ -487,9 +493,11 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                 "write_cif": True}
     )
 
-    # Only add number of nodes to spec if specified
+    # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes:
+    if number_nodes == 0:
+        firework_spec.update({"_category": "none"})
+    else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
     relax_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
@@ -579,9 +587,11 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     else:
         vasprun = VaspTask(directory=os.path.join(migration_dir, "final"))
 
-    # Only add number of nodes to spec if specified
+    # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes:
+    if number_nodes == 0:
+        firework_spec.update({"_category": "none"})
+    else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
     relax_firework = Firework(tasks=[vasprun],

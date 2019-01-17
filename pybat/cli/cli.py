@@ -27,11 +27,10 @@ def main():
     """
     pass
 
+
 # TODO Add checks for U-value input
 
-##########
-# CONFIG #
-##########
+# region * Config
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -75,9 +74,10 @@ def test():
 
     test()
 
-##########
-# DEFINE #
-##########
+
+# endregion
+
+# region * Define
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -125,9 +125,93 @@ def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
                  write_cif=write_cif)
 
 
-#########
-# SETUP #
-#########
+# endregion
+
+# region * Get
+
+
+@main.group(context_settings=CONTEXT_SETTINGS)
+def get():
+    """
+    Obtain data from output files.
+
+    """
+    pass
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".")
+@click.option("--write_cif", "-w", is_flag=True)
+def structure(directory, write_cif):
+    """
+    Obtain the structure with its magnetic configuration.
+
+    """
+    from pybat.cli.commands.get import get_structure
+
+    get_structure(directory=directory,
+                  write_cif=write_cif)
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".",
+              help="The directory which contains the required data for the "
+                   "final cathode JSON file input. This includes ")
+@click.option("--to_current_dir", "-c", is_flag=True,
+              help="Flag to indicate that the final cathode file should be "
+                   "witten to the current directory instead of the directory "
+                   "which contains the data.")
+@click.option("--ignore_magmom", "-i", is_flag=True)
+@click.option("--write_cif", "-w", is_flag=True)
+def cathode(directory, to_current_dir, ignore_magmom, write_cif):
+    """
+    Obtain the Cathode with its magnetic configuration and vacancies.
+
+    """
+    from pybat.cli.commands.get import get_cathode
+
+    get_cathode(directory=directory,
+                to_current_dir=to_current_dir,
+                ignore_magmom=ignore_magmom,
+                write_cif=write_cif)
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".")
+@click.option("--method", "-M", default="pymatgen")
+def barrier(directory, method):
+    """
+    Combine the images of a NEB calculation to show the transition.
+    """
+    from pybat.cli.commands.get import get_barrier
+
+    get_barrier(directory=directory,
+                method=method)
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
+def voltage():
+    """
+    Calculate the voltage for a battery cathode versus a Li anode.
+    """
+    pass
+    # TODO
+
+
+@get.command(context_settings=CONTEXT_SETTINGS)
+@click.option("--directory", "-d", default=".")
+def endiff(directory):
+    """
+    Calculate the energy difference for a transition.
+    """
+    from pybat.cli.commands.get import get_endiff
+
+    get_endiff(directory)
+
+
+# endregion
+
+# region * Setup
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -288,9 +372,9 @@ def neb(directory, functional, nimages, is_metal, is_migration):
         is_migration=is_migration)
 
 
-###########
-# UTILITY #
-###########
+# endregion
+
+# region * Utility
 
 
 @main.group(context_settings=CONTEXT_SETTINGS)
@@ -360,93 +444,9 @@ def supercell(cell, structure_file, file_format):
                    fmt=file_format)
 
 
-#######
-# GET #
-#######
+# endregion
 
-
-@main.group(context_settings=CONTEXT_SETTINGS)
-def get():
-    """
-    Obtain data from output files.
-
-    """
-    pass
-
-
-@get.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--directory", "-d", default=".")
-@click.option("--write_cif", "-w", is_flag=True)
-def structure(directory, write_cif):
-    """
-    Obtain the structure with its magnetic configuration.
-
-    """
-    from pybat.cli.commands.get import get_structure
-
-    get_structure(directory=directory,
-                  write_cif=write_cif)
-
-
-@get.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--directory", "-d", default=".",
-              help="The directory which contains the required data for the "
-                   "final cathode JSON file input. This includes ")
-@click.option("--to_current_dir", "-c", is_flag=True,
-              help="Flag to indicate that the final cathode file should be "
-                   "witten to the current directory instead of the directory "
-                   "which contains the data.")
-@click.option("--ignore_magmom", "-i", is_flag=True)
-@click.option("--write_cif", "-w", is_flag=True)
-def cathode(directory, to_current_dir, ignore_magmom, write_cif):
-    """
-    Obtain the Cathode with its magnetic configuration and vacancies.
-
-    """
-    from pybat.cli.commands.get import get_cathode
-
-    get_cathode(directory=directory,
-                to_current_dir=to_current_dir,
-                ignore_magmom=ignore_magmom,
-                write_cif=write_cif)
-
-
-@get.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--directory", "-d", default=".")
-@click.option("--method", "-M", default="pymatgen")
-def barrier(directory, method):
-    """
-    Combine the images of a NEB calculation to show the transition.
-    """
-    from pybat.cli.commands.get import get_barrier
-
-    get_barrier(directory=directory,
-                method=method)
-
-
-@get.command(context_settings=CONTEXT_SETTINGS)
-def voltage():
-    """
-    Calculate the voltage for a battery cathode versus a Li anode.
-    """
-    pass
-    # TODO
-
-
-@get.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--directory", "-d", default=".")
-def endiff(directory):
-    """
-    Calculate the energy difference for a transition.
-    """
-    from pybat.cli.commands.get import get_endiff
-
-    get_endiff(directory)
-
-
-############
-# WORKFLOW #
-############
+# region * Workflow
 
 @main.group(context_settings=CONTEXT_SETTINGS)
 def workflow():
@@ -481,9 +481,6 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
     Set up an SCF calculation workflow.
     """
     from pybat.workflow import scf_workflow
-
-    if number_nodes == 0:
-        number_nodes = None
 
     scf_workflow(structure_file=structure_file,
                  functional=string_to_functional(functional),
@@ -521,9 +518,6 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
     Set up a geometry optimization workflow.
     """
     from pybat.workflow import relax_workflow
-
-    if number_nodes == 0:
-        number_nodes = None
 
     relax_workflow(structure_file=structure_file,
                    functional=string_to_functional(functional),
@@ -564,9 +558,6 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
     """
     from pybat.workflow import dimer_workflow
 
-    if number_nodes == 0:
-        number_nodes = None
-
     dimer_workflow(structure_file=structure_file,
                    dimer_indices=dimer_indices,
                    distance=distance,
@@ -606,9 +597,6 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
     """
     from pybat.workflow import noneq_dimers_workflow
 
-    if number_nodes == 0:
-        number_nodes = None
-
     noneq_dimers_workflow(structure_file=structure_file,
                           distance=distance,
                           functional=string_to_functional(functional),
@@ -617,9 +605,9 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
                           number_nodes=number_nodes)
 
 
-########
-# TEST #
-########
+# endregion
+
+# region * Test
 
 @main.group(context_settings=CONTEXT_SETTINGS)
 def test():
@@ -629,7 +617,10 @@ def test():
     pass
 
 
-# Utility scripts
+# endregion
+
+
+# region * Local scripts
 
 
 def string_to_functional(dict_string):
@@ -660,3 +651,5 @@ def string_to_functional(dict_string):
         return functional, pbeu_dict
     else:
         return functional, functional_dict
+
+# endregion
