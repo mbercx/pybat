@@ -604,6 +604,13 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     LAUNCHPAD.add_wf(workflow)
 
 
+# endregion
+
+# region * Region 4 - Studies
+#
+# Studies are a collection of Workflows
+
+
 def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
                           is_metal=False, in_custodian=False, number_nodes=None):
     """
@@ -707,4 +714,4 @@ def site_dimers_workflow(structure_file, site_index, distance,
                        in_custodian=in_custodian,
                        number_nodes=number_nodes)
 
-#endregion
+# endregion
