@@ -80,10 +80,10 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
 
     # Set up the calculation directory
     if calculation_dir == "":
-        current_dir = os.getcwd()
-        calculation_dir = os.path.join(
-            current_dir, functional[0] + str(functional[1]) + "_scf"
-        )
+        calculation_dir = os.path.join(os.getcwd(), functional[0])
+        if functional[0] == "pbeu":
+            calculation_dir += str(functional[1]["LDAUU"]).replace(" ", "")
+        calculation_dir += "_scf"
 
     # Set charge density to be written if requested
     if write_chgcar:
@@ -150,10 +150,10 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
 
     # Set up the calculation directory
     if calculation_dir == "":
-        current_dir = os.getcwd()
-        calculation_dir = os.path.join(
-            current_dir, functional[0] + str(functional[1]) + "_relax"
-        )
+        calculation_dir = os.path.join(os.getcwd(), functional[0])
+        if functional[0] == "pbeu":
+            calculation_dir += str(functional[1]["LDAUU"]).replace(" ", "")
+        calculation_dir += "_relax"
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
