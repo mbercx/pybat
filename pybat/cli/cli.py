@@ -453,8 +453,8 @@ def print(structure_file):
     """
     from pybat.core import Cathode
 
-    print(Cathode.from_file(structure_file))
-
+    cat = Cathode.from_file(structure_file)
+    print(cat)
 
 # endregion
 
