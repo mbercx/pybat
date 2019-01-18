@@ -638,15 +638,16 @@ class LiRichCathode(Cathode):
 
         """
 
+        ineq_dimers = []
+
         if method == "symmops":
 
             symmops = SpacegroupAnalyzer(self).get_space_group_operations()
 
+            # If no site is provided, consider all inequivalent cation sites
             if site_index is None:
 
                 ineq_cations = self.find_noneq_cations()
-
-                ineq_dimers = []
 
                 for index in ineq_cations:
 
@@ -668,8 +669,27 @@ class LiRichCathode(Cathode):
 
                         if inequivalent:
                             ineq_dimers.append(dimer)
+
+            # Else only consider the site provided
             else:
-                raise NotImplementedError()
+                site_dimers = self.find_oxygen_dimers(site_index)
+
+                for dimer in site_dimers:
+
+                    d1 = [self.sites[dimer[0]], self.sites[dimer[1]]]
+
+                    inequivalent = True
+
+                    for ineq_dimer in ineq_dimers:
+
+                        d2 = [self.sites[ineq_dimer[0]],
+                              self.sites[ineq_dimer[1]]]
+
+                        if symmops.are_symmetrically_equivalent(d1, d2):
+                            inequivalent = False
+
+                    if inequivalent:
+                        ineq_dimers.append(dimer)
 
             return ineq_dimers
 
