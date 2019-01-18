@@ -444,6 +444,18 @@ def supercell(cell, structure_file, file_format):
                    fmt=file_format)
 
 
+@util.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+def print(structure_file):
+    """
+    Convert a structure into the primitive unit cell.
+
+    """
+    from pybat.core import Cathode
+
+    print(Cathode.from_file(structure_file))
+
+
 # endregion
 
 # region * Workflow
