@@ -695,7 +695,7 @@ def site_dimers_workflow(structure_file, site_index, distance,
     """
 
     lirich = LiRichCathode.from_file(structure_file)
-    dimer_list = lirich.find_oxygen_dimers(int(site_index))
+    dimer_list = lirich.find_noneq_dimers(int(site_index))
 
     for dimer in dimer_list:
         dimer_workflow(structure_file=structure_file,
