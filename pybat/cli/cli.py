@@ -605,6 +605,46 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
                           number_nodes=number_nodes)
 
 
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("site_index", default=None)
+@click.argument("structure_file", nargs=1)
+@click.option("--distance", "-d", default=float(1.4))
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
+@click.option("--in_custodian", "-c", is_flag=True)
+@click.option("--number_nodes", "-n", default=0,
+              help="Number of nodes that should be used for the calculations. Is "
+                   "required to add the proper `_category` to the Firework generated, "
+                   "so it is picked up by the right Fireworker.")
+def site_dimers(site_index, structure_file, distance, functional, is_metal, in_custodian,
+                number_nodes):
+    """
+    Set up dimer calculations for all nonequivalent dimers in a structure.
+    """
+    from pybat.workflow import site_dimers_workflow
+
+    site_dimers_workflow(structure_file=structure_file,
+                         site_index=site_index,
+                         distance=distance,
+                         functional=string_to_functional(functional),
+                         is_metal=is_metal,
+                         in_custodian=in_custodian,
+                         number_nodes=number_nodes)
+
+
 # endregion
 
 # region * Test
