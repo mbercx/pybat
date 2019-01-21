@@ -496,21 +496,12 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
                               name="Dimer Geometry optimization",
                               spec=firework_spec)
 
-    # Set up the SCF calculation following the relaxation, in order to get an accurate
-    # total energy
-    # Create the PyTask that sets up the calculation
-    if functional[0] == "pbeu":
-        scf_dir = os.path.join(
-            dimer_dir,
-            "pbeu_" +
-            "".join([k + str(functional[1][k]) for k in functional[1].keys()]) +
-            "_scf"
-        )
-    else:
-        scf_dir = os.path.join(dimer_dir, functional[0] + "_scf")
+    # Set up the SCF calculation directory
+    scf_dir = os.path.join(dimer_dir, "scf_final")
 
     final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
 
+    # Set up the SCF calculation
     scf_firework = create_scf_fw(
         structure_file=final_cathode, functional=functional,
         directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
