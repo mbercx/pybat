@@ -82,9 +82,8 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
     if calculation_dir == "":
         calculation_dir = os.path.join(os.getcwd(), functional[0])
         if functional[0] == "pbeu":
-            calculation_dir += "".join(
-                k + str(functional[1]["LDAUU"][k]) for k in functional[1]["LDAUU"].keys()
-            )
+            calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                             in functional[1]["LDAUU"].keys())
         calculation_dir += "_scf"
 
     # Set charge density to be written if requested
@@ -154,9 +153,8 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
     if calculation_dir == "":
         calculation_dir = os.path.join(os.getcwd(), functional[0])
         if functional[0] == "pbeu":
-            calculation_dir += "".join(
-                k + str(functional[1]["LDAUU"][k]) for k in functional[1]["LDAUU"].keys()
-            )
+            calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                             in functional[1]["LDAUU"].keys())
         calculation_dir += "_relax"
 
     # For metals, add some Methfessel Paxton smearing
