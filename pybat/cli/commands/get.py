@@ -33,7 +33,7 @@ def get_structure(directory, write_cif=False):
 
     Args:
         directory (str): Directory in which the geometry optimization
-                output files (i.e. CONTCAR and OUTCAR) are stores.
+                output files (i.e. CONTCAR and OUTCAR) are stored.
         write_cif (bool): Flag that indicates whether the structure should
             also be written as a .cif file.
     """

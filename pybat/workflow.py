@@ -322,7 +322,9 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
     if directory == "":
         directory = os.path.join(os.getcwd(), functional[0])
         if functional[0] == "pbeu":
-            directory += str(functional[1]["LDAUU"]).replace(" ", "")
+            directory += "".join(
+                k + str(functional[1]["LDAUU"][k]) for k in functional[1]["LDAUU"].keys()
+            )
         directory += "_scf"
 
     # Combine the two FireTasks into one FireWork
@@ -375,7 +377,9 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
     if directory == "":
         directory = os.path.join(os.getcwd(), functional[0])
         if functional[0] == "pbeu":
-            directory += str(functional[1]["LDAUU"]).replace(" ", "")
+            directory += "".join(
+                k + str(functional[1]["LDAUU"][k]) for k in functional[1]["LDAUU"].keys()
+            )
         directory += "_relax"
 
     # Create the PyTask that sets up the calculation
