@@ -88,10 +88,7 @@ class Cathode(Structure):
     we can consider the empty cation sites for final positions of transition
     metal migrations.
 
-    There was a reason
-
     """
-
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -466,10 +463,10 @@ class Cathode(Structure):
 
         if fmt == "poscar":
             structure = self.as_ordered_structure()
-            structure.to(fmt, filename, **kwargs)
+            return structure.to(fmt, filename, **kwargs)
 
         else:
-            super(Cathode, self).to(fmt, filename, **kwargs)
+            return super(Cathode, self).to(fmt, filename, **kwargs)
 
     @classmethod
     def from_structure(cls, structure):
