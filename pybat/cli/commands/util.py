@@ -2,7 +2,10 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
-from pymatgen.core import Structure
+import os
+
+from monty.io import zopen
+from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
@@ -102,6 +105,23 @@ def make_supercell(structure_file, supercell, fmt="json"):
                            + "." + fmt
 
     cathode.to(fmt, super_structure_file)
+
+
+def data(vasprun_file):
+    """
+    Extract the main data from a vasprun.xml file and write it as a data.json.
+
+    Args:
+        vasprun_file:
+
+    Returns:
+
+    """
+    directory = os.path.dirname(os.path.abspath(vasprun_file))
+    vasprun = Vasprun(vasprun_file)
+
+    with zopen(os.path.join(directory, "data.json"), "w") as file:
+        file.write(vasprun.to_json())
 
 
 def show(structure_file):
