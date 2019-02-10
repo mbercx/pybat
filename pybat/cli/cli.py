@@ -415,6 +415,18 @@ def conv(structure_file, file_format):
 
 
 @util.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("vasprun_file", nargs=1)
+def data(vasprun_file):
+    """
+    Compress the data of the vasprun.xml file to a JSON file.
+
+    """
+    from pybat.cli.commands.util import data
+
+    data(vasprun_file=vasprun_file)
+
+
+@util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--file_format", "-F", default="json")
 def prim(structure_file, file_format):
