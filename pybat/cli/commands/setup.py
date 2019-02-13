@@ -365,7 +365,7 @@ def neb(directory, functional=("pbe", {}), nimages=8, is_metal=False,
         )
         # Perform an interpolation via this image
         images_1 = initial_structure.interpolate(end_structure=middle_structure,
-                                                 nimages=int((nimages)/2 + 1),
+                                                 nimages=int((nimages + 1)/2 + 1),
                                                  interpolate_lattices=True)
         images_2 = middle_structure.interpolate(end_structure=final_structure,
                                                 nimages=int((nimages)/2),
