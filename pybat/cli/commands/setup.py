@@ -357,6 +357,21 @@ def neb(directory, functional=("pbe", {}), nimages=8, is_metal=False,
 
         images = neb_path.images
         neb_path.plot_images("neb.vasp")
+    # In case an "middle image" has been provided via which to interpolate
+    elif os.path.exists(os.path.join(directory, "middle")):
+        # Load the middle image
+        middle_structure = Structure.from_file(
+            os.path.join(directory, "middle", "CONTCAR")
+        )
+        # Perform an interpolation via this image
+        images_1 = initial_structure.interpolate(end_structure=middle_structure,
+                                                 nimages=int((nimages)/2 + 1),
+                                                 interpolate_lattices=True)
+        images_2 = middle_structure.interpolate(end_structure=final_structure,
+                                                nimages=int((nimages)/2),
+                                                interpolate_lattices=True)
+        images = images_1 + images_2[1:]
+
 
     else:
         # Linearly interpolate the initial and final structures
