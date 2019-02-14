@@ -89,6 +89,7 @@ class Cathode(Structure):
     metal migrations.
 
     """
+
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -930,27 +931,27 @@ class Dimer(MSONable):
                 # Find the sites which are in the plane of the oxygens and
                 # their shared neighbors.
                 if np.linalg.norm(oxy_1.coords
-                                          - (
-                                    shared_neighbor_4.coords - oxy_1.coords)
-                                          - site.coords) < REPRESENTATION_DIST_TOL:
+                                  - (
+                                          shared_neighbor_4.coords - oxy_1.coords)
+                                  - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[5] = site.species_and_occu
 
                 if np.linalg.norm(oxy_1.coords
-                                          - (
-                                    shared_neighbor_3.coords - oxy_1.coords)
-                                          - site.coords) < REPRESENTATION_DIST_TOL:
+                                  - (
+                                          shared_neighbor_3.coords - oxy_1.coords)
+                                  - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[6] = site.species_and_occu
 
                 if np.linalg.norm(oxy_2.coords
-                                          - (
-                                    shared_neighbor_4.coords - oxy_2.coords)
-                                          - site.coords) < REPRESENTATION_DIST_TOL:
+                                  - (
+                                          shared_neighbor_4.coords - oxy_2.coords)
+                                  - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[7] = site.species_and_occu
 
                 if np.linalg.norm(oxy_2.coords
-                                          - (
-                                    shared_neighbor_3.coords - oxy_2.coords) \
-                                          - site.coords) < REPRESENTATION_DIST_TOL:
+                                  - (
+                                          shared_neighbor_3.coords - oxy_2.coords) \
+                                  - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[8] = site.species_and_occu
 
                 # Find the sites which are out of plane
@@ -1249,7 +1250,7 @@ class DimerNEBAnalysis(NEBAnalysis):
 
         plt.xlabel("O-O Distance ($\mathrm{\AA}$)")
         plt.xticks(self.r[::2], [str(round(d, 2)) for d in
-                                self.dimer_distances[::2]])
+                                 self.dimer_distances[::2]])
         plt.ylabel("Energy (meV)")
         plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
 
@@ -1315,3 +1316,15 @@ def is_number(s):
         return True
     except ValueError:
         return False
+
+def new_function(arg1, arg2):
+    """
+    This describes the function.
+
+    Args:
+        arg1 (list):
+        arg2:
+
+    Returns:
+
+    """
