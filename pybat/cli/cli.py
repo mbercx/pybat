@@ -388,7 +388,7 @@ def util():
 
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
-@click.option("--filename", "-f", default="neb_result")
+@click.option("--filename", "-f", default="neb_result.cif")
 def showpath(directory, filename):
     """
     Combine the images of a NEB calculation to show the transition.

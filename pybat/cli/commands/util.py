@@ -41,7 +41,7 @@ def show_path(directory, filename):
         for site in structure:
             transition_structure.append(site.specie, site.frac_coords)
 
-    transition_structure.to("cif", filename + ".cif")
+    transition_structure.to("cif", filename)
 
 
 def conventional_structure(structure_file, fmt="json"):
