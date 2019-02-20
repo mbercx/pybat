@@ -370,9 +370,7 @@ def neb(directory, functional=("pbe", {}), nimages=8, is_metal=False,
         images_2 = middle_structure.interpolate(end_structure=final_structure,
                                                 nimages=int((nimages)/2),
                                                 interpolate_lattices=True)
-        pdb.set_trace()
-        images = images_1 + images_2[1:]
-
+        images = images_1[:-1] + images_2
 
     else:
         # Linearly interpolate the initial and final structures
