@@ -196,7 +196,7 @@ class PulayTask(FiretaskBase):
         else:
             print("Lattice vectors have changed significantly during geometry "
                   "optimization. Performing another full geometry optimization to "
-                  "make sure there were no Pulay stresses present.\n\n") # demo
+                  "make sure there were no Pulay stresses present.\n\n")
 
             # Create the ScriptTask that copies the CONTCAR to the POSCAR
             copy_contcar = ScriptTask.from_str(
