@@ -311,6 +311,9 @@ def relax(structure_file, functional, calculation_dir, is_metal):
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
+@click.option("--optimize_initial", "-O", is_flag=True,
+              help="Flag to indicate that the initial structure should also be "
+                   "optimized.")
 def transition(directory, functional, is_metal, is_migration, optimize_initial):
     """
     Set up a the geometry optimizations for the initial and final state of a
