@@ -647,8 +647,8 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     LAUNCHPAD.add_wf(workflow)
 
 
-def neb_workflow(structure_file, nimages=7, functional=("pbe", {}), is_metal=False,
-                 in_custodian=False,
+def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
+                 is_migration=False, in_custodian=False,
                  number_nodes=None):
     """
     Set up a workflow that calculates the kinetic barrier between two geometries.
@@ -658,10 +658,7 @@ def neb_workflow(structure_file, nimages=7, functional=("pbe", {}), is_metal=Fal
     have a separate NEB workflow?
 
     Args:
-        structure_file (str): Structure file of the cathode material. Note
-            that the structure file should be a json format file that is
-            derived from the Cathode class, i.e. it should contain the cation
-            configuration of the structure.
+        directory (str): Directory in which the NEB calculation should be performed.
         nimages (int): Number of images to use for the NEB calculation.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
@@ -670,6 +667,8 @@ def neb_workflow(structure_file, nimages=7, functional=("pbe", {}), is_metal=Fal
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV. Defaults to False.
+        is_migration (bool): Flag that indicates that the transition is a migration
+            of an atom in the structure.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
         number_nodes (int): Number of nodes that should be used for the calculations.
@@ -677,15 +676,19 @@ def neb_workflow(structure_file, nimages=7, functional=("pbe", {}), is_metal=Fal
             it is picked up by the right Fireworker. Defaults to the number of images.
 
     """
-    # TODO Change naming scheme
+    # If no number of nodes is specified, take the number of images
+    if number_nodes is None:
+        number_nodes = nimages
 
     # Create the Firework that sets up and runs the NEB
-
-    # Extract the final cathode from the geometry optimization
-    get_cathode = PyTask(
-        func="pybat.cli.commands.get.get_cathode",
-        kwargs={"directory": os.path.join(dimer_dir, "final"),
-                "write_cif": True}
+    neb_firework = create_neb_fw(
+        directory=directory,
+        nimages=nimages,
+        functional=functional,
+        is_metal=is_metal,
+        is_migration=is_migration,
+        in_custodian=in_custodian,
+        number_nodes=number_nodes
     )
 
     # Add number of nodes to spec, or "none"
@@ -695,25 +698,9 @@ def neb_workflow(structure_file, nimages=7, functional=("pbe", {}), is_metal=Fal
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
-    relax_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
-                              name="Dimer Geometry optimization",
-                              spec=firework_spec)
-
-    # Set up the SCF calculation directory
-    scf_dir = os.path.join(dimer_dir, "scf_final")
-
-    final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
-
-    # Set up the SCF calculation
-    scf_firework = create_scf_fw(
-        structure_file=final_cathode, functional=functional,
-        directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
-        number_nodes=number_nodes
-    )
-
-    workflow = Workflow(fireworks=[relax_firework, scf_firework],
-                        name=structure_file + dimer_dir.split("/")[-1],
-                        links_dict={relax_firework: [scf_firework]})
+    # TODO Improve naming scheme of workflow
+    workflow = Workflow(fireworks=[neb_firework, ],
+                        name=directory.split("/")[-1])
 
     LAUNCHPAD.add_wf(workflow)
 
