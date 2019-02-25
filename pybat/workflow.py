@@ -98,7 +98,6 @@ class VaspTask(FiretaskBase):
     _fw_name = "{{pybat.workflow.VaspTask}}"
 
     def run_task(self, fw_spec):
-
         os.chdir(self["directory"])
         subprocess.run(fw_spec["_fw_env"]["vasp_command"], shell=True)
 
@@ -115,7 +114,6 @@ class CustodianTask(FiretaskBase):
     _fw_name = "{{pybat.workflow.CustodianTask}}"
 
     def run_task(self, fw_spec):
-
         directory = os.path.abspath(self["directory"])
         os.chdir(directory)
 
@@ -229,6 +227,7 @@ class PulayTask(FiretaskBase):
 
             return FWAction(additions=relax_firework)
 
+
 # endregion
 
 # region * Region 2 - Fireworks
@@ -286,6 +285,65 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
                             spec=firework_spec)
 
     return scf_firework
+
+
+def create_neb_fw(directory, nimages, functional, is_metal, is_migration, in_custodian,
+                  number_nodes):
+    """
+    Create a FireWork for performing an NEB calculation.
+
+    Args:
+        directory (str): Directory in which the NEB calculation should be performed.
+        nimages (int): Number of images to use for the NEB calculation.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        in_custodian (bool): Flag that indicates whether the calculation should be
+            run inside a Custodian.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV.
+        is_migration (bool): Flag that indicates that the transition is a migration
+            of an atom in the structure.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
+
+    Returns:
+        Firework: A firework that represents an NEB calculation.
+
+    """
+    # Create the PyTask that sets up the calculation
+    setup_neb = PyTask(
+        func="pybat.cli.commands.setup.neb",
+        kwargs={"directory": directory,
+                "nimages": nimages,
+                "functional": functional,
+                "is_metal": is_metal,
+                "is_migration": is_migration}
+    )
+
+    # Create the PyTask that runs the calculation
+    if in_custodian:
+        vasprun = CustodianTask(directory=directory)
+    else:
+        vasprun = VaspTask(directory=directory)
+
+    # Add number of nodes to spec, or "none"
+    firework_spec = {"_launch_dir": os.getcwd()}
+    if number_nodes == 0:
+        firework_spec.update({"_category": "none"})
+    else:
+        firework_spec.update({"_category": str(number_nodes) + "nodes"})
+
+    # Combine the two FireTasks into one FireWork
+    neb_firework = Firework(tasks=[setup_neb, vasprun],
+                            name="NEB calculation",
+                            spec=firework_spec)
+
+    return neb_firework
+
 
 # endregion
 
@@ -585,6 +643,77 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
     workflow = Workflow(fireworks=[relax_firework],
                         name=structure_file + migration_dir.split("/")[-1])
+
+    LAUNCHPAD.add_wf(workflow)
+
+
+def neb_workflow(structure_file, nimages=7, functional=("pbe", {}), is_metal=False,
+                 in_custodian=False,
+                 number_nodes=None):
+    """
+    Set up a workflow that calculates the kinetic barrier between two geometries.
+
+    # TODO
+    TEMPORARY? Should NEB be integrated in other workflows? If so, should we still
+    have a separate NEB workflow?
+
+    Args:
+        structure_file (str): Structure file of the cathode material. Note
+            that the structure file should be a json format file that is
+            derived from the Cathode class, i.e. it should contain the cation
+            configuration of the structure.
+        nimages (int): Number of images to use for the NEB calculation.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV. Defaults to False.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker. Defaults to the number of images.
+
+    """
+    # TODO Change naming scheme
+
+    # Create the Firework that sets up and runs the NEB
+
+    # Extract the final cathode from the geometry optimization
+    get_cathode = PyTask(
+        func="pybat.cli.commands.get.get_cathode",
+        kwargs={"directory": os.path.join(dimer_dir, "final"),
+                "write_cif": True}
+    )
+
+    # Add number of nodes to spec, or "none"
+    firework_spec = {"_launch_dir": os.getcwd()}
+    if number_nodes == 0:
+        firework_spec.update({"_category": "none"})
+    else:
+        firework_spec.update({"_category": str(number_nodes) + "nodes"})
+
+    relax_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
+                              name="Dimer Geometry optimization",
+                              spec=firework_spec)
+
+    # Set up the SCF calculation directory
+    scf_dir = os.path.join(dimer_dir, "scf_final")
+
+    final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
+
+    # Set up the SCF calculation
+    scf_firework = create_scf_fw(
+        structure_file=final_cathode, functional=functional,
+        directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
+        number_nodes=number_nodes
+    )
+
+    workflow = Workflow(fireworks=[relax_firework, scf_firework],
+                        name=structure_file + dimer_dir.split("/")[-1],
+                        links_dict={relax_firework: [scf_firework]})
 
     LAUNCHPAD.add_wf(workflow)
 
