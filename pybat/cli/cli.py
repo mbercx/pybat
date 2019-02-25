@@ -470,6 +470,7 @@ def show(structure_file):
 
     show(structure_file=structure_file)
 
+
 # endregion
 
 # region * Workflow
@@ -591,6 +592,54 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
                    is_metal=is_metal,
                    in_custodian=in_custodian,
                    number_nodes=number_nodes)
+
+
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("directory", nargs=1)
+@click.option("--nimages", "-n", default=7,
+              help="Number of images.")
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
+@click.option("--is_migration", "-M", is_flag=True,
+              help="Flag to designate the transition as a migration. "
+                   "Activating this flag means that a static calculation will "
+                   "be set up to determine the charge density of the host "
+                   "structure, i.e. without the migrating ion. This charge "
+                   "density can then be used to find a good initial guess "
+                   "for the migration pathway.")
+@click.option("--in_custodian", "-c", is_flag=True)
+@click.option("--number_nodes", "-n", default=0,
+              help="Number of nodes that should be used for the calculations. Is "
+                   "required to add the proper `_category` to the Firework generated, "
+                   "so it is picked up by the right Fireworker. Defaults to the "
+                   "number of images.")
+def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
+        number_nodes):
+    """
+    Set up dimer calculation workflows.
+    """
+    from pybat.workflow import neb_workflow
+
+    neb_workflow(directory=directory,
+                 nimages=nimages,
+                 functional=string_to_functional(functional),
+                 is_metal=is_metal,
+                 is_migration=is_migration,
+                 in_custodian=in_custodian,
+                 number_nodes=number_nodes)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
