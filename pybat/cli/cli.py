@@ -596,7 +596,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("directory", nargs=1)
-@click.option("--nimages", "-n", default=7,
+@click.option("--nimages", "-N", default=7,
               help="Number of images.")
 @click.option("--functional", "-f", default="pbe",
               help="Option for configuring the functional used in the calculation. "
