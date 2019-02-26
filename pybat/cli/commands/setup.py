@@ -402,7 +402,7 @@ def neb(directory, nimages=8, functional=("pbe", {}), is_metal=False,
     neb_calculation.write_input(directory)
 
     # Make a file to visualize the transition
-    neb_calculation.visualize_transition()
+    neb_calculation.visualize_transition(os.path.join(directory, "transition.cif"))
 
 
 ###########

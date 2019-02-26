@@ -196,7 +196,7 @@ class PybatNEBSet(PybatRelaxSet):
             nebpath = Structure.from_sites(sorted(sites))
             nebpath.to(filename=os.path.join(output_dir, 'path.cif'))
 
-    def visualize_transition(self, filename="transition"):
+    def visualize_transition(self, filename="transition.cif"):
         """
         Write a file to show the transition
 
@@ -207,4 +207,4 @@ class PybatNEBSet(PybatRelaxSet):
             for site in structure:
                 transition_structure.append(site.specie, site.frac_coords)
 
-        transition_structure.to("cif", filename + ".cif")
+        transition_structure.to("cif", filename)
