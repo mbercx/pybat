@@ -445,7 +445,7 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
                                        in functional[1]["LDAUU"].keys())
         directory += "_scf"
 
-    # Combine the two FireTasks into one FireWork
+    # Set up the SCF Firework
     scf_firework = create_scf_fw(
         structure_file=structure_file, functional=functional,
         directory=directory, write_chgcar=write_chgcar,
@@ -499,7 +499,7 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
                                        in functional[1]["LDAUU"].keys())
         directory += "_relax"
 
-    # Combine the FireTasks into one FireWork
+    # Set up the geometry optimization Firework
     relax_firework = create_relax_fw(structure_file=structure_file,
                                      functional=functional,
                                      directory=directory,
