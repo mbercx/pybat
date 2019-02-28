@@ -419,7 +419,48 @@ def dos(structure_file, chgcar_file, functional, kpoint_density):
         calculation_dir (str): Directory in which the calculation is set up.
 
     """
-    raise NotImplementedError
+
+    # Import the structure as a Cathode instance from the structure file
+    structure_file = os.path.abspath(structure_file)
+    structure = Cathode.from_file(structure_file).as_ordered_structure()
+
+    # Check if a magnetic moment was not provided for the sites. If not, make
+    # sure it is zero for the calculations._
+    if "magmom" not in structure.site_properties.keys():
+        structure.add_site_property("magmom", [0] * len(structure.sites))
+
+    # Set up the calculation
+    user_incar_settings = {}
+
+    # Set up the functional
+    if functional[0] != "pbe":
+        functional_config = _load_yaml_config(functional[0] + "Set")
+        functional_config["INCAR"].update(functional[1])
+        user_incar_settings.update(functional_config["INCAR"])
+
+    # Set up the calculation directory
+    if calculation_dir == "":
+        calculation_dir = os.path.join(os.getcwd(), functional[0])
+        if functional[0] == "pbeu":
+            calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                             in functional[1]["LDAUU"].keys())
+        calculation_dir += "_relax"
+
+    # For metals, add some Methfessel Paxton smearing
+    if is_metal:
+        user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
+
+    # Set up the geometry optimization
+    geo_optimization = BulkRelaxSet(structure=structure,
+                                    user_incar_settings=user_incar_settings,
+                                    potcar_functional=DFT_FUNCTIONAL)
+
+    # Write the input files to the geometry optimization directory
+    geo_optimization.write_input(calculation_dir)
+    shutil.copy(structure_file,
+                os.path.join(calculation_dir, "initial_cathode.json"))
+
+    return calculation_dir
 
 
 ###########
