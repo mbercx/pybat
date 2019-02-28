@@ -136,7 +136,7 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
     structure = Cathode.from_file(structure_file).as_ordered_structure()
 
     # Check if a magnetic moment was not provided for the sites. If not, make
-    # sure it is zero for the calculations.
+    # sure it is zero for the calculations._
     if "magmom" not in structure.site_properties.keys():
         structure.add_site_property("magmom", [0] * len(structure.sites))
 
@@ -367,10 +367,10 @@ def neb(directory, nimages=8, functional=("pbe", {}), is_metal=False,
         )
         # Perform an interpolation via this image
         images_1 = initial_structure.interpolate(end_structure=middle_structure,
-                                                 nimages=int((nimages + 1)/2),
+                                                 nimages=int((nimages + 1) / 2),
                                                  interpolate_lattices=True)
         images_2 = middle_structure.interpolate(end_structure=final_structure,
-                                                nimages=int((nimages)/2 + 1),
+                                                nimages=int((nimages) / 2 + 1),
                                                 interpolate_lattices=True)
 
         images = images_1[:-1] + images_2
@@ -403,6 +403,23 @@ def neb(directory, nimages=8, functional=("pbe", {}), is_metal=False,
 
     # Make a file to visualize the transition
     neb_calculation.visualize_transition(os.path.join(directory, "transition.cif"))
+
+
+def dos(structure_file, chgcar_file, functional, kpoint_density):
+    """
+    Set up Density of States calculation.
+
+    Args:
+        structure_file (str): Structure for which the DOS...
+        chgcar_file (str):
+        functional (tuple):
+        kpoint_density (float):
+
+    Returns:
+        calculation_dir (str): Directory in which the calculation is set up.
+
+    """
+    raise NotImplementedError
 
 
 ###########

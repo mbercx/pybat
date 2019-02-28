@@ -461,14 +461,14 @@ def supercell(cell, structure_file, file_format):
 
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-def show(structure_file):
+def print(structure_file):
     """
-    Convert a structure into the primitive unit cell.
+    Print the cathode details to the screen.
 
     """
-    from pybat.cli.commands.util import show
+    from pybat.cli.commands.util import print
 
-    show(structure_file=structure_file)
+    print(structure_file=structure_file)
 
 
 # endregion
