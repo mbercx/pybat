@@ -27,7 +27,7 @@ except ImportError:
     from scipy.interpolate import CubicSpline
 
     scipy_old_piecewisepolynomial = False
-
+# demo
 """
 Module that contains tools to represent and calculate the properties of
 battery cathodes.
