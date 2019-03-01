@@ -50,11 +50,6 @@ __date__ = "May 2018"
 VORONOI_DIST_FACTOR = 1.4
 VORONOI_ANG_FACTOR = 0.6
 
-# Tuple of possible cations. This idea should work fine, considering the
-# fact that these cation elements rarely serve another purpose than being
-# a cation.
-CATIONS = ("Li", "Na", "Mg")
-
 # Tolerance for determining whether two oxygens are on opposite sides of an
 # octahedron. If the angle between the two vectors connecting the site and
 # the corresponding oxygens is larger than this value, the oxygens are
@@ -89,6 +84,10 @@ class Cathode(Structure):
     metal migrations.
 
     """
+
+    # Tuple of possible working ions for typical battery insertion cathodes.
+    standard_working_ions = ("Li", "Na")
+
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -104,47 +103,58 @@ class Cathode(Structure):
         self._voronoi = None
 
     @property
-    def cation_configuration(self):
+    def working_ion_configuration(self):
         """
-        A list of all sites which correspond to cations in the Cathode.
+        A list of all sites which correspond to working ions in the Cathode.
 
         Returns:
+            (list): A list of pymatgen.Sites that correspond to the working ions
+                in the Cathode.
 
         """
-        return [site for site in self.sites if site.species_string in CATIONS]
+        return [site for site in self.sites
+                if site.species_string in Cathode.standard_working_ions]
 
-    @cation_configuration.setter
-    def cation_configuration(self, configuration):
+    @working_ion_configuration.setter
+    def working_ion_configuration(self, configuration):
+        """
+
+        Args:
+            configuration: A dictionary mapping
+
+        Returns:
+            None
+        """
 
         # TODO Add checks
 
-        # Remove all cations
-        for cation in [cat for cat in CATIONS if Element[cat] in set(
-                self.composition.keys())]:
-            self.replace_species({cation: {cation: 0}})
+        # Remove all working ions
+        for working_ion in [ion for ion in Cathode.standard_working_ions
+                            if Element[ion] in set(self.composition.keys())]:
+            self.replace_species({working_ion: {working_ion: 0}})
 
-        # Add the cation sites
+        # Add the working ion sites
         if isinstance(configuration, dict):
-            for cation in configuration.keys():
-                for index in configuration[cation]:
-                    self.replace(index, cation, properties={"magmom": 0})
+            for working_ion in configuration.keys():
+                for index in configuration[working_ion]:
+                    self.replace(index, working_ion, properties={"magmom": 0})
 
         elif all([isinstance(item, Site) for item in configuration]):
-            for catsite in configuration:
+            for ion_site in configuration:
                 for i, site in enumerate(self):
-                    if np.linalg.norm(site.distance(catsite)) < 0.05:
-                        self.replace(i, catsite.specie,
+                    if np.linalg.norm(site.distance(ion_site)) < 0.05:
+                        self.replace(i, ion_site.specie,
                                      properties={"magmom": 0})
 
         else:
-            raise TypeError("Cation configurations should be a dictionary "
-                            "mapping cations to site indices or a list of "
+            raise TypeError("Working ion configurations should be a dictionary "
+                            "mapping working ions to site indices, or a list of "
                             "sites.")
 
     def __str__(self):
         """
         Overwritten string representation, in order to provide information
-        about the cation configuration, as well as the VESTA index, which
+        about the vacancy sites, as well as the VESTA index, which
         is useful when defining structural changes.
 
         """
@@ -250,7 +260,7 @@ class Cathode(Structure):
         # If no sites are given
         if sites is None:
             # Remove all the cations
-            self.cation_configuration = []
+            self.working_ion_configuration = []
 
         # If a List of integers is given
         elif all([isinstance(item, int) for item in sites]):
@@ -261,10 +271,10 @@ class Cathode(Structure):
         elif all([isinstance(item, Site) for item in sites]):
             for site in sites:
                 # Check if the provided site corresponds to a cation site
-                if site in self.cation_configuration:
-                    cat_conf = self.cation_configuration.copy()
+                if site in self.working_ion_configuration:
+                    cat_conf = self.working_ion_configuration.copy()
                     cat_conf.remove(site)
-                    self.cation_configuration = cat_conf
+                    self.working_ion_configuration = cat_conf
                 else:
                     raise Warning("Requested site not found in cation "
                                   "configuration.")
