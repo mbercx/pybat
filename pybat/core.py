@@ -19,6 +19,7 @@ from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.util.plotting import pretty_plot
+from tabulate import tabulate
 
 scipy_old_piecewisepolynomial = True
 try:
@@ -50,12 +51,6 @@ __date__ = "May 2018"
 VORONOI_DIST_FACTOR = 1.4
 VORONOI_ANG_FACTOR = 0.6
 
-# Tolerance for determining whether two oxygens are on opposite sides of an
-# octahedron. If the angle between the two vectors connecting the site and
-# the corresponding oxygens is larger than this value, the oxygens are
-# considered to be opposites.
-OXYGEN_ANGLE_TOL = math.pi * 9 / 10
-
 # Tolerance for the representation determination. This can be pretty big, since
 # the dimer environment structure is known.
 REPRESENTATION_DIST_TOL = 5e-1
@@ -85,8 +80,11 @@ class Cathode(Structure):
 
     """
 
-    # Tuple of possible working ions for typical battery insertion cathodes.
+    # Tuple of standard working ions for typical battery insertion cathodes.
     standard_working_ions = ("Li", "Na")
+
+    # Tuple of standard anions for typical battery insertion cathodes.
+    standard_anions = ("O", "F")
 
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
@@ -94,7 +92,7 @@ class Cathode(Structure):
                  site_properties=None):
 
         super(Cathode, self).__init__(
-            lattice=lattice, species=species, coords=coords,
+            lattice=lattice, species=species, coords=coords, charge=charge,
             validate_proximity=validate_proximity, to_unit_cell=to_unit_cell,
             coords_are_cartesian=coords_are_cartesian,
             site_properties=site_properties
@@ -188,7 +186,6 @@ class Cathode(Structure):
                 row.append(props[k][i])
             data.append(row)
 
-        from tabulate import tabulate
         outs.append(
             tabulate(data,
                      headers=["#", "#VESTA", "SP", "a", "b", "c"] + keys,
@@ -241,17 +238,17 @@ class Cathode(Structure):
                             "mapping cations to site indices or a list of "
                             "sites.")
 
-    def remove_cations(self, sites=None):
+    def remove_working_ions(self, sites=None):
         """
-        Remove the cations from the cathode, i.e. delithiate the structure in
-        case Li is the cation of the cathode.
+        Remove working ions from the cathode, i.e. delithiate the structure in
+        case Li is the working ion of the cathode.
 
         Note that this does not remove the sites from the pymatgen Structure.
         The occupancy is simply adjusted to an empty Composition object.
 
         Args:
-            sites: List of indices
-            List of pymatgen.core.Sites which are to be removed.
+            sites: List of indices OR
+                List of pymatgen.core.Sites which are to be removed.
 
         """
 
@@ -259,7 +256,7 @@ class Cathode(Structure):
 
         # If no sites are given
         if sites is None:
-            # Remove all the cations
+            # Remove all the working ions
             self.working_ion_configuration = []
 
         # If a List of integers is given
@@ -270,13 +267,13 @@ class Cathode(Structure):
         # If a List of sites is given
         elif all([isinstance(item, Site) for item in sites]):
             for site in sites:
-                # Check if the provided site corresponds to a cation site
+                # Check if the provided site corresponds to a working ion site
                 if site in self.working_ion_configuration:
-                    cat_conf = self.working_ion_configuration.copy()
-                    cat_conf.remove(site)
-                    self.working_ion_configuration = cat_conf
+                    ion_configuration = self.working_ion_configuration.copy()
+                    ion_configuration.remove(site)
+                    self.working_ion_configuration = ion_configuration
                 else:
-                    raise Warning("Requested site not found in cation "
+                    raise Warning("Requested site not found in working ion "
                                   "configuration.")
         else:
             raise IOError("Incorrect site input.")
@@ -315,10 +312,8 @@ class Cathode(Structure):
         site_move_distance = (original_distance - distance) / 2
 
         # Calculate the new cartesian coordinates of the sites
-        new_site_a_coords = site_a.coords \
-                            + site_move_distance * connection_vector
-        new_site_b_coords = site_b.coords \
-                            - site_move_distance * connection_vector
+        new_site_a_coords = site_a.coords + site_move_distance * connection_vector
+        new_site_b_coords = site_b.coords - site_move_distance * connection_vector
 
         # Change the sites in the structure
         self.replace(i=site_indices[0], species=site_a.species_string,
@@ -387,7 +382,7 @@ class Cathode(Structure):
 
         cation_indices = [
             index for index in range(len(self.sites))
-            if not self.sites[index].species_string == "O"
+            if not self.sites[index].species_string not in Cathode.standard_anions
         ]
 
         # Start with adding the first cation
@@ -501,20 +496,25 @@ class LiRichCathode(Cathode):
 
     """
 
+    # Tolerance for determining whether two oxygens are on opposite sides of an
+    # octahedron. If the angle between the two vectors connecting the site and
+    # the corresponding oxygens is larger than this value, the oxygens are
+    # considered to be opposites.
+    oxygen_angle_tol = math.pi * 9 / 10
+
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
                  site_properties=None):
 
         super(LiRichCathode, self).__init__(
-            lattice=lattice, species=species, coords=coords,
+            lattice=lattice, species=species, coords=coords, charge=charge,
             validate_proximity=validate_proximity, to_unit_cell=to_unit_cell,
             coords_are_cartesian=coords_are_cartesian,
             site_properties=site_properties
         )
 
-    def find_oxygen_dimers(self, site_index=None,
-                           oxygen_angle_tol=OXYGEN_ANGLE_TOL):
+    def find_oxygen_dimers(self, site_index=None, oxygen_angle_tol=None):
         """
         Returns a list of index pairs corresponding to the oxygen dimers that
         can be formed around the site provided by the user, i.e. with oxygens
@@ -522,10 +522,14 @@ class LiRichCathode(Cathode):
 
         Args:
             site_index:
+            oxygen_angle_tol:
 
         Returns:
 
         """
+
+        if not oxygen_angle_tol:
+            oxygen_angle_tol = LiRichCathode.oxygen_angle_tol
 
         if site_index is None:
 
@@ -573,23 +577,21 @@ class LiRichCathode(Cathode):
             for oxygen_pair in oxygen_combinations:
 
                 site = self.sites[site_index]
-                oxygen_site_A = self.sites[oxygen_pair[0]]
-                oxygen_site_B = self.sites[oxygen_pair[1]]
+                oxygen_site_a = self.sites[oxygen_pair[0]]
+                oxygen_site_b = self.sites[oxygen_pair[1]]
 
-                oxygen_image_A = site.distance_and_image(oxygen_site_A)[1]
-                oxygen_image_B = site.distance_and_image(oxygen_site_B)[1]
+                oxygen_image_a = site.distance_and_image(oxygen_site_a)[1]
+                oxygen_image_b = site.distance_and_image(oxygen_site_b)[1]
 
-                image_A_cart_coords = oxygen_site_A.coords \
-                                      + np.dot(oxygen_image_A,
-                                               self.lattice.matrix)
-                image_B_cart_coords = oxygen_site_B.coords \
-                                      + np.dot(oxygen_image_B,
-                                               self.lattice.matrix)
+                image_a_cart_coords = oxygen_site_a.coords + np.dot(oxygen_image_a,
+                                                                    self.lattice.matrix)
+                image_b_cart_coords = oxygen_site_b.coords + np.dot(oxygen_image_b,
+                                                                    self.lattice.matrix)
 
-                oxygen_vector_A = image_A_cart_coords - site.coords
-                oxygen_vector_B = image_B_cart_coords - site.coords
+                oxygen_vector_a = image_a_cart_coords - site.coords
+                oxygen_vector_b = image_b_cart_coords - site.coords
 
-                if angle_between(oxygen_vector_A, oxygen_vector_B) < \
+                if angle_between(oxygen_vector_a, oxygen_vector_b) < \
                         oxygen_angle_tol:
                     oxygen_dimers.append(oxygen_pair)
 
@@ -615,9 +617,9 @@ class LiRichCathode(Cathode):
         dimer_environment = Dimer(self, dimer_indices).sites
 
         remove_sites = [site for site in dimer_environment
-                        if site.species_string in CATIONS]
+                        if site.species_string in Cathode.standard_anions]
 
-        self.remove_cations(remove_sites)
+        self.remove_working_ions(remove_sites)
 
     def find_noneq_dimers(self, site_index=None, method="symmops"):
         """
@@ -892,8 +894,7 @@ class Dimer(MSONable):
                 oxygen_sites[1])
 
             image_cart_coords = oxygen_sites[1].coords \
-                                + np.dot(oxygen_image,
-                                         self.cathode.lattice.matrix)
+                                + np.dot(oxygen_image, self.cathode.lattice.matrix)
 
             self._center = (oxygen_sites[0].coords + image_cart_coords) / 2
 
@@ -939,28 +940,24 @@ class Dimer(MSONable):
 
                 # Find the sites which are in the plane of the oxygens and
                 # their shared neighbors.
-                if np.linalg.norm(oxy_1.coords
-                                  - (
-                                          shared_neighbor_4.coords - oxy_1.coords)
-                                  - site.coords) < REPRESENTATION_DIST_TOL:
+                if np.linalg.norm(
+                        oxy_1.coords - (shared_neighbor_4.coords - oxy_1.coords)
+                        - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[5] = site.species_and_occu
 
-                if np.linalg.norm(oxy_1.coords
-                                  - (
-                                          shared_neighbor_3.coords - oxy_1.coords)
-                                  - site.coords) < REPRESENTATION_DIST_TOL:
+                if np.linalg.norm(
+                        oxy_1.coords - (shared_neighbor_3.coords - oxy_1.coords)
+                        - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[6] = site.species_and_occu
 
-                if np.linalg.norm(oxy_2.coords
-                                  - (
-                                          shared_neighbor_4.coords - oxy_2.coords)
-                                  - site.coords) < REPRESENTATION_DIST_TOL:
+                if np.linalg.norm(
+                        oxy_2.coords - (shared_neighbor_4.coords - oxy_2.coords)
+                        - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[7] = site.species_and_occu
 
-                if np.linalg.norm(oxy_2.coords
-                                  - (
-                                          shared_neighbor_3.coords - oxy_2.coords) \
-                                  - site.coords) < REPRESENTATION_DIST_TOL:
+                if np.linalg.norm(
+                        oxy_2.coords - (shared_neighbor_3.coords - oxy_2.coords)
+                        - site.coords) < REPRESENTATION_DIST_TOL:
                     representation[8] = site.species_and_occu
 
                 # Find the sites which are out of plane
@@ -1325,16 +1322,3 @@ def is_number(s):
         return True
     except ValueError:
         return False
-
-
-def new_function(arg1, arg2):
-    """
-    This describes the function.
-
-    Args:
-        arg1 (list):
-        arg2:
-
-    Returns:
-
-    """
