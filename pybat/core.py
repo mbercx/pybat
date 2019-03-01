@@ -16,10 +16,12 @@ from pymatgen.core import Structure, Composition, Molecule, Site, Element
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
 from pymatgen.io.vasp.outputs import Outcar
+from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.util.plotting import pretty_plot
 from tabulate import tabulate
+from icet.tools.structure_enumeration import enumerate_structures
 
 scipy_old_piecewisepolynomial = True
 try:
@@ -81,7 +83,8 @@ class Cathode(Structure):
     """
 
     # Tuple of standard working ions for typical battery insertion cathodes.
-    standard_working_ions = ("Li", "Na")
+    # Livermorium is also in there for the enumerate workaround.
+    standard_working_ions = ("Li", "Na", "Lv0+")
 
     # Tuple of standard anions for typical battery insertion cathodes.
     standard_anions = ("O", "F")
@@ -408,15 +411,74 @@ class Cathode(Structure):
 
         return inequiv_cations
 
-    def find_cation_configurations(self):
+    def get_cation_configurations(self, substitution_sites, cation_list, sizes,
+                                  concentration_restrictions=None, max_structures=None):
         """
-        Plan is to find all non-equivalent cation configurations. Is probably
-        already implemented elsewhere.
+        Get all non-equivalent cation configurations within a specified range of unit
+        cell sizes and based on certain restrictions.
+
+        Based on the icet.tools.structure_enumeration.enumerate_structures() method.
+        Because there are some issues with this method, related to the allowed
+        concentrations, the method will have to be updated later. There is also the fact
+        that vacancies can not be inserted in enumerate_structures, which will require
+        some workaround using Livermorium.
+
+        Currently also returns a list of Cathodes, for easy of implementation. It might
+        be more useful to design it as a generator.
 
         Returns:
 
         """
-        raise NotImplementedError
+
+        # Set up the configuration space
+        configuration_space = []
+        cation_list = ["Lv" if cat == "Vac" else cat for cat in cation_list]
+
+        for site in self.sites:
+            if site in substitution_sites:
+                configuration_space.append(cation_list)
+            else:
+                configuration_space.append([site.species_string,])
+
+        # TODO adjust this once concentration restrictions work correctly for
+        # enumerate_structures
+        if concentration_restrictions:
+            # Get the largest concentration restriction
+            enum_conc_restrictions = [
+                {k: v} for k, v in concentration_restrictions.items()
+                if v == max(concentration_restrictions.values())][0]
+        else:
+            concentration_restrictions = {}
+            enum_conc_restrictions = None
+
+        configuration_list = []
+        configuration_generator = enumerate_structures(
+            atoms=AseAtomsAdaptor.get_atoms(self.as_ordered_structure()),
+            sizes=sizes,
+            chemical_symbols=configuration_space,
+            concentration_restrictions=enum_conc_restrictions
+        )
+
+        for atoms in configuration_generator:
+
+            structure = AseAtomsAdaptor.get_structure(atoms).get_sorted_structure()
+            frac_composition = structure.composition.fractional_composition
+            elements = [str(el) for el in structure.composition.elements]
+
+            if all([concentration_restrictions[el] <
+                    frac_composition[el] < concentration_restrictions[el]
+                    for el in elements if concentration_restrictions.get(el, False)]):
+                cathode = Cathode.from_structure(structure)
+                cathode.remove_working_ions(
+                    [i for i, site in enumerate(cathode)
+                     if site.species_string == "Lv0+"]
+                )
+                configuration_list.append(cathode)
+
+            if len(configuration_list) == max_structures:
+                break
+
+        return configuration_list
 
     def set_to_high_spin(self):
         """
