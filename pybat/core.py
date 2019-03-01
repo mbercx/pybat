@@ -27,7 +27,7 @@ except ImportError:
     from scipy.interpolate import CubicSpline
 
     scipy_old_piecewisepolynomial = False
-# demo
+
 """
 Module that contains tools to represent and calculate the properties of
 battery cathodes.
@@ -89,7 +89,6 @@ class Cathode(Structure):
     metal migrations.
 
     """
-
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
                  to_unit_cell=False, coords_are_cartesian=False,
@@ -1316,6 +1315,7 @@ def is_number(s):
         return True
     except ValueError:
         return False
+
 
 def new_function(arg1, arg2):
     """
