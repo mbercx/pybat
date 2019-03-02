@@ -73,12 +73,19 @@ class Cathode(Structure):
     """
     A class representing a cathode material in a battery.
 
-    The main idea of this class is to keep track of the original sites by
-    using sites with empty Compositions. This is important to make sure that
-    the voronoi decomposition is successful, and hence interesting if we
-    want to look at coordinations and neighbors. Another advantage is that
-    we can consider the empty cation sites for final positions of transition
+    The main idea of this class is to keep track of the original sites of removed
+    working ions (e.g. Li, Na, ...) by using sites with empty Compositions. This is
+    important to make sure that the voronoi decomposition is successful, and hence
+    essential if we want to look at coordinations and neighbors. Another advantage
+    is that we can consider the empty cation sites for final positions of transition
     metal migrations.
+
+    By designing a new class, we can update the Structure I/O methods that do not deal
+    with sites that have an empty composition well. Moreover, we can design and bundle
+    new methods which are useful in the context of battery cathode research.
+
+    However, the class has currently not been fully tested yet for all the methods it
+    inherits from Structure, so some of these may produce some unintented results.
 
     """
 
@@ -121,12 +128,13 @@ class Cathode(Structure):
         """
 
         Args:
-            configuration: A dictionary mapping
+            configuration (dict or list): A dictionary mapping or list of pymatgen.Sites
+                that describes the configuration of the working ions in the cathode.
 
         Returns:
             None
-        """
 
+        """
         # TODO Add checks
 
         # Remove all working ions
@@ -154,9 +162,12 @@ class Cathode(Structure):
 
     def __str__(self):
         """
-        Overwritten string representation, in order to provide information
-        about the vacancy sites, as well as the VESTA index, which
-        is useful when defining structural changes.
+        Overwritten string representation, in order to provide information about the
+        vacancy sites, as well as the VESTA index, which can be useful when defining
+        structural changes.
+
+        Returns:
+            (str) String representation of the Cathode.
 
         """
         outs = ["Full Formula ({s})".format(s=self.composition.formula),
@@ -198,7 +209,7 @@ class Cathode(Structure):
     @property
     def voronoi(self):
         """
-        ChemEnv voronoi decomposition of the cathode structure.
+        Pymatgen ChemEnv voronoi decomposition of the cathode structure.
 
         Returns:
             pymatgen.analysis.chemenv.coordination_environments.voronoi.\
@@ -217,9 +228,11 @@ class Cathode(Structure):
     def add_cations(self, sites=None):
         """
         Args:
-            sites:
+            sites: A dictionary mapping or list of pymatgen.Sites that describes the
+                configuration of the working ions in the cathode.
 
         Returns:
+            None
 
         """
 
@@ -253,6 +266,9 @@ class Cathode(Structure):
             sites: List of indices OR
                 List of pymatgen.core.Sites which are to be removed.
 
+        Returns:
+            None
+
         """
 
         # TODO add checks
@@ -281,25 +297,33 @@ class Cathode(Structure):
         else:
             raise IOError("Incorrect site input.")
 
-    def change_site_distance(self, site_indices, distance):
+    def change_site_distance(self, sites, distance):
         """
         Change the coordinates of two sites in a structure in order to adjust
         their distance.
 
         Args:
-            site_indices:
-            distance:
+            sites (list): List of two site indices or pymatgen.Sites of
+                elements whose distance should be changed.
+            distance (float): Final distance between the two sites provided.
+
+        Returns:
+            None
+
         """
 
-        # TODO Add possibility of site_indices simply being the sites
-
-        site_a = self.sites[site_indices[0]]
-        site_b = self.sites[site_indices[1]]
+        if all(isinstance(el, int) for el in sites):
+            site_a = self.sites[sites[0]]
+            site_b = self.sites[sites[1]]
+        elif all(isinstance(el, Site) for el in sites):
+            site_a = sites[0]
+            site_b = sites[1]
+        else:
+            raise IOError("Incorrect input provided.")
 
         # Find the distance between the sites, as well as the image of site B
         # closest to site A
-        (original_distance, closest_image_b) = site_a.distance_and_image(
-            site_b)
+        (original_distance, closest_image_b) = site_a.distance_and_image(site_b)
 
         image_cart_coords = self.lattice.get_cartesian_coords(
             site_b.frac_coords + closest_image_b
@@ -307,9 +331,7 @@ class Cathode(Structure):
 
         # Calculate the vector that connects site A with site B
         connection_vector = image_cart_coords - site_a.coords
-
-        # Make it a unit vector
-        connection_vector /= np.linalg.norm(connection_vector)
+        connection_vector /= np.linalg.norm(connection_vector)  # Unit vector
 
         # Calculate the distance the sites need to be moved.
         site_move_distance = (original_distance - distance) / 2
@@ -319,12 +341,12 @@ class Cathode(Structure):
         new_site_b_coords = site_b.coords - site_move_distance * connection_vector
 
         # Change the sites in the structure
-        self.replace(i=site_indices[0], species=site_a.species_string,
+        self.replace(i=sites[0], species=site_a.species_string,
                      coords=new_site_a_coords,
                      coords_are_cartesian=True,
                      properties=site_a.properties)
 
-        self.replace(i=site_indices[1], species=site_b.species_string,
+        self.replace(i=sites[1], species=site_b.species_string,
                      coords=new_site_b_coords,
                      coords_are_cartesian=True,
                      properties=site_b.properties)
@@ -343,6 +365,10 @@ class Cathode(Structure):
                 moments of the optimized structure should be ignored. This means
                 that the magnetic moments of the Cathode structure will
                 remain the same.
+
+        Returns:
+            None
+
         """
 
         new_cathode = Cathode.from_file(os.path.join(directory, "CONTCAR"))
@@ -378,7 +404,7 @@ class Cathode(Structure):
         Find a list of the site indices of all non-equivalent cations.
 
         Returns:
-            List of site indices
+            (list): List of site indices
 
         """
         symmops = SpacegroupAnalyzer(self).get_space_group_operations()
