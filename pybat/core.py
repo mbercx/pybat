@@ -412,7 +412,8 @@ class Cathode(Structure):
         return inequiv_cations
 
     def get_cation_configurations(self, substitution_sites, cation_list, sizes,
-                                  concentration_restrictions=None, max_structures=None):
+                                  concentration_restrictions=None,
+                                  max_configurations=None):
         """
         Get all non-equivalent cation configurations within a specified range of unit
         cell sizes and based on certain restrictions.
@@ -423,10 +424,26 @@ class Cathode(Structure):
         that vacancies can not be inserted in enumerate_structures, which will require
         some workaround using Livermorium.
 
-        Currently also returns a list of Cathodes, for easy of implementation. It might
-        be more useful to design it as a generator.
+        Currently also returns a list of Cathodes, for easy implementation and usage. It
+        might be more useful/powerful to design it as a generator later.
+
+        Args:
+            substitution_sites (list): List of pymatgen.Sites to be substituted.
+            cation_list (list): List of string representations of the cation elements
+                which have to be substituted on the substitution sites. Can also
+                include "Vac" to introduce vacancy sites.
+                E.g. ["Li", "Vac"]; ["Mn", "Co", "Ni"]; ...
+            sizes (list): List of unit supercell sizes to be considered for the
+                enumeration of the configurations.
+                E.g. [1, 2]; range(1, 4); ...
+            concentration_restrictions (dict): Dictionary of allowed concentration
+                ranges for each element. Note that the concentration is defined
+                versus the total amount of atoms in the unit cell.
+                E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
+            max_configurations (int): Maximum number of configurations to generate.
 
         Returns:
+            (list): List of Cathodes representing different configurations.
 
         """
 
@@ -475,7 +492,7 @@ class Cathode(Structure):
                 )
                 configuration_list.append(cathode)
 
-            if len(configuration_list) == max_structures:
+            if len(configuration_list) == max_configurations:
                 break
 
         return configuration_list

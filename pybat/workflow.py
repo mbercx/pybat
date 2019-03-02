@@ -741,6 +741,11 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     LAUNCHPAD.add_wf(workflow)
 
 
+def configuration_workflow(structure_file, functional=("pbe", {}), directory="",
+                           in_custodian=False, number_nodes=None):
+    raise NotImplementedError
+
+
 # endregion
 
 # region * Region 4 - Studies
