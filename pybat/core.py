@@ -464,10 +464,10 @@ class Cathode(Structure):
             structure = AseAtomsAdaptor.get_structure(atoms).get_sorted_structure()
             frac_composition = structure.composition.fractional_composition
             elements = [str(el) for el in structure.composition.elements]
+            c = concentration_restrictions
 
-            if all([concentration_restrictions[el] <
-                    frac_composition[el] < concentration_restrictions[el]
-                    for el in elements if concentration_restrictions.get(el, False)]):
+            if all([c[el][0] < frac_composition[el] < c[el][1]
+                    for el in elements if c.get(el, False)]):
                 cathode = Cathode.from_structure(structure)
                 cathode.remove_working_ions(
                     [i for i, site in enumerate(cathode)
