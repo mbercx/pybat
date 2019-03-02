@@ -110,6 +110,52 @@ class Cathode(Structure):
 
         self._voronoi = None
 
+    def __str__(self):
+        """
+        Overwritten string representation, in order to provide information about the
+        vacancy sites, as well as the VESTA index, which can be useful when defining
+        structural changes.
+
+        Returns:
+            (str) String representation of the Cathode.
+
+        """
+        outs = ["Full Formula ({s})".format(s=self.composition.formula),
+                "Reduced Formula: {}".format(self.composition.reduced_formula)]
+        to_s = lambda x: "%0.6f" % x
+        outs.append("abc   : " + " ".join([to_s(i).rjust(10)
+                                           for i in self.lattice.abc]))
+        outs.append("angles: " + " ".join([to_s(i).rjust(10)
+                                           for i in self.lattice.angles]))
+        if self._charge:
+            if self._charge >= 0:
+                outs.append("Overall Charge: +{}".format(self._charge))
+            else:
+                outs.append("Overall Charge: -{}".format(self._charge))
+        outs.append("Sites ({i})".format(i=len(self)))
+        data = []
+        props = self.site_properties
+        keys = sorted(props.keys())
+        vesta_index = 1
+        for i, site in enumerate(self):
+            if site.species_and_occu.num_atoms == 0:
+                row = [str(i), "-", "Vac"]
+
+            else:
+                row = [str(i), vesta_index, site.species_string]
+                vesta_index += 1
+
+            row.extend([to_s(j) for j in site.frac_coords])
+            for k in keys:
+                row.append(props[k][i])
+            data.append(row)
+
+        outs.append(
+            tabulate(data,
+                     headers=["#", "#VESTA", "SP", "a", "b", "c"] + keys,
+                     ))
+        return "\n".join(outs)
+
     @property
     def working_ion_configuration(self):
         """
@@ -159,52 +205,6 @@ class Cathode(Structure):
             raise TypeError("Working ion configurations should be a dictionary "
                             "mapping working ions to site indices, or a list of "
                             "sites.")
-
-    def __str__(self):
-        """
-        Overwritten string representation, in order to provide information about the
-        vacancy sites, as well as the VESTA index, which can be useful when defining
-        structural changes.
-
-        Returns:
-            (str) String representation of the Cathode.
-
-        """
-        outs = ["Full Formula ({s})".format(s=self.composition.formula),
-                "Reduced Formula: {}".format(self.composition.reduced_formula)]
-        to_s = lambda x: "%0.6f" % x
-        outs.append("abc   : " + " ".join([to_s(i).rjust(10)
-                                           for i in self.lattice.abc]))
-        outs.append("angles: " + " ".join([to_s(i).rjust(10)
-                                           for i in self.lattice.angles]))
-        if self._charge:
-            if self._charge >= 0:
-                outs.append("Overall Charge: +{}".format(self._charge))
-            else:
-                outs.append("Overall Charge: -{}".format(self._charge))
-        outs.append("Sites ({i})".format(i=len(self)))
-        data = []
-        props = self.site_properties
-        keys = sorted(props.keys())
-        vesta_index = 1
-        for i, site in enumerate(self):
-            if site.species_and_occu.num_atoms == 0:
-                row = [str(i), "-", "Vac"]
-
-            else:
-                row = [str(i), vesta_index, site.species_string]
-                vesta_index += 1
-
-            row.extend([to_s(j) for j in site.frac_coords])
-            for k in keys:
-                row.append(props[k][i])
-            data.append(row)
-
-        outs.append(
-            tabulate(data,
-                     headers=["#", "#VESTA", "SP", "a", "b", "c"] + keys,
-                     ))
-        return "\n".join(outs)
 
     @property
     def voronoi(self):
@@ -399,6 +399,20 @@ class Cathode(Structure):
                              properties=new_site.properties)
                 new_index += 1
 
+    def set_to_high_spin(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
+    def set_to_low_spin(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
     def find_noneq_cations(self):
         """
         Find a list of the site indices of all non-equivalent cations.
@@ -522,20 +536,6 @@ class Cathode(Structure):
                 break
 
         return configuration_list
-
-    def set_to_high_spin(self):
-        """
-
-        :return:
-        """
-        raise NotImplementedError
-
-    def set_to_low_spin(self):
-        """
-
-        :return:
-        """
-        raise NotImplementedError
 
     def as_ordered_structure(self):
         """
