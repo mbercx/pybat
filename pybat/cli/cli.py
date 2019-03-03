@@ -19,8 +19,12 @@ __date__ = "May 2018"
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+# Bash Complete functionality
+def get_env_vars(ctx, args, incomplete):
+    return [k for k in os.environ.keys() if incomplete in k]
 
-@click.group(context_settings=CONTEXT_SETTINGS)
+
+@click.group(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 def main():
     """
     CLI tools for performing calculations for studying batteries.
@@ -380,7 +384,7 @@ def neb(directory, functional, nimages, is_metal, is_migration):
 # region * Utility
 
 
-@main.group(context_settings=CONTEXT_SETTINGS)
+@main.group(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 def util():
     """
     Utility command for the pybat package.
@@ -389,7 +393,7 @@ def util():
     pass
 
 
-@util.command(context_settings=CONTEXT_SETTINGS)
+@util.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.option("--directory", "-d", default=".")
 @click.option("--filename", "-f", default="neb_result.cif")
 def showpath(directory, filename):
@@ -403,7 +407,7 @@ def showpath(directory, filename):
               filename=filename)
 
 
-@util.command(context_settings=CONTEXT_SETTINGS)
+@util.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("structure_file", nargs=1)
 @click.option("--file_format", "-F", default="json")
 def conv(structure_file, file_format):
@@ -417,7 +421,7 @@ def conv(structure_file, file_format):
                            fmt=file_format)
 
 
-@util.command(context_settings=CONTEXT_SETTINGS)
+@util.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("vasprun_file", nargs=1)
 def data(vasprun_file):
     """
@@ -429,7 +433,7 @@ def data(vasprun_file):
     data(vasprun_file=vasprun_file)
 
 
-@util.command(context_settings=CONTEXT_SETTINGS)
+@util.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("structure_file", nargs=1)
 @click.option("--file_format", "-F", default="json")
 def prim(structure_file, file_format):
@@ -443,7 +447,7 @@ def prim(structure_file, file_format):
                         fmt=file_format)
 
 
-@util.command(context_settings=CONTEXT_SETTINGS)
+@util.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("cell", nargs=1)
 @click.argument("structure_file", nargs=1)
 @click.option("--file_format", "-F", default="json")
@@ -459,7 +463,7 @@ def supercell(cell, structure_file, file_format):
                    fmt=file_format)
 
 
-@util.command(context_settings=CONTEXT_SETTINGS)
+@util.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("structure_file", nargs=1)
 def print(structure_file):
     """
@@ -475,7 +479,7 @@ def print(structure_file):
 
 # region * Workflow
 
-@main.group(context_settings=CONTEXT_SETTINGS)
+@main.group(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 def workflow():
     """
     Scripts for setting up workflows and submitting them to the server.
@@ -483,7 +487,7 @@ def workflow():
     pass
 
 
-@workflow.command(context_settings=CONTEXT_SETTINGS)
+@workflow.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("structure_file", nargs=1)
 @click.option("--functional", "-f", default="pbe",
               help="Option for configuring the functional used in the calculation. "
@@ -517,7 +521,7 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
                  number_nodes=number_nodes)
 
 
-@workflow.command(context_settings=CONTEXT_SETTINGS)
+@workflow.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("structure_file", nargs=1)
 @click.option("--functional", "-f", default="pbe",
               help="Option for configuring the functional used in the calculation. "
@@ -554,7 +558,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
                    number_nodes=number_nodes)
 
 
-@workflow.command(context_settings=CONTEXT_SETTINGS)
+@workflow.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("structure_file", nargs=1)
 @click.option("--dimer_indices", "-i", default=(0, 0))
 @click.option("--distance", "-d", default=float(0))
@@ -594,7 +598,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
                    number_nodes=number_nodes)
 
 
-@workflow.command(context_settings=CONTEXT_SETTINGS)
+@workflow.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("directory", nargs=1)
 @click.option("--nimages", "-N", default=7,
               help="Number of images.")
@@ -642,7 +646,7 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
                  number_nodes=number_nodes)
 
 
-@workflow.command(context_settings=CONTEXT_SETTINGS)
+@workflow.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("structure_file", nargs=1)
 @click.option("--distance", "-d", default=float(1.4))
 @click.option("--functional", "-f", default="pbe",
@@ -680,7 +684,7 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
                           number_nodes=number_nodes)
 
 
-@workflow.command(context_settings=CONTEXT_SETTINGS)
+@workflow.command(context_settings=CONTEXT_SETTINGS, autocompletion=get_env_vars)
 @click.argument("site_index", default=None)
 @click.argument("structure_file", nargs=1)
 @click.option("--distance", "-d", default=float(1.4))
