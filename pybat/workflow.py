@@ -5,6 +5,7 @@
 import os
 import subprocess
 import ast
+import pdb
 
 import numpy as np
 
@@ -332,7 +333,7 @@ def create_relax_fw(structure_file, functional, directory, is_metal=False,
     # Extract the final cathode from the geometry optimization
     get_cathode = PyTask(
         func="pybat.cli.commands.get.get_cathode",
-        kwargs={"directory": os.path.join(directory, "final"),
+        kwargs={"directory": os.path.join(directory),
                 "write_cif": True}
     )
 
@@ -794,7 +795,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
     if directory == "":
         directory = os.getcwd()
 
-    functional_dir = os.path.join(os.getcwd(), functional[0])
+    functional_dir = functional[0]
     if functional[0] == "pbeu":
         functional_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                         in functional[1]["LDAUU"].keys())
@@ -819,6 +820,8 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
             relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
             scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
+
+            #pdb.set_trace()
 
             firework_list.append(create_relax_fw(
                 structure_file=os.path.join(conf_dir, "cathode.json"),
