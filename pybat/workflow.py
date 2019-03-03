@@ -7,7 +7,7 @@ import subprocess
 
 import numpy as np
 
-from pybat.core import LiRichCathode, Dimer
+from pybat.core import Cathode, LiRichCathode, Dimer
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
 
@@ -156,6 +156,7 @@ class PulayTask(FiretaskBase):
 
     """
     required_params = ["directory"]
+    option_params = ["in_custodian", "number_nodes", "tolerance", "next_firework"]
     _fw_name = "{{pybat.workflow.PulayTask}}"
 
     def run_task(self, fw_spec):
@@ -188,7 +189,7 @@ class PulayTask(FiretaskBase):
 
         # If the difference is small, return an empty FWAction
         if sum_differences < tolerance:
-            return FWAction()
+            return FWAction(additions=self.get('next_firework'))
 
         # Else, set up another geometry optimization
         else:
@@ -288,7 +289,7 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
 
 def create_relax_fw(structure_file, functional, directory, is_metal,
-                    in_custodian, number_nodes):
+                    in_custodian, number_nodes, next_firework=None):
     """
     Create a FireWork for performing an SCF calculation.
 
@@ -327,11 +328,19 @@ def create_relax_fw(structure_file, functional, directory, is_metal,
     else:
         vasprun = VaspTask(directory=directory)
 
+    # Extract the final cathode from the geometry optimization
+    get_cathode = PyTask(
+        func="pybat.cli.commands.get.get_cathode",
+        kwargs={"directory": os.path.join(directory, "final"),
+                "write_cif": True}
+    )
+
     # Create the PyTask that check the Pulay stresses
     pulay_task = PulayTask(directory=directory,
                            in_custodian=in_custodian,
                            number_nodes=number_nodes,
-                           tol=PULAY_TOLERANCE)
+                           tol=PULAY_TOLERANCE,
+                           next_firework=next_firework)
 
     # Only add number of nodes to spec if specified
     firework_spec = {"_launch_dir": os.getcwd()}
@@ -341,7 +350,7 @@ def create_relax_fw(structure_file, functional, directory, is_metal,
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
     # Combine the FireTasks into one FireWork
-    relax_firework = Firework(tasks=[setup_relax, vasprun, pulay_task],
+    relax_firework = Firework(tasks=[setup_relax, vasprun, get_cathode, pulay_task],
                               name="Geometry optimization",
                               spec=firework_spec)
 
@@ -741,9 +750,71 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     LAUNCHPAD.add_wf(workflow)
 
 
-def configuration_workflow(structure_file, functional=("pbe", {}), directory="",
-                           in_custodian=False, number_nodes=None):
-    raise NotImplementedError
+def configuration_workflow(structure_file, substitution_sites, cation_list,
+                           sizes, concentration_restrictions=None,
+                           max_configurations=None, functional=("pbe", {}),
+                           directory="", in_custodian=False, number_nodes=None):
+    cat = Cathode.from_file(structure_file)
+
+    configurations = cat.get_cation_configurations(
+        substitution_sites=substitution_sites,
+        cation_list=cation_list,
+        sizes=sizes,
+        concentration_restrictions=concentration_restrictions,
+        max_configurations=max_configurations
+    )
+
+    if directory == "":
+        directory = os.getcwd()
+
+    functional_dir = os.path.join(os.getcwd(), functional[0])
+    if functional[0] == "pbeu":
+        functional_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                        in functional[1]["LDAUU"].keys())
+
+    firework_list = []
+
+    # Because of the directory structure, we need to differentiate between TM
+    # configurations and Li/Vac configurations
+    if "Vac" in cation_list:
+        # Set up Li configuration study
+        pass
+    else:
+        # Set up TM configuration study
+        for conf_number, configuration in enumerate(configurations):
+            conf_dir = os.path.join(
+                os.path.abspath(directory), "tm_conf_" + str(conf_number),
+                configuration.concentration, "workion_conf1", "prim"
+            )
+            configuration.to("json", os.path.join(conf_dir, "cathode.json"))
+            relax_dir = os.path.join(conf_dir, functional_dir + "relax")
+            scf_dir = os.path.join(conf_dir, functional_dir + "scf")
+
+            firework_list.append(create_relax_fw(
+                structure_file=os.path.join(conf_dir, "cathode.json"),
+                functional=functional,
+                directory=relax_dir,
+                in_custodian=in_custodian,
+                number_nodes=number_nodes,
+                next_firework=create_scf_fw(
+                    structure_file=os.path.join(relax_dir, "final_cathode.json"),
+                    functional=functional,
+                    directory=scf_dir,
+                    in_custodian=in_custodian,
+                    number_nodes=number_nodes
+                )
+            ))
+
+    # Set up a clear name for the workflow
+    workflow_name = str(cat.composition.reduced_formula).replace(" ", "")
+    workflow_name += " " + str(cation_list)
+    workflow_name += " " + str(functional)
+
+    # Create the workflow
+    workflow = Workflow(fireworks=firework_list,
+                        name=workflow_name)
+
+    LAUNCHPAD.add_wf(workflow)
 
 
 # endregion
