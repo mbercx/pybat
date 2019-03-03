@@ -803,7 +803,30 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
     # configurations and Li/Vac configurations
     if "Vac" in cation_list:
         # Set up Li configuration study
-        pass
+        for conf_number, configuration in enumerate(configurations):
+            conf_dir = os.path.join(
+                os.path.abspath(directory), "tm_conf_1" + str(conf_number),
+                round(configuration.concentration, 3),
+                "workion_conf" + str(conf_number), "prim"
+            )
+            configuration.to("json", os.path.join(conf_dir, "cathode.json"))
+            relax_dir = os.path.join(conf_dir, functional_dir + "relax")
+            scf_dir = os.path.join(conf_dir, functional_dir + "scf")
+
+            firework_list.append(create_relax_fw(
+                structure_file=os.path.join(conf_dir, "cathode.json"),
+                functional=functional,
+                directory=relax_dir,
+                in_custodian=in_custodian,
+                number_nodes=number_nodes,
+                next_firework=create_scf_fw(
+                    structure_file=os.path.join(relax_dir, "final_cathode.json"),
+                    functional=functional,
+                    directory=scf_dir,
+                    in_custodian=in_custodian,
+                    number_nodes=number_nodes
+                )
+            ))
     else:
         # Set up TM configuration study
         for conf_number, configuration in enumerate(configurations):

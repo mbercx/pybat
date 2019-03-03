@@ -205,6 +205,7 @@ class Cathode(Structure):
             raise TypeError("Working ion configurations should be a dictionary "
                             "mapping working ions to site indices, or a list of "
                             "sites.")
+
     @property
     def concentration(self):
         """
@@ -215,6 +216,10 @@ class Cathode(Structure):
             (float): The working ion concentration
 
         """
+        working_ion_sites = [site for site in self.sites if
+                             site.species_string in self.standard_working_ions
+                             or site.species_and_occu == Composition()]
+        return len(self.working_ion_configuration)/len(working_ion_sites)
 
     @property
     def voronoi(self):
