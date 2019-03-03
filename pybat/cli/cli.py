@@ -19,12 +19,6 @@ __date__ = "May 2018"
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
-
-# Bash Complete functionality
-def get_env_vars(ctx, args, incomplete):
-    return [k for k in os.environ.keys() if incomplete in k]
-
-
 @click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     """
