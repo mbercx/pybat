@@ -792,6 +792,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
         concentration_restrictions=concentration_restrictions,
         max_configurations=max_configurations
     )
+    print("Found " + str(len(configurations)) + " configurations.")
 
     if directory == "":
         directory = os.getcwd()
