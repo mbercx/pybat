@@ -214,7 +214,9 @@ class PulayTask(FiretaskBase):
 
             # Create the PyTask that check the Pulay stresses again
             pulay_task = PulayTask(
-                directory=directory, in_custodian=in_custodian, number_nodes=number_nodes
+                directory=directory, in_custodian=in_custodian,
+                number_nodes=number_nodes, tolerance=tolerance,
+                fw_action=fw_action
             )
 
             # Add number of nodes to spec, or "none"
