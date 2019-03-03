@@ -19,6 +19,7 @@ __date__ = "May 2018"
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     """
@@ -567,10 +568,6 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
                    "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
               )
 @click.option("--directory", "-d", default="")
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
 @click.option("--in_custodian", "-c", is_flag=True)
 @click.option("--number_nodes", "-n", default=0,
               help="Number of nodes that should be used for the calculations. Is "
