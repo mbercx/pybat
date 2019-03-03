@@ -19,6 +19,7 @@ __date__ = "May 2018"
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+
 # Bash Complete functionality
 def get_env_vars(ctx, args, incomplete):
     return [k for k in os.environ.keys() if incomplete in k]
@@ -556,6 +557,43 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
                    is_metal=is_metal,
                    in_custodian=in_custodian,
                    number_nodes=number_nodes)
+
+
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("--functional", "-f", default="pbe",
+              help="Option for configuring the functional used in the calculation. "
+                   "User must provide the functional information in the form of a "
+                   "single string, starting with the string that determines the "
+                   "functional, then with string/float pairs for specifying further "
+                   "settings. Defaults to 'pbe'. Examples:\n"
+                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
+                   "U equal to 3.9 for Mn and 3.1 for V.\n"
+                   "* 'hse' ~ HSE06\n"
+                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              )
+@click.option("--directory", "-d", default="")
+@click.option("--is_metal", "-m", is_flag=True,
+              help="Flag to indicate that the structure is metallic. This "
+                   "will make the algorithm choose Methfessel-Paxton "
+                   "smearing of 0.2 eV.")
+@click.option("--in_custodian", "-c", is_flag=True)
+@click.option("--number_nodes", "-n", default=0,
+              help="Number of nodes that should be used for the calculations. Is "
+                   "required to add the proper `_category` to the Firework generated, "
+                   "so it is picked up by the right Fireworker.")
+def configuration(structure_file, functional, directory, in_custodian,
+                  number_nodes):
+    """
+    Set up a geometry optimization workflow for a range of configurations.
+    """
+    from pybat.workflow import configuration_workflow
+
+    configuration_workflow(structure_file=structure_file,
+                           functional=string_to_functional(functional),
+                           directory=directory,
+                           in_custodian=in_custodian,
+                           number_nodes=number_nodes)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)

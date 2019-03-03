@@ -4,6 +4,7 @@
 
 import os
 import subprocess
+import ast
 
 import numpy as np
 
@@ -750,11 +751,35 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     LAUNCHPAD.add_wf(workflow)
 
 
-def configuration_workflow(structure_file, substitution_sites, cation_list,
-                           sizes, concentration_restrictions=None,
+def configuration_workflow(structure_file, substitution_sites=None, cation_list=None,
+                           sizes=None, concentration_restrictions=None,
                            max_configurations=None, functional=("pbe", {}),
                            directory="", in_custodian=False, number_nodes=None):
+    # Load the cathode from the structure file
     cat = Cathode.from_file(structure_file)
+
+    # Check for the required input, and request if necessary
+    print(cat)
+    print()
+    if not substitution_sites:
+        substitution_sites = [int(i) for i in input(
+            "Please provide the substitution site indices, separated by a space: "
+        ).split(" ")]
+    if not cation_list:
+        cation_list = [i for i in input(
+            "Please provide the substitution elements, separated by a space: "
+        ).split(" ")]
+    if not sizes:
+        sizes = [int(i) for i in input(
+            "Please provide the possible unit cell sizes, separated by a space: "
+        ).split(" ")]
+    if not concentration_restrictions:
+        concentration_restrictions = ast.literal_eval(input(
+            "Please provide the concentration restrictions, written as you would "
+            "define a dictionary, or None: "))
+    if not max_configurations:
+        max_configurations = int(input(
+            "Please provide the maximum configurations, as an integer: "))
 
     configurations = cat.get_cation_configurations(
         substitution_sites=substitution_sites,
@@ -784,7 +809,7 @@ def configuration_workflow(structure_file, substitution_sites, cation_list,
         for conf_number, configuration in enumerate(configurations):
             conf_dir = os.path.join(
                 os.path.abspath(directory), "tm_conf_" + str(conf_number),
-                configuration.concentration, "workion_conf1", "prim"
+                round(configuration.concentration, 3), "workion_conf1", "prim"
             )
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
             relax_dir = os.path.join(conf_dir, functional_dir + "relax")

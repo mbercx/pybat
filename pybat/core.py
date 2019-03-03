@@ -205,6 +205,16 @@ class Cathode(Structure):
             raise TypeError("Working ion configurations should be a dictionary "
                             "mapping working ions to site indices, or a list of "
                             "sites.")
+    @property
+    def concentration(self):
+        """
+        The working ion concentration of the cathode, defined versus the pristine,
+        i.e. fully discharged structure as a percentage.
+
+        Returns:
+            (float): The working ion concentration
+
+        """
 
     @property
     def voronoi(self):
@@ -468,7 +478,8 @@ class Cathode(Structure):
         might be more useful/powerful to design it as a generator later.
 
         Args:
-            substitution_sites (list): List of pymatgen.Sites to be substituted.
+            substitution_sites (list): List of site indices or pymatgen.Sites to be
+                substituted.
             cation_list (list): List of string representations of the cation elements
                 which have to be substituted on the substitution sites. Can also
                 include "Vac" to introduce vacancy sites.
@@ -486,6 +497,9 @@ class Cathode(Structure):
             (list): List of Cathodes representing different configurations.
 
         """
+        # Check substitution_site input
+        if all(isinstance(site, int) for site in substitution_sites):
+            substitution_sites = [self.sites[index] for index in substitution_sites]
 
         # Set up the configuration space
         configuration_space = []
