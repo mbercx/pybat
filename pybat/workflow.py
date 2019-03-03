@@ -289,8 +289,8 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
     return scf_firework
 
 
-def create_relax_fw(structure_file, functional, directory, is_metal,
-                    in_custodian, number_nodes, next_firework=None):
+def create_relax_fw(structure_file, functional, directory, is_metal=False,
+                    in_custodian=False, number_nodes=None, next_firework=None):
     """
     Create a FireWork for performing an SCF calculation.
 
