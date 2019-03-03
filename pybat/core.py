@@ -495,7 +495,7 @@ class Cathode(Structure):
             if site in substitution_sites:
                 configuration_space.append(cation_list)
             else:
-                configuration_space.append([site.species_string,])
+                configuration_space.append([site.species_string, ])
 
         # TODO adjust this once concentration restrictions work correctly for
         # enumerate_structures
@@ -515,17 +515,27 @@ class Cathode(Structure):
             chemical_symbols=configuration_space,
             concentration_restrictions=enum_conc_restrictions
         )
+        try:
+            self.site_properties["magmom"]
+        except KeyError:
+            print("No magnetic moments found in structure, setting to zero.")
+            self.add_site_property("magmom", [0] * len(self))
 
         for atoms in configuration_generator:
 
-            structure = AseAtomsAdaptor.get_structure(atoms).get_sorted_structure()
+            structure = AseAtomsAdaptor.get_structure(atoms)
+            structure.add_site_property(
+                "magmom",
+                self.site_properties["magmom"] * int(len(structure) / len(self))
+            )
+
             frac_composition = structure.composition.fractional_composition
             elements = [str(el) for el in structure.composition.elements]
             c = concentration_restrictions
 
             if all([c[el][0] < frac_composition[el] < c[el][1]
                     for el in elements if c.get(el, False)]):
-                cathode = Cathode.from_structure(structure)
+                cathode = Cathode.from_structure(structure.get_sorted_structure())
                 cathode.remove_working_ions(
                     [i for i, site in enumerate(cathode)
                      if site.species_string == "Lr"]
