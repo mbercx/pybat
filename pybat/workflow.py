@@ -780,6 +780,8 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
     if not max_configurations:
         max_configurations = int(input(
             "Please provide the maximum configurations, as an integer: "))
+        if max_configurations == 0:
+            max_configurations = None
 
     configurations = cat.get_cation_configurations(
         substitution_sites=substitution_sites,
@@ -809,7 +811,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
         for conf_number, configuration in enumerate(configurations):
             conf_dir = os.path.join(
                 os.path.abspath(directory), "tm_conf_1",
-                round(configuration.concentration, 3),
+                str(round(configuration.concentration, 3)),
                 "workion_conf" + str(conf_number), "prim"
             )
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
@@ -835,7 +837,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
         for conf_number, configuration in enumerate(configurations):
             conf_dir = os.path.join(
                 os.path.abspath(directory), "tm_conf_" + str(conf_number),
-                round(configuration.concentration, 3), "workion_conf1", "prim"
+                str(round(configuration.concentration, 3)), "workion_conf1", "prim"
             )
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
             relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
