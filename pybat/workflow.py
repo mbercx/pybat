@@ -798,20 +798,23 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
                                         in functional[1]["LDAUU"].keys())
 
     firework_list = []
+    # TODO add functionality to create new configurations directories if present
+    # These scripts do not consider the fact that there already may be configuration
+    # directories present. This needs to be changed.
 
     # Because of the directory structure, we need to differentiate between TM
-    # configurations and Li/Vac configurations
+    # configurations and Li/Vac configurations #TODO
     if "Vac" in cation_list:
         # Set up Li configuration study
         for conf_number, configuration in enumerate(configurations):
             conf_dir = os.path.join(
-                os.path.abspath(directory), "tm_conf_1" + str(conf_number),
+                os.path.abspath(directory), "tm_conf_1",
                 round(configuration.concentration, 3),
                 "workion_conf" + str(conf_number), "prim"
             )
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
-            relax_dir = os.path.join(conf_dir, functional_dir + "relax")
-            scf_dir = os.path.join(conf_dir, functional_dir + "scf")
+            relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
+            scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
 
             firework_list.append(create_relax_fw(
                 structure_file=os.path.join(conf_dir, "cathode.json"),
@@ -835,8 +838,8 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
                 round(configuration.concentration, 3), "workion_conf1", "prim"
             )
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
-            relax_dir = os.path.join(conf_dir, functional_dir + "relax")
-            scf_dir = os.path.join(conf_dir, functional_dir + "scf")
+            relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
+            scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
 
             firework_list.append(create_relax_fw(
                 structure_file=os.path.join(conf_dir, "cathode.json"),
