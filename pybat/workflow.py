@@ -219,7 +219,7 @@ class PulayTask(FiretaskBase):
 
             # Add number of nodes to spec, or "none"
             firework_spec = {"_launch_dir": os.getcwd()}
-            if number_nodes == 0:
+            if number_nodes is None:
                 firework_spec.update({"_category": "none"})
             else:
                 firework_spec.update({"_category": str(number_nodes) + "nodes"})
@@ -237,8 +237,9 @@ class PulayTask(FiretaskBase):
 # region * Region 2 - Fireworks
 
 
-def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custodian,
-                  number_nodes):
+def create_scf_fw(structure_file, functional, directory, write_chgcar=False,
+                  in_custodian=False,
+                  number_nodes=None):
     """
     Create a FireWork for performing an SCF calculation.
 
@@ -278,7 +279,7 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
     # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes == 0:
+    if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
@@ -347,7 +348,7 @@ def create_relax_fw(structure_file, functional, directory, is_metal=False,
 
     # Only add number of nodes to spec if specified
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes == 0:
+    if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
@@ -360,8 +361,8 @@ def create_relax_fw(structure_file, functional, directory, is_metal=False,
     return relax_firework
 
 
-def create_neb_fw(directory, nimages, functional, is_metal, is_migration,
-                  in_custodian, number_nodes):
+def create_neb_fw(directory, nimages, functional, is_metal=False, is_migration=False,
+                  in_custodian=False, number_nodes=None):
     """
     Create a FireWork for performing an NEB calculation.
 
@@ -405,7 +406,7 @@ def create_neb_fw(directory, nimages, functional, is_metal, is_migration,
 
     # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes == 0:
+    if number_nodes == None:
         firework_spec.update({"_category": "none"})
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
@@ -595,7 +596,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes == 0:
+    if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
@@ -680,7 +681,7 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
 
     # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes == 0:
+    if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
@@ -741,7 +742,7 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
 
     # Add number of nodes to spec, or "none"
     firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes == 0:
+    if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
