@@ -829,6 +829,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
                     structure_file=os.path.join(relax_dir, "final_cathode.json"),
                     functional=functional,
                     directory=scf_dir,
+                    write_chgcar=False,
                     in_custodian=in_custodian,
                     number_nodes=number_nodes
                 )
@@ -855,6 +856,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
                     structure_file=os.path.join(relax_dir, "final_cathode.json"),
                     functional=functional,
                     directory=scf_dir,
+                    write_chgcar=False,
                     in_custodian=in_custodian,
                     number_nodes=number_nodes
                 )
