@@ -90,8 +90,8 @@ class Cathode(Structure):
     """
 
     # Tuple of standard working ions for typical battery insertion cathodes.
-    # Livermorium is also in there for the enumerate workaround.
-    standard_working_ions = ("Li", "Na", "Lv0+")
+    # Lawrencium is also in there for the enumerate workaround.
+    standard_working_ions = ("Li", "Na", "Lr")
 
     # Tuple of standard anions for typical battery insertion cathodes.
     standard_anions = ("O", "F")
@@ -185,7 +185,7 @@ class Cathode(Structure):
 
         # Remove all working ions
         for working_ion in [ion for ion in Cathode.standard_working_ions
-                            if Element[ion] in set(self.composition.keys())]:
+                            if Element(ion) in set(self.composition.keys())]:
             self.replace_species({working_ion: {working_ion: 0}})
 
         # Add the working ion sites
@@ -462,7 +462,7 @@ class Cathode(Structure):
         Because there are some issues with this method, related to the allowed
         concentrations, the method will have to be updated later. There is also the fact
         that vacancies can not be inserted in enumerate_structures, which will require
-        some workaround using Livermorium.
+        some workaround using Lawrencium.
 
         Currently also returns a list of Cathodes, for easy implementation and usage. It
         might be more useful/powerful to design it as a generator later.
@@ -489,7 +489,7 @@ class Cathode(Structure):
 
         # Set up the configuration space
         configuration_space = []
-        cation_list = ["Lv" if cat == "Vac" else cat for cat in cation_list]
+        cation_list = ["Lr" if cat == "Vac" else cat for cat in cation_list]
 
         for site in self.sites:
             if site in substitution_sites:
@@ -528,7 +528,7 @@ class Cathode(Structure):
                 cathode = Cathode.from_structure(structure)
                 cathode.remove_working_ions(
                     [i for i, site in enumerate(cathode)
-                     if site.species_string == "Lv0+"]
+                     if site.species_string == "Lr"]
                 )
                 configuration_list.append(cathode)
 
@@ -556,7 +556,7 @@ class Cathode(Structure):
     def to(self, fmt=None, filename=None, **kwargs):
         """
         Structure method override to solve issue with writing the Cathode to a
-        POSCAR file
+        POSCAR file.
 
         # TODO Figure out what exactly was the problem here again... Should
         have written this down immediately! I think it had something to do
