@@ -158,7 +158,7 @@ class PulayTask(FiretaskBase):
 
     """
     required_params = ["directory"]
-    option_params = ["in_custodian", "number_nodes", "tolerance", "next_firework"]
+    option_params = ["in_custodian", "number_nodes", "tolerance", "fw_action"]
     _fw_name = "{{pybat.workflow.PulayTask}}"
 
     def run_task(self, fw_spec):
@@ -176,6 +176,7 @@ class PulayTask(FiretaskBase):
         in_custodian = self.get("in_custodian", False)
         number_nodes = self.get("number_nodes", None)
         tolerance = self.get("tolerance", PULAY_TOLERANCE)
+        fw_action = self.get('fw_action', FWAction())
 
         # Check if the lattice vectors have changed significantly
         initial_cathode = LiRichCathode.from_file(
@@ -191,7 +192,7 @@ class PulayTask(FiretaskBase):
 
         # If the difference is small, return an empty FWAction
         if sum_differences < tolerance:
-            return FWAction(additions=self.get('next_firework'))
+            return fw_action
 
         # Else, set up another geometry optimization
         else:
@@ -291,7 +292,7 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar, in_custod
 
 
 def create_relax_fw(structure_file, functional, directory, is_metal=False,
-                    in_custodian=False, number_nodes=None, next_firework=None):
+                    in_custodian=False, number_nodes=None, fw_action=None):
     """
     Create a FireWork for performing an SCF calculation.
 
@@ -342,7 +343,7 @@ def create_relax_fw(structure_file, functional, directory, is_metal=False,
                            in_custodian=in_custodian,
                            number_nodes=number_nodes,
                            tol=PULAY_TOLERANCE,
-                           next_firework=next_firework)
+                           fw_action=fw_action)
 
     # Only add number of nodes to spec if specified
     firework_spec = {"_launch_dir": os.getcwd()}
@@ -821,7 +822,15 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
             relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
             scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
 
-            #pdb.set_trace()
+            scf_firework = create_scf_fw(
+                structure_file=os.path.join(relax_dir, "final_cathode.json"),
+                functional=functional,
+                directory=scf_dir,
+                write_chgcar=False,
+                in_custodian=in_custodian,
+                number_nodes=number_nodes
+            )
+            fw_action = FWAction(additions=scf_firework)
 
             firework_list.append(create_relax_fw(
                 structure_file=os.path.join(conf_dir, "cathode.json"),
@@ -829,14 +838,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
                 directory=relax_dir,
                 in_custodian=in_custodian,
                 number_nodes=number_nodes,
-                next_firework=create_scf_fw(
-                    structure_file=os.path.join(relax_dir, "final_cathode.json"),
-                    functional=functional,
-                    directory=scf_dir,
-                    write_chgcar=False,
-                    in_custodian=in_custodian,
-                    number_nodes=number_nodes
-                )
+                fw_action=fw_action
             ))
     else:
         # Set up TM configuration study
@@ -851,20 +853,23 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
             relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
             scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
 
+            scf_firework = create_scf_fw(
+                structure_file=os.path.join(relax_dir, "final_cathode.json"),
+                functional=functional,
+                directory=scf_dir,
+                write_chgcar=False,
+                in_custodian=in_custodian,
+                number_nodes=number_nodes
+            )
+            fw_action = FWAction(additions=scf_firework)
+
             firework_list.append(create_relax_fw(
                 structure_file=os.path.join(conf_dir, "cathode.json"),
                 functional=functional,
                 directory=relax_dir,
                 in_custodian=in_custodian,
                 number_nodes=number_nodes,
-                next_firework=create_scf_fw(
-                    structure_file=os.path.join(relax_dir, "final_cathode.json"),
-                    functional=functional,
-                    directory=scf_dir,
-                    write_chgcar=False,
-                    in_custodian=in_custodian,
-                    number_nodes=number_nodes
-                )
+                fw_action=fw_action
             ))
 
     # Set up a clear name for the workflow
