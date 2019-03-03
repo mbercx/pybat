@@ -814,7 +814,8 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
                 str(round(configuration.concentration, 3)),
                 "workion_conf" + str(conf_number), "prim"
             )
-            os.makedirs(conf_dir)
+            if not os.exists(conf_dir):
+                os.makedirs(conf_dir)
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
             relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
             scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
@@ -841,7 +842,8 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
                 os.path.abspath(directory), "tm_conf_" + str(conf_number),
                 str(round(configuration.concentration, 3)), "workion_conf1", "prim"
             )
-            os.makedirs(conf_dir)
+            if not os.exists(conf_dir):
+                os.makedirs(conf_dir)
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
             relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
             scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
