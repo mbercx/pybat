@@ -509,6 +509,9 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
     """
     from pybat.workflow import scf_workflow
 
+    if number_nodes == 0:
+        number_nodes = None
+
     scf_workflow(structure_file=structure_file,
                  functional=string_to_functional(functional),
                  directory=directory,
