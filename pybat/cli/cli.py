@@ -507,7 +507,7 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
     """
     Set up an SCF calculation workflow.
     """
-    from pybat.workflow import scf_workflow
+    from pybat.workflow.workflows import scf_workflow
 
     if number_nodes == 0:
         number_nodes = None
@@ -547,7 +547,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
     """
     Set up a geometry optimization workflow.
     """
-    from pybat.workflow import relax_workflow
+    from pybat.workflow.workflows import relax_workflow
 
     relax_workflow(structure_file=structure_file,
                    functional=string_to_functional(functional),
@@ -581,7 +581,7 @@ def configuration(structure_file, functional, directory, in_custodian,
     """
     Set up a geometry optimization workflow for a range of configurations.
     """
-    from pybat.workflow import configuration_workflow
+    from pybat.workflow.workflows import configuration_workflow
 
     configuration_workflow(structure_file=structure_file,
                            functional=string_to_functional(functional),
@@ -619,7 +619,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
     """
     Set up dimer calculation workflows.
     """
-    from pybat.workflow import dimer_workflow
+    from pybat.workflow.workflows import dimer_workflow
 
     dimer_workflow(structure_file=structure_file,
                    dimer_indices=dimer_indices,
@@ -667,7 +667,7 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
     """
     Set up dimer calculation workflows.
     """
-    from pybat.workflow import neb_workflow
+    from pybat.workflow.workflows import neb_workflow
 
     neb_workflow(directory=directory,
                  nimages=nimages,
@@ -706,7 +706,7 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
-    from pybat.workflow import noneq_dimers_workflow
+    from pybat.workflow.workflows import noneq_dimers_workflow
 
     noneq_dimers_workflow(structure_file=structure_file,
                           distance=distance,
@@ -745,7 +745,7 @@ def site_dimers(site_index, structure_file, distance, functional, is_metal, in_c
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
-    from pybat.workflow import site_dimers_workflow
+    from pybat.workflow.workflows import site_dimers_workflow
 
     site_dimers_workflow(structure_file=structure_file,
                          site_index=site_index,
