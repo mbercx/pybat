@@ -112,7 +112,7 @@ def data(vasprun_file):
     Extract the main data from a vasprun.xml file and write it as a data.json.
 
     Args:
-        vasprun_file:
+        vasprun_file (str):
 
     Returns:
 
