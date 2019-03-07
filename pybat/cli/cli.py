@@ -345,8 +345,8 @@ def transition(directory, functional, is_metal, is_migration, optimize_initial):
                    "* 'hse' ~ HSE06\n"
                    "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
               )
-@click.option("--nimages", "-n", default=8,
-              help="Number of images.")
+@click.option("--nimages", "-N", default=7,
+              help="Number of images. Defaults to 7.")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
@@ -633,7 +633,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("directory", nargs=1)
 @click.option("--nimages", "-N", default=7,
-              help="Number of images.")
+              help="Number of images. Defaults to 7.")
 @click.option("--functional", "-f", default="pbe",
               help="Option for configuring the functional used in the calculation. "
                    "User must provide the functional information in the form of a "

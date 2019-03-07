@@ -277,7 +277,7 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
         host_scf.write_input(os.path.join(directory, "host"))
 
 
-def neb(directory, nimages=8, functional=("pbe", {}), is_metal=False,
+def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
         is_migration=False):
     """
     Set up the NEB calculation from the initial and final structures.
