@@ -899,10 +899,15 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
     else:
         # Set up TM configuration study
         for conf_number, configuration in enumerate(configurations):
-            conf_dir = os.path.join(
-                os.path.abspath(directory), "tm_conf_" + str(conf_number),
-                str(round(configuration.concentration, 3)), "workion_conf1", "prim"
-            )
+            try:
+                conf_dir = os.path.join(
+                    os.path.abspath(directory), "tm_conf_" + str(conf_number),
+                    str(round(configuration.concentration, 3)), "workion_conf1", "prim"
+                )
+            except ZeroDivisionError:
+                conf_dir = os.path.join(
+                    os.path.abspath(directory), "tm_conf_" + str(conf_number), "prim"
+                )
             if not os.path.exists(conf_dir):
                 os.makedirs(conf_dir)
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
