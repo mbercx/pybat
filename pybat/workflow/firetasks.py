@@ -31,7 +31,7 @@ class VaspTask(FiretaskBase):
 
     """
     required_params = ["directory"]
-    _fw_name = "{{pybat.workflow.VaspTask}}"
+    _fw_name = "{{pybat.workflow.firetasks.VaspTask}}"
 
     def run_task(self, fw_spec):
         os.chdir(self["directory"])
@@ -47,7 +47,7 @@ class CustodianTask(FiretaskBase):
 
     """
     required_params = ["directory"]
-    _fw_name = "{{pybat.workflow.CustodianTask}}"
+    _fw_name = "{{pybat.workflow.firetasks.CustodianTask}}"
 
     def run_task(self, fw_spec):
         directory = os.path.abspath(self["directory"])
@@ -93,7 +93,7 @@ class PulayTask(FiretaskBase):
     """
     required_params = ["directory"]
     option_params = ["in_custodian", "number_nodes", "tolerance", "fw_action"]
-    _fw_name = "{{pybat.workflow.PulayTask}}"
+    _fw_name = "{{pybat.workflow.firetasks.PulayTask}}"
 
     # Standard tolerance for deciding to perform another geometry optimization.
     # Basically, PulayTask calculates the 2-norm of the absolute matrix taken from the
@@ -179,7 +179,7 @@ class PulayTask(FiretaskBase):
 class MiddleTask(FiretaskBase):
     required_params = ["message"]
     option_params = ["fw_action"]
-    _fw_name = "{{pybat.workflow.MiddleTask}}"
+    _fw_name = "{{pybat.workflow.firetask.MiddleTask}}"
 
     def run_task(self, fw_spec):
 
