@@ -886,8 +886,6 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
             )
             fw_action = FWAction(additions=scf_firework)
 
-            pdb.set_trace()
-
             firework_list.append(create_relax_fw(
                 structure_file=os.path.join(conf_dir, "cathode.json"),
                 functional=functional,
