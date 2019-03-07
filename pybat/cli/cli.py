@@ -466,9 +466,9 @@ def print(structure_file):
     Print the cathode details to the screen.
 
     """
-    from pybat.cli.commands.util import print
+    from pybat.cli.commands.util import print_structure
 
-    print(structure_file=structure_file)
+    print_structure(structure_file=structure_file)
 
 
 # endregion

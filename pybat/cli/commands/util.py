@@ -124,5 +124,5 @@ def data(vasprun_file):
         file.write(vasprun.to_json())
 
 
-def print(structure_file):
+def print_structure(structure_file):
     print(Cathode.from_file(structure_file))
