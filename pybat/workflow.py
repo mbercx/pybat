@@ -180,8 +180,6 @@ class PulayTask(FiretaskBase):
         tolerance = self.get("tolerance", PULAY_TOLERANCE)
         fw_action = self.get('fw_action', {})
 
-        pdb.set_trace()
-
         # Check if the lattice vectors have changed significantly
         initial_structure = Structure.from_file(
             os.path.join(directory, "POSCAR")
