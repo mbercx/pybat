@@ -176,7 +176,9 @@ class PulayTask(FiretaskBase):
         in_custodian = self.get("in_custodian", False)
         number_nodes = self.get("number_nodes", None)
         tolerance = self.get("tolerance", PULAY_TOLERANCE)
-        fw_action = self.get('fw_action', FWAction())
+        fw_action = self.get('fw_action', {})
+
+        pdb.set_trace()
 
         # Check if the lattice vectors have changed significantly
         initial_cathode = LiRichCathode.from_file(
@@ -192,7 +194,7 @@ class PulayTask(FiretaskBase):
 
         # If the difference is small, return an empty FWAction
         if sum_differences < tolerance:
-            return fw_action
+            return FWAction.from_dict(fw_action)
 
         # Else, set up another geometry optimization
         else:
@@ -294,10 +296,58 @@ def create_scf_fw(structure_file, functional, directory, write_chgcar=False,
     return scf_firework
 
 
+class RelaxFirework(Firework):
+
+    def __init__(self, structure_file, functional, directory, is_metal=False,
+                 in_custodian=False, number_nodes=None, fw_action=None):
+
+        # Create the PyTask that sets up the calculation
+        setup_relax = PyTask(
+            func="pybat.cli.commands.setup.relax",
+            kwargs={"structure_file": structure_file,
+                    "functional": functional,
+                    "calculation_dir": directory,
+                    "is_metal": is_metal}
+        )
+
+        # Create the PyTask that runs the calculation
+        if in_custodian:
+            vasprun = CustodianTask(directory=directory)
+        else:
+            vasprun = VaspTask(directory=directory)
+
+        # Extract the final cathode from the geometry optimization
+        get_cathode = PyTask(
+            func="pybat.cli.commands.get.get_cathode",
+            kwargs={"directory": os.path.join(directory),
+                    "write_cif": True}
+        )
+
+        # Create the PyTask that check the Pulay stresses
+        pulay_task = PulayTask(directory=directory,
+                               in_custodian=in_custodian,
+                               number_nodes=number_nodes,
+                               tol=PULAY_TOLERANCE,
+                               fw_action=fw_action)
+
+        # Only add number of nodes to spec if specified
+        firework_spec = {"_launch_dir": os.getcwd()}
+        if number_nodes is None:
+            firework_spec.update({"_category": "none"})
+        else:
+            firework_spec.update({"_category": str(number_nodes) + "nodes"})
+
+        # Combine the FireTasks into one FireWork
+        super(RelaxFirework, self).__init__(
+            tasks=[setup_relax, vasprun, get_cathode, pulay_task],
+            name="Geometry optimization", spec=firework_spec
+        )
+
+
 def create_relax_fw(structure_file, functional, directory, is_metal=False,
                     in_custodian=False, number_nodes=None, fw_action=None):
     """
-    Create a FireWork for performing an SCF calculation.
+    Create a FireWork for performing an Geometry Optimization.
 
     Args:
         structure_file (str): Path to the geometry file of the structure.
@@ -836,6 +886,8 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
             )
             fw_action = FWAction(additions=scf_firework)
 
+            pdb.set_trace()
+
             firework_list.append(create_relax_fw(
                 structure_file=os.path.join(conf_dir, "cathode.json"),
                 functional=functional,
@@ -998,4 +1050,45 @@ def site_dimers_workflow(structure_file, site_index, distance,
                        in_custodian=in_custodian,
                        number_nodes=number_nodes)
 
+
 # endregion
+
+# region * Token tasks for testing
+
+class MiddleTask(FiretaskBase):
+    required_params = ["message"]
+    option_params = ["fw_action"]
+    _fw_name = "{{pybat.workflow.MiddleTask}}"
+
+    def run_task(self, fw_spec):
+
+        if self["message"] == "next":
+
+            print("The message was next!")
+            print(self["message"])
+
+            fw = Firework([ScriptTask.from_str("echo next"),
+                           MiddleTask(message="other",
+                                      fw_action=self.get("fw_action", FWAction()))])
+
+            return FWAction(additions=fw)
+
+        else:
+
+            print("The message was Something Else!")
+            print(self["message"])
+            print()
+            print(self.get("fw_action", FWAction()))
+            print()
+
+            return FWAction.from_dict(self.get("fw_action", {}))
+
+
+class FirstFirework(Firework):
+
+    def __init__(self, final_message):
+        super(FirstFirework, self).__init__(
+            tasks=[ScriptTask.from_str("echo 'Here we go!'"),
+                   MiddleTask(message="next",
+                              fw_action=FWAction(additions=Firework([ScriptTask.from_str(
+                                  "echo '" + final_message + "'")])))])
