@@ -17,7 +17,6 @@ from ruamel.yaml import YAML
 from pymongo.errors import ServerSelectionTimeoutError
 from fireworks import Firework, LaunchPad, PyTask, Workflow, FWAction
 
-
 """
 Package that contains all the Workflows of the pybat package.
 
@@ -29,7 +28,6 @@ __version__ = "alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
-
 
 # Load the workflow configuration
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
@@ -61,6 +59,7 @@ else:
                             "in order to set up the configuration for "
                             "the workflows.")
 
+
 # TODO Extend configuration and make the whole configuration setup more user friendly
 # Currently the user is not guided to the workflow setup when attempting to use
 # pybat workflows, this should change and be tested. Moreover, careful additions should
@@ -72,9 +71,6 @@ else:
 # TODO Add UnitTests!
 # It's really getting time to do this. Think about what unit tests you need and make a
 # test suite.
-
-# region * Workflows
-
 
 def scf_workflow(structure_file, functional=("pbe", {}), directory="",
                  write_chgcar=False, in_custodian=False, number_nodes=None):
@@ -543,13 +539,6 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
     LAUNCHPAD.add_wf(workflow)
 
 
-# endregion
-
-# region * Studies
-#
-# Studies are a collection of Workflows
-
-
 def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
                           is_metal=False, in_custodian=False, number_nodes=None):
     """
@@ -652,9 +641,6 @@ def site_dimers_workflow(structure_file, site_index, distance,
                        is_metal=is_metal,
                        in_custodian=in_custodian,
                        number_nodes=number_nodes)
-
-
-# endregion
 
 # region * Token workflows for testing
 

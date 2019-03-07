@@ -203,3 +203,5 @@ class MiddleTask(FiretaskBase):
             print()
 
             return FWAction.from_dict(self.get("fw_action", {}))
+
+# endregion
