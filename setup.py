@@ -9,7 +9,9 @@ setup(
         "click",
         "pymongo",
         "fireworks",
-        "custodian"
+        "custodian",
+        "tabulate",
+        "icet"
     ],
     entry_points='''
         [console_scripts]
