@@ -395,9 +395,13 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
-    # TODO Improve naming scheme of workflow
+    cathode = Cathode.from_file(
+        os.path.join(directory, "final", "initial_cathode.json")
+    )
+    dir_name = os.path.abspath(directory).split("/")[-1]
+
     workflow = Workflow(fireworks=[neb_firework, ],
-                        name=directory.split("/")[-1])
+                        name=cathode + "_" + dir_name)
 
     LAUNCHPAD.add_wf(workflow)
 
