@@ -9,6 +9,8 @@ import pdb
 
 import numpy as np
 
+from pymatgen import Structure
+
 from pybat.core import Cathode, LiRichCathode, Dimer
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
@@ -181,15 +183,15 @@ class PulayTask(FiretaskBase):
         pdb.set_trace()
 
         # Check if the lattice vectors have changed significantly
-        initial_cathode = LiRichCathode.from_file(
+        initial_structure = Structure.from_file(
             os.path.join(directory, "POSCAR")
         )
-        final_cathode = LiRichCathode.from_file(
+        final_structure = Structure.from_file(
             os.path.join(directory, "CONTCAR")
         )
 
         sum_differences = np.linalg.norm(
-            initial_cathode.lattice.matrix - final_cathode.lattice.matrix
+            initial_structure.lattice.matrix - final_structure.lattice.matrix
         )
 
         # If the difference is small, return an empty FWAction
