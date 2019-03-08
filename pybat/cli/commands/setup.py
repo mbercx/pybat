@@ -337,8 +337,11 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
         raise FileNotFoundError("Could not find required structure "
                                 "information in " + initial_dir + ".")
 
-    final_structure = Structure.from_file(os.path.join(final_dir,
-                                                       "CONTCAR"))
+    try:
+        final_structure = Structure.from_file(os.path.join(final_dir, "CONTCAR"))
+    except FileNotFoundError:
+        final_structure = Cathode.from_file(
+            os.path.join(final_dir, "final_cathode.json")).as_ordered_structure()
 
     # In case the transition is a migration
     if is_migration:
