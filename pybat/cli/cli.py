@@ -619,6 +619,8 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     except ValueError:
         sizes = eval(sizes)
 
+    sub_sites = [int(site) for site in sub_sites]
+
     configuration_workflow(structure_file=structure_file,
                            substitution_sites=sub_sites,
                            element_list=element_list,
