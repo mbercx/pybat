@@ -621,7 +621,10 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
         sizes = [int(i) for i in sizes.strip("[]").split(",")]
     except ValueError:
         sizes = eval(sizes)
-    conc_restrict = eval(conc_restrict)
+    try:
+        conc_restrict = eval(conc_restrict)
+    except TypeError:
+        conc_restrict = None
 
     configuration_workflow(structure_file=structure_file,
                            substitution_sites=sub_sites,
