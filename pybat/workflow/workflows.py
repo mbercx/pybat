@@ -407,7 +407,7 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     LAUNCHPAD.add_wf(workflow)
 
 
-def configuration_workflow(structure_file, substitution_sites=None, cation_list=None,
+def configuration_workflow(structure_file, substitution_sites=None, element_list=None,
                            sizes=None, concentration_restrictions=None,
                            max_configurations=None, functional=("pbe", {}),
                            directory=None, in_custodian=False, number_nodes=None):
@@ -421,8 +421,8 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
         substitution_sites = [int(i) for i in input(
             "Please provide the substitution site indices, separated by a space: "
         ).split(" ")]
-    if not cation_list:
-        cation_list = [i for i in input(
+    if not element_list:
+        element_list = [i for i in input(
             "Please provide the substitution elements, separated by a space: "
         ).split(" ")]
     if not sizes:
@@ -441,7 +441,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
 
     configurations = cat.get_cation_configurations(
         substitution_sites=substitution_sites,
-        cation_list=cation_list,
+        cation_list=element_list,
         sizes=sizes,
         concentration_restrictions=concentration_restrictions,
         max_configurations=max_configurations
@@ -463,7 +463,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
 
     # Because of the directory structure, we need to differentiate between TM
     # configurations and Li/Vac configurations #TODO
-    if "Vac" in cation_list:
+    if "Vac" in element_list:
         # Set up Li configuration study
         for conf_number, configuration in enumerate(configurations):
             conf_dir = os.path.join(
@@ -534,7 +534,7 @@ def configuration_workflow(structure_file, substitution_sites=None, cation_list=
 
     # Set up a clear name for the workflow
     workflow_name = str(cat.composition.reduced_formula).replace(" ", "")
-    workflow_name += " " + str(cation_list)
+    workflow_name += " " + str(element_list)
     workflow_name += " " + str(functional)
 
     # Create the workflow

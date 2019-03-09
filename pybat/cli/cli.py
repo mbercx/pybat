@@ -147,7 +147,7 @@ def migration(structure_file, migration_indices, write_cif):
 @click.argument("structure_file", nargs=1)
 @click.option("--dimer_indices", "-i", default=(0, 0))
 @click.option("--distance", "-d", default=float(0))
-@click.option("--remove_cations", "-R", is_flag=True)
+@click.option("--remove_cations", "-r", is_flag=True)
 @click.option("--write_cif", "-w", is_flag=True,
               help=WRITE_CIF_HELP)
 def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
@@ -583,23 +583,48 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
+@click.option("--sub_sites", "-s", default=None,
+              help="Indices of the sites that should be substituted to generate the "
+                   "possible configurations.")
+@click.option("--element_list", "-E", default=None,
+              help="List of elements that should be placed on the substitution sites to "
+                   "generate the configurations.")
+@click.option("--sizes", "-S", default=None,
+              help="Allowed unit cell sizes for the generation of configurations. Can "
+                   "be either a List of numbers or a range(). \nExamples:\n"
+                   "'[0, 2, 5]'\n"
+                   "'range(1,7)'")
+@click.option("--conc_restrict", "-R", default=None,
+              help="Dictionary of the allowed concentration ranges for each element. "
+                   "Note that the concentration is defined versus the total amount of "
+                   "atoms in the unit cell. \n Examples:\n {'Li':(0.2, 0.3)}\n "
+                   "{'Ni':(0.1, 0.2), 'Mn':(0, 0.1)}")
+@click.option("--max_conf", "-M", default=0,
+              help="Maximum number of configurations to generate.")
 @click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
-@click.option("--sub_sites", "-s", default=None,
-              help="Indices of the sites that should be substituted.")
-@click.option("--sub_sites", "-s", default=None,
-              help="Indices of the sites that should be substituted.")
 @click.option("--directory", "-d", default=None,
               help="Directory in which to set up the configuration workflow.")
-@click.option("--in_custodian", "-c", is_flag=True)
+@click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
-def configuration(structure_file, functional, directory, in_custodian,
-                  number_nodes):
+def configuration(structure_file, functional, sub_sites, element_list, sizes,
+                  directory, conc_restrict, max_conf, in_custodian, number_nodes):
     """
     Set up a geometry optimization workflow for a range of configurations.
     """
     from pybat.workflow.workflows import configuration_workflow
 
+    # Process the sizes format to one that can be used by the configuration workflow
+    try:
+        sizes = [int(i) for i in sizes.strip("[]").split(",")]
+    except ValueError:
+        sizes = eval(sizes)
+
     configuration_workflow(structure_file=structure_file,
+                           substitution_sites=sub_sites,
+                           element_list=element_list,
+                           sizes=sizes,
+                           concentration_restrictions=conc_restrict,
+                           max_configurations=max_conf,
                            functional=string_to_functional(functional),
                            directory=directory,
                            in_custodian=in_custodian,
