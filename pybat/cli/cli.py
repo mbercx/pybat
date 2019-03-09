@@ -614,12 +614,14 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     from pybat.workflow.workflows import configuration_workflow
 
     # Process the sizes format to one that can be used by the configuration workflow
+
+    sub_sites = [int(site) for site in sub_sites]
+    element_list = [el for el in element_list.split(" ")]
     try:
         sizes = [int(i) for i in sizes.strip("[]").split(",")]
     except ValueError:
         sizes = eval(sizes)
-
-    sub_sites = [int(site) for site in sub_sites]
+    conc_restrict = eval(conc_restrict)
 
     configuration_workflow(structure_file=structure_file,
                            substitution_sites=sub_sites,
