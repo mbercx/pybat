@@ -165,10 +165,10 @@ class PybatNEBSet(BulkRelaxSet):
                 )
         if write_path_cif:
             sites = set()
-            l = self.structures[0].lattice
+            lattice = self.structures[0].lattice
             for site in chain(*(s.sites for s in self.structures)):
                 sites.add(PeriodicSite(site.species_and_occu, site.frac_coords,
-                                       l))
+                                       lattice))
             nebpath = Structure.from_sites(sorted(sites))
             nebpath.to(filename=os.path.join(output_dir, 'path.cif'))
 
