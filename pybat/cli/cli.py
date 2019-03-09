@@ -19,6 +19,38 @@ __date__ = "Mar 2019"
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+# region * Help strings for options
+# Because several options have the same help string, it's easier to gather those here,
+# so that in case we adjust them it only has to be done once.
+
+IN_CUSTODIAN_HELP = "Run the calculations in a Custodian for automatic error handling."
+
+IS_METAL_HELP = "Flag to indicate that the structure is metallic. This will make the " \
+                "algorithm choose Methfessel-Paxton smearing of 0.2 eV."
+
+FUNCTIONAL_HELP = "Option for configuring the functional used in the calculation. User " \
+                  "must provide the functional information in the form of a single " \
+                  "string, starting with the string that determines the functional, " \
+                  "then with string/float pairs for specifying further settings. " \
+                  "Defaults to 'pbe'. \nExamples:\n" \
+                  "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U Dudarev approach) with effective U " \
+                  "equal to 3.9 for Mn and 3.1 for V.\n" \
+                  "* 'scan' ~ SCAN\n" \
+                  "* 'hse' ~ HSE06\n" \
+                  "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+
+MIGRATION_INDICES_HELP = "Starting and final indices of a migration. Provided with two " \
+                         "integers when using the option, i.e. -I 4 12."
+
+NUMBER_NODES_HELP = "Number of nodes that should be used for the calculations. Is " \
+                    "required to add the proper `_category` to the Firework generated, " \
+                    "so it is picked up by the right Fireworker."
+
+WRITE_CIF_HELP = "Flag that indicates that the structure(s) should also be written as a " \
+                 ".cif file."
+
+
+# endregion
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def main():
@@ -91,8 +123,10 @@ def define():
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--migration_indices", "-i", default=(0, 0))
-@click.option("--write_cif", "-w", is_flag=True)
+@click.option("--migration_indices", "-I", default=(0, 0),
+              help=MIGRATION_INDICES_HELP)
+@click.option("--write_cif", "-w", is_flag=True,
+              help=WRITE_CIF_HELP)
 def migration(structure_file, migration_indices, write_cif):
     """
     Define a migration of an ion in a structure.
@@ -110,7 +144,8 @@ def migration(structure_file, migration_indices, write_cif):
 @click.option("--dimer_indices", "-i", default=(0, 0))
 @click.option("--distance", "-d", default=float(0))
 @click.option("--remove_cations", "-R", is_flag=True)
-@click.option("--write_cif", "-w", is_flag=True)
+@click.option("--write_cif", "-w", is_flag=True,
+              help=WRITE_CIF_HELP)
 def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
     """
     Define the formation of a dimer in a structure.
@@ -141,7 +176,8 @@ def get():
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
-@click.option("--write_cif", "-w", is_flag=True)
+@click.option("--write_cif", "-w", is_flag=True,
+              help=WRITE_CIF_HELP)
 def structure(directory, write_cif):
     """
     Obtain the structure with its magnetic configuration.
@@ -156,13 +192,19 @@ def structure(directory, write_cif):
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".",
               help="The directory which contains the required data for the "
-                   "final cathode JSON file input. This includes ")
+                   "final cathode JSON file input. This includes initial_cathode.json "
+                   "and the output of a VASP calculation, i.e. the CONTCAR and OUTCAR "
+                   "files. ")
 @click.option("--to_current_dir", "-c", is_flag=True,
               help="Flag to indicate that the final cathode file should be "
                    "witten to the current directory instead of the directory "
                    "which contains the data.")
-@click.option("--ignore_magmom", "-i", is_flag=True)
-@click.option("--write_cif", "-w", is_flag=True)
+@click.option("--ignore_magmom", "-i", is_flag=True,
+              help="Flag that indicates that the final magnetic moments should be "
+                   "ignored, i.e. that the magnetic moments should be kept as the ones "
+                   "in initial_cathode.json.")
+@click.option("--write_cif", "-w", is_flag=True,
+              help=WRITE_CIF_HELP)
 def cathode(directory, to_current_dir, ignore_magmom, write_cif):
     """
     Obtain the Cathode with its magnetic configuration and vacancies.
@@ -486,23 +528,17 @@ def workflow():
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--functional", "-f", default="pbe",
-              help="Option for configuring the functional used in the calculation. "
-                   "User must provide the functional information in the form of a "
-                   "single string, starting with the string that determines the "
-                   "functional, then with string/float pairs for specifying further "
-                   "settings. Defaults to 'pbe'. Examples:\n"
-                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
-                   "U equal to 3.9 for Mn and 3.1 for V.\n"
-                   "* 'hse' ~ HSE06\n"
-                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
+              help=FUNCTIONAL_HELP
               )
-@click.option("--directory", "-d", default="")
-@click.option("--write_chgcar", "-C", is_flag=True)
-@click.option("--in_custodian", "-c", is_flag=True)
+@click.option("--directory", "-d", default="",
+              help="Directory in which the SCF calculation will be performed.")
+@click.option("--write_chgcar", "-C", is_flag=True,
+              help="Flag that indicates that the CHGCAR should be written, which "
+                   "is not done by default to conserve space.")
+@click.option("--in_custodian", "-c", is_flag=True,
+              help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0,
-              help="Number of nodes that should be used for the calculations. Is "
-                   "required to add the proper `_category` to the Firework generated, "
-                   "so it is picked up by the right Fireworker.")
+              help=NUMBER_NODES_HELP)
 def scf(structure_file, functional, directory, write_chgcar, in_custodian, number_nodes):
     """
     Set up an SCF calculation workflow.
@@ -522,27 +558,11 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--functional", "-f", default="pbe",
-              help="Option for configuring the functional used in the calculation. "
-                   "User must provide the functional information in the form of a "
-                   "single string, starting with the string that determines the "
-                   "functional, then with string/float pairs for specifying further "
-                   "settings. Defaults to 'pbe'. Examples:\n"
-                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
-                   "U equal to 3.9 for Mn and 3.1 for V.\n"
-                   "* 'hse' ~ HSE06\n"
-                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
-              )
+@click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
 @click.option("--directory", "-d", default="")
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
+@click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True)
-@click.option("--number_nodes", "-n", default=0,
-              help="Number of nodes that should be used for the calculations. Is "
-                   "required to add the proper `_category` to the Firework generated, "
-                   "so it is picked up by the right Fireworker.")
+@click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def relax(structure_file, functional, directory, is_metal, in_custodian, number_nodes):
     """
     Set up a geometry optimization workflow.

@@ -61,7 +61,7 @@ def get_cathode(directory, to_current_dir=False, write_cif=False,
     """
     Construct a .json file of the updated Cathode from a geometry
     optimization, based on the initial_cathode.json file and the output of a
-    VASP calculation, i.e. the CONTCAR and OUTCAR file. All these files must
+    VASP calculation, i.e. the CONTCAR and OUTCAR files. All these files must
     be present in the directory.
 
     Args:
