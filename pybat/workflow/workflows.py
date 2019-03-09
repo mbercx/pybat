@@ -410,7 +410,7 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
 def configuration_workflow(structure_file, substitution_sites=None, cation_list=None,
                            sizes=None, concentration_restrictions=None,
                            max_configurations=None, functional=("pbe", {}),
-                           directory="", in_custodian=False, number_nodes=None):
+                           directory=None, in_custodian=False, number_nodes=None):
     # Load the cathode from the structure file
     cat = Cathode.from_file(structure_file)
 

@@ -570,7 +570,12 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
                    "* 'hse' ~ HSE06\n"
                    "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
               )
-@click.option("--directory", "-d", default="")
+@click.option("--sub_sites", "-s", default=None,
+              help="Indices of the sites that should be substituted.")
+@click.option("--sub_sites", "-s", default=None,
+              help="Indices of the sites that should be substituted.")
+@click.option("--directory", "-d", default=None,
+              help="Directory in which to set up the configuration workflow.")
 @click.option("--in_custodian", "-c", is_flag=True)
 @click.option("--number_nodes", "-n", default=0,
               help="Number of nodes that should be used for the calculations. Is "

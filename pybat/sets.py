@@ -59,50 +59,23 @@ class BulkSCFSet(DictSet):
         self.kwargs = kwargs
 
 
-class PybatRelaxSet(DictSet):
+class PybatNEBSet(BulkRelaxSet):
     """
-    Subclass of the MITNEBSet, with specific settings for migration
-    calculations in batteries, i.e. POTCAR files with more valence electrons
-    and ISIF = 2.
+    Class for writing NEB inputs, based on the settings of BulkRelaxSet.
 
-    """
-
-    CONFIG = _load_yaml_config("pybatRelaxSet")
-
-    def __init__(self, structure, hse_calculation=False, **kwargs):
-        super(PybatRelaxSet, self).__init__(
-            structure, PybatNEBSet.CONFIG, **kwargs
-        )
-
-        # HSE specific defaults
-        if hse_calculation:
-            hse_config = {"ALGO": "All", "HFSCREEN": 0.2, "LDAU": False,
-                          "LHFCALC": True, "PRECFOCK": "Fast"}
-            self._config_dict["INCAR"].update(hse_config)
-
-        self.kwargs = kwargs
-
-
-class PybatNEBSet(PybatRelaxSet):
-    """
-    Class for writing NEB inputs, based on the settings of pybatRelaxSet.
-
-    This class was largely copied from the MITNEBSet in pymatgen.io.vasp.sets.
-    However, note that we changed the defaults to include LDA+U.
+    This class was largely copied from the MITNEBSet in pymatgen.io.vasp.sets,
+    But then using the defaults specified in BulkRelaxSet
 
     Args:
         \\*\\*kwargs: Other kwargs supported by :class:`DictSet`.
 
     """
 
-    # TODO make this class independent of PyBatRelaxSet
-
-    def __init__(self, structures, hse_calculation=False, **kwargs):
+    def __init__(self, structures, **kwargs):
         if len(structures) < 3:
             raise ValueError("You need at least 3 structures for an NEB.")
         kwargs["sort_structure"] = False
-        super(PybatNEBSet, self).__init__(structures[0], hse_calculation,
-                                          **kwargs)
+        super(PybatNEBSet, self).__init__(structures[0], **kwargs)
         self._structures = self._process_structures(structures)
 
         if "EDIFF" not in self._config_dict["INCAR"]:
@@ -173,7 +146,7 @@ class PybatNEBSet(PybatRelaxSet):
             if write_cif:
                 p.structure.to(filename=os.path.join(d, '{}.cif'.format(i)))
         if write_endpoint_inputs:
-            end_point_param = PybatRelaxSet(
+            end_point_param = BulkRelaxSet(
                 self.structures[0],
                 user_incar_settings=self.user_incar_settings)
 
