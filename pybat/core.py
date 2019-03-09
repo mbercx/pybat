@@ -1,4 +1,4 @@
-# Encoding: UTF-8
+# coding: utf8
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
@@ -32,14 +32,14 @@ except ImportError:
     scipy_old_piecewisepolynomial = False
 
 """
-Module that contains tools to represent and calculate the properties of
+Module that contains basic classes to represent and calculate the properties of
 battery cathodes.
 
 """
 
 __author__ = "Marnik Bercx"
 __copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
-__version__ = "0.1"
+__version__ = "pre-alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "May 2018"

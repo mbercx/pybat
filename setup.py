@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pybat",
-    version="0.1",
+    version="pre-alpha",
     packages=find_packages(exclude=["docs"]),
     install_requires=[
         "pymatgen",

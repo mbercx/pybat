@@ -16,7 +16,7 @@ from fireworks import FiretaskBase
 
 __author__ = "Marnik Bercx"
 __copyright__ = "Copyright 2019, Marnik Bercx, University of Antwerp"
-__version__ = "alpha"
+__version__ = "pre-alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"

@@ -1,4 +1,4 @@
-# Encoding: UTF-8
+# coding: utf8
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
@@ -17,10 +17,10 @@ interface.
 
 __author__ = "Marnik Bercx"
 __copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
-__version__ = "0.1"
+__version__ = "pre-alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
-__date__ = "May 2018"
+__date__ = "Mar 2019"
 
 
 def define_migration(structure_file, migration_indices=(0, 0),
