@@ -23,6 +23,10 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 # Because several options have the same help string, it's easier to gather those here,
 # so that in case we adjust them it only has to be done once.
 
+DISTANCE_HELP = "Distance between the oxygen pairs for the intialization of the dimer " \
+                "structure. If not specified, the user will be requested to specify " \
+                "the value when running the script."
+
 IN_CUSTODIAN_HELP = "Run the calculations in a Custodian for automatic error handling."
 
 IS_METAL_HELP = "Flag to indicate that the structure is metallic. This will make the " \
@@ -579,17 +583,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--functional", "-f", default="pbe",
-              help="Option for configuring the functional used in the calculation. "
-                   "User must provide the functional information in the form of a "
-                   "single string, starting with the string that determines the "
-                   "functional, then with string/float pairs for specifying further "
-                   "settings. Defaults to 'pbe'. Examples:\n"
-                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
-                   "U equal to 3.9 for Mn and 3.1 for V.\n"
-                   "* 'hse' ~ HSE06\n"
-                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
-              )
+@click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
 @click.option("--sub_sites", "-s", default=None,
               help="Indices of the sites that should be substituted.")
 @click.option("--sub_sites", "-s", default=None,
@@ -597,10 +591,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 @click.option("--directory", "-d", default=None,
               help="Directory in which to set up the configuration workflow.")
 @click.option("--in_custodian", "-c", is_flag=True)
-@click.option("--number_nodes", "-n", default=0,
-              help="Number of nodes that should be used for the calculations. Is "
-                   "required to add the proper `_category` to the Firework generated, "
-                   "so it is picked up by the right Fireworker.")
+@click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def configuration(structure_file, functional, directory, in_custodian,
                   number_nodes):
     """
@@ -618,27 +609,11 @@ def configuration(structure_file, functional, directory, in_custodian,
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
 @click.option("--dimer_indices", "-i", default=(0, 0))
-@click.option("--distance", "-d", default=float(0))
-@click.option("--functional", "-f", default="pbe",
-              help="Option for configuring the functional used in the calculation. "
-                   "User must provide the functional information in the form of a "
-                   "single string, starting with the string that determines the "
-                   "functional, then with string/float pairs for specifying further "
-                   "settings. Defaults to 'pbe'. Examples:\n"
-                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
-                   "U equal to 3.9 for Mn and 3.1 for V.\n"
-                   "* 'hse' ~ HSE06\n"
-                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
-              )
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
-@click.option("--in_custodian", "-c", is_flag=True)
-@click.option("--number_nodes", "-n", default=0,
-              help="Number of nodes that should be used for the calculations. Is "
-                   "required to add the proper `_category` to the Firework generated, "
-                   "so it is picked up by the right Fireworker.")
+@click.option("--distance", "-d", default=float(0), help=DISTANCE_HELP)
+@click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
+@click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
+@click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
+@click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def dimer(structure_file, dimer_indices, distance, functional, is_metal,
           in_custodian, number_nodes):
     """
@@ -657,23 +632,11 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("directory", nargs=1)
-@click.option("--nimages", "-N", default=7,
-              help="Number of images. Defaults to 7.")
+@click.option("--nimages", "-N", default=7, show_default=True,
+              help="Number of images for the NEB calculation. Defaults to 7.")
 @click.option("--functional", "-f", default="pbe",
-              help="Option for configuring the functional used in the calculation. "
-                   "User must provide the functional information in the form of a "
-                   "single string, starting with the string that determines the "
-                   "functional, then with string/float pairs for specifying further "
-                   "settings. Defaults to 'pbe'. Examples:\n"
-                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
-                   "U equal to 3.9 for Mn and 3.1 for V.\n"
-                   "* 'hse' ~ HSE06\n"
-                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
-              )
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
+              help=FUNCTIONAL_HELP)
+@click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--is_migration", "-M", is_flag=True,
               help="Flag to designate the transition as a migration. "
                    "Activating this flag means that a static calculation will "
@@ -681,12 +644,8 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
                    "structure, i.e. without the migrating ion. This charge "
                    "density can then be used to find a good initial guess "
                    "for the migration pathway.")
-@click.option("--in_custodian", "-c", is_flag=True)
-@click.option("--number_nodes", "-n", default=0,
-              help="Number of nodes that should be used for the calculations. Is "
-                   "required to add the proper `_category` to the Firework generated, "
-                   "so it is picked up by the right Fireworker. Defaults to the "
-                   "number of images.")
+@click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
+@click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
         number_nodes):
     """
@@ -705,27 +664,11 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--distance", "-d", default=float(1.4))
-@click.option("--functional", "-f", default="pbe",
-              help="Option for configuring the functional used in the calculation. "
-                   "User must provide the functional information in the form of a "
-                   "single string, starting with the string that determines the "
-                   "functional, then with string/float pairs for specifying further "
-                   "settings. Defaults to 'pbe'. Examples:\n"
-                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
-                   "U equal to 3.9 for Mn and 3.1 for V.\n"
-                   "* 'hse' ~ HSE06\n"
-                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
-              )
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
-@click.option("--in_custodian", "-c", is_flag=True)
-@click.option("--number_nodes", "-n", default=0,
-              help="Number of nodes that should be used for the calculations. Is "
-                   "required to add the proper `_category` to the Firework generated, "
-                   "so it is picked up by the right Fireworker.")
+@click.option("--distance", "-d", default=float(0), help=DISTANCE_HELP)
+@click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
+@click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
+@click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
+@click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
                  number_nodes):
     """
@@ -744,27 +687,11 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("site_index", default=None)
 @click.argument("structure_file", nargs=1)
-@click.option("--distance", "-d", default=float(1.4))
-@click.option("--functional", "-f", default="pbe",
-              help="Option for configuring the functional used in the calculation. "
-                   "User must provide the functional information in the form of a "
-                   "single string, starting with the string that determines the "
-                   "functional, then with string/float pairs for specifying further "
-                   "settings. Defaults to 'pbe'. Examples:\n"
-                   "* 'pbeu Mn\xa03.9 V 3.1' ~ PBE+U (Dudarev approach) with effective "
-                   "U equal to 3.9 for Mn and 3.1 for V.\n"
-                   "* 'hse' ~ HSE06\n"
-                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
-              )
-@click.option("--is_metal", "-m", is_flag=True,
-              help="Flag to indicate that the structure is metallic. This "
-                   "will make the algorithm choose Methfessel-Paxton "
-                   "smearing of 0.2 eV.")
-@click.option("--in_custodian", "-c", is_flag=True)
-@click.option("--number_nodes", "-n", default=0,
-              help="Number of nodes that should be used for the calculations. Is "
-                   "required to add the proper `_category` to the Firework generated, "
-                   "so it is picked up by the right Fireworker.")
+@click.option("--distance", "-d", default=float(0), help=DISTANCE_HELP)
+@click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
+@click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
+@click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
+@click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def site_dimers(site_index, structure_file, distance, functional, is_metal, in_custodian,
                 number_nodes):
     """
