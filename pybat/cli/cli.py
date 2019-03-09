@@ -615,7 +615,7 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
 
     # Process the sizes format to one that can be used by the configuration workflow
 
-    sub_sites = [int(site) for site in sub_sites]
+    sub_sites = [int(site) for site in sub_sites.split(" ")]
     element_list = [el for el in element_list.split(" ")]
     try:
         sizes = [int(i) for i in sizes.strip("[]").split(",")]
