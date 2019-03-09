@@ -1,4 +1,4 @@
-# Encoding: UTF-8
+# coding: utf8
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
@@ -13,16 +13,16 @@ from pymatgen.io.vasp.inputs import Poscar
 from pymatgen.io.vasp.sets import DictSet
 
 """
-Package that described the various calculation sets used.
+Package that described the various calculation sets used for the setup scripts.
 
 """
 
 __author__ = "Marnik Bercx"
 __copyright__ = "Copyright 2018, Marnik Bercx, University of Antwerp"
-__version__ = "0.1"
+__version__ = "alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
-__date__ = "May 2018"
+__date__ = "Mar 2019"
 
 MODULE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           "set_configs/")
@@ -48,7 +48,7 @@ class BulkRelaxSet(DictSet):
 
 class BulkSCFSet(DictSet):
     """
-    VASP input set for the bulk relaxation.
+    VASP input set for the bulk SCF calculation.
 
     """
     CONFIG = _load_yaml_config("bulkSCFSet")
@@ -64,7 +64,8 @@ class PybatNEBSet(BulkRelaxSet):
     Class for writing NEB inputs, based on the settings of BulkRelaxSet.
 
     This class was largely copied from the MITNEBSet in pymatgen.io.vasp.sets,
-    But then using the defaults specified in BulkRelaxSet
+    But then using the defaults specified in BulkRelaxSet. We've also added a new
+    method for visualizing the transition.
 
     Args:
         \\*\\*kwargs: Other kwargs supported by :class:`DictSet`.
@@ -102,6 +103,7 @@ class PybatNEBSet(BulkRelaxSet):
     def _process_structures(self, structures):
         """
         Remove any atom jumps across the cell
+
         """
         input_structures = structures
         structures = [input_structures[0]]
@@ -130,6 +132,7 @@ class PybatNEBSet(BulkRelaxSet):
             write_path_cif (bool): If true, writes a cif for each image.
             write_endpoint_inputs (bool): If true, writes input files for
                 running endpoint calculations.
+
         """
 
         if make_dir_if_not_present and not os.path.exists(output_dir):
@@ -171,7 +174,7 @@ class PybatNEBSet(BulkRelaxSet):
 
     def visualize_transition(self, filename="transition.cif"):
         """
-        Write a file to show the transition
+        Write a file to show the transition by simply adding all images.
 
         """
 
