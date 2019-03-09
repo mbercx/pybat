@@ -360,6 +360,7 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
 
         images = neb_path.images
         neb_path.plot_images("neb.vasp")
+
     # In case an "middle image" has been provided via which to interpolate
     elif os.path.exists(os.path.join(directory, "middle")):
         print("Found a 'middle' directory in the NEB directory. Interpolating "
