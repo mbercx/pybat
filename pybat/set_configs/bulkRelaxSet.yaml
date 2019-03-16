@@ -1,4 +1,4 @@
-# PBE+U calculations used for the relaxation of the bulk.
+# Standard calculation settings used for the relaxation of a bulk material.
 INCAR:
   ALGO: All
   EDIFF: 1.0e-06
@@ -17,6 +17,7 @@ INCAR:
   NELM: 100
   NELMIN: 5
   NSW: 300
+  NWRITE: 0
   PREC: Normal
   SIGMA: 0.05
 KPOINTS:
