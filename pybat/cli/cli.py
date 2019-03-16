@@ -602,7 +602,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 @click.option("--max_conf", "-M", default=0,
               help="Maximum number of configurations to generate.")
 @click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
-@click.option("--directory", "-d", default=None,
+@click.option("--directory", "-d", default="",
               help="Directory in which to set up the configuration workflow.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
@@ -614,9 +614,14 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     from pybat.workflow.workflows import configuration_workflow
 
     # Process the sizes format to one that can be used by the configuration workflow
-
-    sub_sites = [int(site) for site in sub_sites.split(" ")]
-    element_list = [el for el in element_list.split(" ")]
+    try:
+        sub_sites = [int(site) for site in sub_sites.split(" ")]
+    except ValueError:
+        sub_sites = eval(sub_sites)
+    try:
+        element_list = [el for el in element_list.split(" ")]
+    except ValueError:
+        sub_sites = eval(sub_sites)
     try:
         sizes = [int(i) for i in sizes.strip("[]").split(",")]
     except ValueError:
