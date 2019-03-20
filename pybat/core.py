@@ -138,7 +138,7 @@ class Cathode(Structure):
         keys = sorted(props.keys())
         vesta_index = 1
         for i, site in enumerate(self):
-            if site.species_and_occu.num_atoms == 0:
+            if site.species.num_atoms == 0:
                 row = [str(i), "-", "Vac"]
 
             else:
@@ -224,7 +224,7 @@ class Cathode(Structure):
         """
         working_ion_sites = [site for site in self.sites if
                              site.species_string in self.standard_working_ions
-                             or site.species_and_occu == Composition()]
+                             or site.species == Composition()]
         return len(self.working_ion_configuration) / len(working_ion_sites)
 
     @property
@@ -398,7 +398,7 @@ class Cathode(Structure):
 
         if ignore_magmom:
             magmom = [site.properties["magmom"] for site in self.sites
-                      if site.species_and_occu != Composition()]
+                      if site.species != Composition()]
             new_cathode.add_site_property("magmom", magmom)
         else:
             magmom = [site["tot"] for site in out.magnetization]
@@ -412,10 +412,10 @@ class Cathode(Structure):
         for i, site in enumerate(self):
 
             # If the site is not empty
-            if site.species_and_occu != Composition():
+            if site.species != Composition():
                 new_site = new_cathode.sites[new_index]
                 # Update the site coordinates
-                self.replace(i, species=new_site.species_and_occu,
+                self.replace(i, species=new_site.species,
                              coords=new_site.frac_coords,
                              properties=new_site.properties)
                 new_index += 1
@@ -585,7 +585,7 @@ class Cathode(Structure):
 
         return Structure.from_sites(
             [site for site in self.sites
-             if site.species_and_occu != Composition()]
+             if site.species != Composition()]
         )
 
     def to(self, fmt=None, filename=None, **kwargs):
@@ -1067,10 +1067,10 @@ class Dimer(MSONable):
 
             # The representation is defined as a dictionary between site
             # numbers and dimer environment sites
-            representation = {1: oxy_1.species_and_occu,
-                              2: oxy_2.species_and_occu,
-                              3: shared_neighbor_3.species_and_occu,
-                              4: shared_neighbor_4.species_and_occu}
+            representation = {1: oxy_1.species,
+                              2: oxy_2.species,
+                              3: shared_neighbor_3.species,
+                              4: shared_neighbor_4.species}
 
             # TODO Find a cleaner way of assigning representation positions
 
@@ -1083,22 +1083,22 @@ class Dimer(MSONable):
                 if np.linalg.norm(
                         oxy_1.coords - (shared_neighbor_4.coords - oxy_1.coords)
                         - site.coords) < REPRESENTATION_DIST_TOL:
-                    representation[5] = site.species_and_occu
+                    representation[5] = site.species
 
                 if np.linalg.norm(
                         oxy_1.coords - (shared_neighbor_3.coords - oxy_1.coords)
                         - site.coords) < REPRESENTATION_DIST_TOL:
-                    representation[6] = site.species_and_occu
+                    representation[6] = site.species
 
                 if np.linalg.norm(
                         oxy_2.coords - (shared_neighbor_4.coords - oxy_2.coords)
                         - site.coords) < REPRESENTATION_DIST_TOL:
-                    representation[7] = site.species_and_occu
+                    representation[7] = site.species
 
                 if np.linalg.norm(
                         oxy_2.coords - (shared_neighbor_3.coords - oxy_2.coords)
                         - site.coords) < REPRESENTATION_DIST_TOL:
-                    representation[8] = site.species_and_occu
+                    representation[8] = site.species
 
                 # Find the sites which are out of plane
                 oxy_1_oop = np.cross(
@@ -1112,19 +1112,19 @@ class Dimer(MSONable):
 
                 if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
                         < REPRESENTATION_ANGLE_TOL:
-                    representation[9] = site.species_and_occu
+                    representation[9] = site.species
 
                 if angle_between(oxy_1_oop, site.coords - oxy_1.coords) \
                         > math.pi - REPRESENTATION_ANGLE_TOL:
-                    representation[10] = site.species_and_occu
+                    representation[10] = site.species
 
                 if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
                         < REPRESENTATION_ANGLE_TOL:
-                    representation[11] = site.species_and_occu
+                    representation[11] = site.species
 
                 if angle_between(oxy_2_oop, site.coords - oxy_2.coords) \
                         > math.pi - REPRESENTATION_ANGLE_TOL:
-                    representation[12] = site.species_and_occu
+                    representation[12] = site.species
 
             self._representation = representation
 
@@ -1144,7 +1144,7 @@ class Dimer(MSONable):
             image_cart_coords = \
                 site.coords - np.dot(jimage, self.cathode.lattice.matrix)
 
-            molecule_sites.append(Site(site.species_and_occu,
+            molecule_sites.append(Site(site.species,
                                        image_cart_coords))
 
         return Molecule.from_sites(molecule_sites)
@@ -1162,7 +1162,7 @@ class Dimer(MSONable):
         # occupancy
         dimer_environment_molecule = Molecule.from_sites(
             [site for site in self.get_dimer_molecule().sites
-             if not site.species_and_occu == Composition({"": 0})]
+             if not site.species == Composition({"": 0})]
         )
 
         if filename is None:
