@@ -592,7 +592,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 @click.option("--sizes", "-S", default=None,
               help="Allowed unit cell sizes for the generation of configurations. Can "
                    "be either a List of numbers or a range(). \nExamples:\n"
-                   "'[0, 2, 5]'\n"
+                   "'[1, 2, 5]'\n"
                    "'range(1,7)'")
 @click.option("--conc_restrict", "-R", default=None,
               help="Dictionary of the allowed concentration ranges for each element. "

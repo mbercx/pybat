@@ -446,7 +446,7 @@ class Cathode(Structure):
 
         cation_indices = [
             index for index in range(len(self.sites))
-            if not self.sites[index].species_string not in Cathode.standard_anions
+            if self.sites[index].species_string not in Cathode.standard_anions
         ]
 
         # Start with adding the first cation
