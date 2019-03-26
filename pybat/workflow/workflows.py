@@ -647,6 +647,22 @@ def site_dimers_workflow(structure_file, site_index, distance,
                        in_custodian=in_custodian,
                        number_nodes=number_nodes)
 
+
+# region * Utility scripts
+
+def find_all(name, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            result.append(os.path.join(root, name))
+    return result
+
+
+def find_all_cathode_hashes(path):
+    return [Cathode.from_file(file).__hash__() for file in find_all("cathode.json", path)]
+
+# endregion
+
 # region * Token workflows for testing
 
 
