@@ -134,6 +134,8 @@ class PulayTask(FiretaskBase):
         if sum_differences < tolerance:
             if fw_action:
                 return FWAction.from_dict(fw_action)
+            else:
+                return FWAction()
 
         # Else, set up another geometry optimization
         else:
