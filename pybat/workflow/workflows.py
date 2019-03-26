@@ -439,6 +439,14 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
         if max_configurations == 0:
             max_configurations = None
 
+    if directory == "":
+        directory = os.getcwd()
+
+    functional_dir = functional[0]
+    if functional[0] == "pbeu":
+        functional_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                        in functional[1]["LDAUU"].keys())
+
     configurations = cat.get_cation_configurations(
         substitution_sites=substitution_sites,
         cation_list=element_list,
@@ -448,89 +456,68 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     )
     print("Found " + str(len(configurations)) + " configurations.")
 
-    if directory == "":
-        directory = os.getcwd()
+    # Set up a dictionary of configurations, considering existing configurations in
+    # directory tree
+    hash_dict = find_hash_dict(directory)
+    conf_directories = []
+    conf_number = 0
 
-    functional_dir = functional[0]
-    if functional[0] == "pbeu":
-        functional_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
-                                        in functional[1]["LDAUU"].keys())
+    for configuration in configurations:
+
+        conf_hash = configuration.__hash__()
+
+        if conf_hash in hash_dict:
+
+            conf_dir = hash_dict[conf_hash]
+
+        else:
+
+            conf_dir = generate_conf_dir(
+                directory, element_list, configuration, conf_number, functional
+            )
+            conf_number += 1
+            while os.path.exists(conf_dir):
+                conf_dir = generate_conf_dir(
+                    directory, element_list, configuration, conf_number, functional
+                )
+                conf_number += 1
+            os.makedirs(conf_dir)
+            configuration.to("json", os.path.join(conf_dir, "cathode.json"))
+
+        conf_directories.append(conf_dir)
 
     firework_list = []
-    # TODO add functionality to create new configurations directories if present
-    # These scripts do not consider the fact that there already may be configuration
-    # directories present. This needs to be changed.
 
-    # Because of the directory structure, we need to differentiate between TM
-    # configurations and Li/Vac configurations #TODO
-    if "Vac" in element_list:
-        # Set up Li configuration study
-        for conf_number, configuration in enumerate(configurations):
-            conf_dir = os.path.join(
-                os.path.abspath(directory), "tm_conf_1",
-                str(round(configuration.concentration, 3)),
-                "workion_conf" + str(conf_number), "prim"
-            )
-            if not os.path.exists(conf_dir):
-                os.makedirs(conf_dir)
-            configuration.to("json", os.path.join(conf_dir, "cathode.json"))
-            relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
-            scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
+    for conf_directory in conf_directories:
 
-            scf_firework = ScfFirework(
-                structure_file=os.path.join(relax_dir, "final_cathode.json"),
-                functional=functional,
-                directory=scf_dir,
-                write_chgcar=False,
-                in_custodian=in_custodian,
-                number_nodes=number_nodes
-            )
-            fw_action = FWAction(additions=scf_firework)
+        relax_dir = os.path.join(conf_directory, functional_dir + "_relax")
+        scf_dir = os.path.join(conf_directory, functional_dir + "_scf")
 
-            firework_list.append(RelaxFirework(
-                structure_file=os.path.join(conf_dir, "cathode.json"),
-                functional=functional,
-                directory=relax_dir,
-                in_custodian=in_custodian,
-                number_nodes=number_nodes,
-                fw_action=fw_action
-            ))
-    else:
-        # Set up TM configuration study
-        for conf_number, configuration in enumerate(configurations):
-            try:
-                conf_dir = os.path.join(
-                    os.path.abspath(directory), "tm_conf_" + str(conf_number),
-                    str(round(configuration.concentration, 3)), "workion_conf1", "prim"
-                )
-            except ZeroDivisionError:
-                conf_dir = os.path.join(
-                    os.path.abspath(directory), "tm_conf_" + str(conf_number), "prim"
-                )
-            if not os.path.exists(conf_dir):
-                os.makedirs(conf_dir)
-            configuration.to("json", os.path.join(conf_dir, "cathode.json"))
-            relax_dir = os.path.join(conf_dir, functional_dir + "_relax")
-            scf_dir = os.path.join(conf_dir, functional_dir + "_scf")
+        scf_firework = ScfFirework(
+            structure_file=os.path.join(relax_dir, "final_cathode.json"),
+            functional=functional,
+            directory=scf_dir,
+            write_chgcar=False,
+            in_custodian=in_custodian,
+            number_nodes=number_nodes
+        )
 
-            scf_firework = ScfFirework(
-                structure_file=os.path.join(relax_dir, "final_cathode.json"),
-                functional=functional,
-                directory=scf_dir,
-                write_chgcar=False,
-                in_custodian=in_custodian,
-                number_nodes=number_nodes
-            )
-            fw_action = FWAction(additions=scf_firework)
+        fw_action = FWAction(additions=scf_firework)
 
-            firework_list.append(RelaxFirework(
-                structure_file=os.path.join(conf_dir, "cathode.json"),
-                functional=functional,
-                directory=relax_dir,
-                in_custodian=in_custodian,
-                number_nodes=number_nodes,
-                fw_action=fw_action
-            ))
+        relax_firework = RelaxFirework(
+            structure_file=os.path.join(conf_directory, "cathode.json"),
+            functional=functional,
+            directory=relax_dir,
+            in_custodian=in_custodian,
+            number_nodes=number_nodes,
+            fw_action=fw_action
+        )
+
+        if os.path.exists(os.path.join(relax_dir, "final_cathode.json")):
+            if not os.path.exists(scf_dir):
+                firework_list.append(scf_firework)
+        else:
+            firework_list.append(relax_firework)
 
     # Set up a clear name for the workflow
     workflow_name = str(cat.composition.reduced_formula).replace(" ", "")
@@ -660,6 +647,36 @@ def find_all(name, path):
 
 def find_all_cathode_hashes(path):
     return [Cathode.from_file(file).__hash__() for file in find_all("cathode.json", path)]
+
+
+def find_hash_dict(path):
+    return [{Cathode.from_file(file).__hash__(): file.replace(path, "").replace(
+        "cathode.json", "")}
+        for file in find_all("cathode.json", path)]
+
+
+def generate_conf_dir(directory, element_list, configuration, number, functional):
+    if "Vac" in element_list:
+        # Set up Li configuration directory
+        conf_dir = os.path.join(
+            os.path.abspath(directory), "tm_conf_1",
+            str(round(configuration.concentration, 3)),
+            "workion_conf" + str(number), "prim"
+        )
+    else:
+        # Set up TM configuration directory
+        try:
+            conf_dir = os.path.join(
+                os.path.abspath(directory), "tm_conf_" + str(number),
+                str(round(configuration.concentration, 3)), "workion_conf1",
+                "prim"
+            )
+        except ZeroDivisionError:
+            conf_dir = os.path.join(
+                os.path.abspath(directory), "tm_conf_" + str(number), "prim"
+            )
+
+    return conf_dir
 
 # endregion
 
