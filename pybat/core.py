@@ -880,7 +880,7 @@ class LiRichCathode(Cathode):
             raise IOError("Method for finding non-equivalent dimers is not "
                           "recognized.")
 
-    def list_noneq_dimers(self):
+    def list_noneq_dimers(self, site_index=None):
         """
         Create a list of lists of equivalent dimers of the various
         non-equivalent dimers, i.e. group all dimers in the structure in
@@ -892,9 +892,9 @@ class LiRichCathode(Cathode):
 
         symmops = SpacegroupAnalyzer(self).get_space_group_operations()
 
-        dimers = self.find_oxygen_dimers()
+        dimers = self.find_oxygen_dimers(site_index)
 
-        noneq_dimer_lists = [[dimer, ] for dimer in self.find_noneq_dimers()]
+        noneq_dimer_lists = [[dimer, ] for dimer in self.find_noneq_dimers(site_index)]
 
         for dimer in dimers:
 
