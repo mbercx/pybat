@@ -442,6 +442,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
 
     if directory == "":
         directory = os.getcwd()
+    directory = os.path.abspath(directory)
 
     functional_dir = functional[0]
     if functional[0] == "pbeu":
@@ -463,7 +464,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     conf_directories = []
     conf_number = 0
 
-    #ipdb.set_trace()
+    # ipdb.set_trace()
 
     for configuration in configurations:
 
@@ -472,6 +473,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
         if conf_hash in hash_dict.keys():
 
             conf_dir = os.path.join(directory, hash_dict[conf_hash])
+            print(conf_dir)
 
         else:
 
@@ -533,8 +535,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
                         name=workflow_name)
 
     print(workflow)
-    #LAUNCHPAD.add_wf(workflow)
-
+    # LAUNCHPAD.add_wf(workflow)
 
 
 def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
@@ -665,7 +666,7 @@ def generate_conf_dir(directory, element_list, configuration, number):
     if "Vac" in element_list:
         # Set up Li configuration directory
         conf_dir = os.path.join(
-            os.path.abspath(directory), "tm_conf_1",
+            directory, "tm_conf_1",
             str(round(configuration.concentration, 3)),
             "workion_conf" + str(number), "prim"
         )
@@ -673,13 +674,13 @@ def generate_conf_dir(directory, element_list, configuration, number):
         # Set up TM configuration directory
         try:
             conf_dir = os.path.join(
-                os.path.abspath(directory), "tm_conf_" + str(number),
+                directory, "tm_conf_" + str(number),
                 str(round(configuration.concentration, 3)), "workion_conf1",
                 "prim"
             )
         except ZeroDivisionError:
             conf_dir = os.path.join(
-                os.path.abspath(directory), "tm_conf_" + str(number), "prim"
+                directory, "tm_conf_" + str(number), "prim"
             )
 
     return conf_dir
