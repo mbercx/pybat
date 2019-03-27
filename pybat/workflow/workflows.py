@@ -464,8 +464,6 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     conf_directories = []
     conf_number = 0
 
-    # ipdb.set_trace()
-
     for configuration in configurations:
 
         conf_hash = configuration.__hash__()
@@ -493,7 +491,6 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
         conf_directories.append(conf_dir)
 
     firework_list = []
-    ipdb.set_trace()
 
     for conf_directory in conf_directories:
 
