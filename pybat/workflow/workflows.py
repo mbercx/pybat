@@ -473,12 +473,12 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
         else:
 
             conf_dir = generate_conf_dir(
-                directory, element_list, configuration, conf_number, functional
+                directory, element_list, configuration, conf_number
             )
             conf_number += 1
             while os.path.exists(conf_dir):
                 conf_dir = generate_conf_dir(
-                    directory, element_list, configuration, conf_number, functional
+                    directory, element_list, configuration, conf_number
                 )
                 conf_number += 1
             os.makedirs(conf_dir)
@@ -652,12 +652,12 @@ def find_all_cathode_hashes(path):
 
 
 def find_hash_dict(path):
-    return [{Cathode.from_file(file).__hash__(): file.replace(path, "").replace(
-        "cathode.json", "")}
-        for file in find_all("cathode.json", path)]
+    return {Cathode.from_file(file).__hash__(): file.replace(path, "").replace(
+        "cathode.json", "")
+        for file in find_all("cathode.json", path)}
 
 
-def generate_conf_dir(directory, element_list, configuration, number, functional):
+def generate_conf_dir(directory, element_list, configuration, number):
     if "Vac" in element_list:
         # Set up Li configuration directory
         conf_dir = os.path.join(
