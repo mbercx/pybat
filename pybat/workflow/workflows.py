@@ -472,8 +472,9 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
 
         if conf_hash in hash_dict.keys():
 
-            conf_dir = os.path.join(directory, hash_dict[conf_hash])
+            conf_dir = os.path.join(directory, hash_dict[conf_hash].strip("/"))
             print(conf_dir)
+            ipdb.set_trace()
 
         else:
 
