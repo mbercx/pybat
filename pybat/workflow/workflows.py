@@ -466,7 +466,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
 
         conf_hash = configuration.__hash__()
 
-        if conf_hash in hash_dict:
+        if conf_hash in hash_dict.values():
 
             conf_dir = hash_dict[conf_hash]
 
@@ -528,7 +528,9 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     workflow = Workflow(fireworks=firework_list,
                         name=workflow_name)
 
-    LAUNCHPAD.add_wf(workflow)
+    print(workflow)
+    #LAUNCHPAD.add_wf(workflow)
+
 
 
 def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
