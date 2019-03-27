@@ -905,7 +905,7 @@ class LiRichCathode(Cathode):
                 d2 = [self.sites[noneq_dimer_list[0][0]],
                       self.sites[noneq_dimer_list[0][1]]]
 
-                if symmops.are_symmetrically_equivalent(d1, d2):
+                if symmops.are_symmetrically_equivalent(d1, d2) and not d1 == d2:
                     noneq_dimer_list.append(dimer)
 
         return noneq_dimer_lists
