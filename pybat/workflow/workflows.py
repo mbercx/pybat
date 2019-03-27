@@ -2,6 +2,7 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
+import ipdb
 import os
 import ast
 import numpy as np
@@ -462,11 +463,13 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     conf_directories = []
     conf_number = 0
 
+    ipdb.set_trace()
+
     for configuration in configurations:
 
         conf_hash = configuration.__hash__()
 
-        if conf_hash in hash_dict.values():
+        if conf_hash in hash_dict.keys():
 
             conf_dir = hash_dict[conf_hash]
 
