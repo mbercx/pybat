@@ -164,7 +164,7 @@ class PulayTask(FiretaskBase):
 
             # Add number of nodes to spec, or "none"
             firework_spec = {"_launch_dir": os.getcwd()}
-            if number_nodes is None:
+            if number_nodes is None or number_nodes == 0:
                 firework_spec.update({"_category": "none"})
             else:
                 firework_spec.update({"_category": str(number_nodes) + "nodes"})
