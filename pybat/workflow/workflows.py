@@ -2,21 +2,18 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
-import ipdb
 import os
-import ast
+
 import numpy as np
+from fireworks import Firework, LaunchPad, PyTask, Workflow, FWAction
+from pymongo.errors import ServerSelectionTimeoutError
+from ruamel.yaml import YAML
 
-from pybat.workflow.firetasks import VaspTask, CustodianTask
-from pybat.workflow.fireworks import ScfFirework, RelaxFirework, NebFirework
-
-from pybat.core import Cathode, LiRichCathode, Dimer
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
-
-from ruamel.yaml import YAML
-from pymongo.errors import ServerSelectionTimeoutError
-from fireworks import Firework, LaunchPad, PyTask, Workflow, FWAction
+from pybat.core import Cathode, LiRichCathode, Dimer
+from pybat.workflow.firetasks import VaspTask, CustodianTask
+from pybat.workflow.fireworks import ScfFirework, RelaxFirework, NebFirework
 
 """
 Package that contains all the Workflows of the pybat package.
@@ -412,12 +409,31 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
                            sizes=None, concentration_restrictions=None,
                            max_configurations=None, functional=("pbe", {}),
                            directory=None, in_custodian=False, number_nodes=None):
+    """
+
+    Args:
+        structure_file:
+        substitution_sites:
+        element_list:
+        sizes:
+        concentration_restrictions:
+        max_configurations:
+        functional:
+        directory:
+        in_custodian:
+        number_nodes:
+
+    Returns:
+
+    """
+
     # Load the cathode from the structure file
     cat = Cathode.from_file(structure_file)
 
     # Check for the required input, and request if necessary
-    print(cat)
-    print()
+    if not substitution_sites or not element_list or not sizes:
+        print(cat)
+        print()
     if not substitution_sites:
         substitution_sites = [int(i) for i in input(
             "Please provide the substitution site indices, separated by a space: "
@@ -430,15 +446,6 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
         sizes = [int(i) for i in input(
             "Please provide the possible unit cell sizes, separated by a space: "
         ).split(" ")]
-    if not concentration_restrictions:
-        concentration_restrictions = ast.literal_eval(input(
-            "Please provide the concentration restrictions, written as you would "
-            "define a dictionary, or None: "))
-    if not max_configurations:
-        max_configurations = int(input(
-            "Please provide the maximum configurations, as an integer: "))
-        if max_configurations == 0:
-            max_configurations = None
 
     if directory == "":
         directory = os.getcwd()
@@ -449,20 +456,21 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
         functional_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                         in functional[1]["LDAUU"].keys())
 
+    # Set up a dictionary of configurations, considering existing configurations in
+    # directory tree
+    hash_dict = find_hash_dict(directory)
+
     configurations = cat.get_cation_configurations(
         substitution_sites=substitution_sites,
         cation_list=element_list,
         sizes=sizes,
         concentration_restrictions=concentration_restrictions,
-        max_configurations=max_configurations
+        max_configurations=max_configurations + len(hash_dict)
     )
     print("Found " + str(len(configurations)) + " configurations.")
 
-    # Set up a dictionary of configurations, considering existing configurations in
-    # directory tree
-    hash_dict = find_hash_dict(directory)
     conf_directories = []
-    conf_number = 0
+    conf_number = len(hash_dict)
 
     for configuration in configurations:
 
@@ -472,7 +480,6 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
 
             conf_dir = os.path.join(directory, hash_dict[conf_hash].strip("/"))
             print(conf_dir)
-            ipdb.set_trace()
 
         else:
 
@@ -480,11 +487,6 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
                 directory, element_list, configuration, conf_number
             )
             conf_number += 1
-            while os.path.exists(conf_dir):
-                conf_dir = generate_conf_dir(
-                    directory, element_list, configuration, conf_number
-                )
-                conf_number += 1
             os.makedirs(conf_dir)
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
 
@@ -523,7 +525,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
         else:
             firework_list.append(relax_firework)
 
-    # Set up a clear name for the workflow
+    # Set up a (sort of) clear name for the workflow
     workflow_name = str(cat.composition.reduced_formula).replace(" ", "")
     workflow_name += " " + str(element_list)
     workflow_name += " " + str(functional)
@@ -655,6 +657,7 @@ def find_all_cathode_hashes(path):
 
 
 def find_hash_dict(path):
+    path = os.path.abspath(path)
     return {Cathode.from_file(file).__hash__(): file.replace(path, "").replace(
         "cathode.json", "")
         for file in find_all("cathode.json", path)}
