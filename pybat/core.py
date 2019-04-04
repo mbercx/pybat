@@ -522,13 +522,19 @@ class Cathode(Structure):
             else:
                 configuration_space.append([site.species_string, ])
 
+
+
         # TODO adjust this once concentration restrictions work correctly for
         # enumerate_structures
         if concentration_restrictions:
-            # Get the largest concentration restriction
+
+            # Get the most stringent concentration restriction
             enum_conc_restrictions = [
                 {k: v} for k, v in concentration_restrictions.items()
-                if v == max(concentration_restrictions.values())][0]
+                if v[1]-v[0] == min(
+                    [b-a for a, b in concentration_restrictions.values()]
+                )][0]
+            print(enum_conc_restrictions)
         else:
             concentration_restrictions = {}
             enum_conc_restrictions = None
@@ -538,13 +544,15 @@ class Cathode(Structure):
             atoms=AseAtomsAdaptor.get_atoms(self.as_ordered_structure()),
             sizes=sizes,
             chemical_symbols=configuration_space,
-            concentration_restrictions=enum_conc_restrictions
+            concentration_restrictions=concentration_restrictions
         )
         try:
             self.site_properties["magmom"]
         except KeyError:
             print("No magnetic moments found in structure, setting to zero.")
             self.add_site_property("magmom", [0] * len(self))
+
+        print(concentration_restrictions)
 
         for atoms in configuration_generator:
 
@@ -555,16 +563,18 @@ class Cathode(Structure):
             )
 
             frac_composition = structure.composition.fractional_composition
-            elements = [str(el) for el in structure.composition.elements]
             c = concentration_restrictions
 
-            if all([c[el][0] < frac_composition[el] < c[el][1]
-                    for el in elements if c.get(el, False)]):
+            print("tic")
+            print(structure.composition.fractional_composition)
+
+            if all([c[el][0] <= frac_composition[el] <= c[el][1] for el in c.keys()]):
                 cathode = Cathode.from_structure(structure.get_sorted_structure())
                 cathode.remove_working_ions(
                     [i for i, site in enumerate(cathode)
                      if site.species_string == "Lr"]
                 )
+                print("tac")
                 configuration_list.append(cathode)
 
             if len(configuration_list) == max_configurations:
