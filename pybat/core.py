@@ -6,7 +6,7 @@ import itertools
 import math
 import json
 import os
-import pdb
+import ipdb
 
 import numpy as np
 
@@ -533,6 +533,8 @@ class Cathode(Structure):
             concentration_restrictions = {}
             enum_conc_restrictions = None
 
+        print("Setting up generator")
+
         configuration_list = []
         configuration_generator = enumerate_structures(
             atoms=AseAtomsAdaptor.get_atoms(self.as_ordered_structure()),
@@ -540,13 +542,23 @@ class Cathode(Structure):
             chemical_symbols=configuration_space,
             concentration_restrictions=enum_conc_restrictions
         )
+        print("Success!")
+
         try:
             self.site_properties["magmom"]
         except KeyError:
             print("No magnetic moments found in structure, setting to zero.")
             self.add_site_property("magmom", [0] * len(self))
 
-        for atoms in configuration_generator:
+        if max_configurations is None:
+            max_configurations = 1e6
+
+        while len(configuration_list) < max_configurations:
+
+            try:
+                atoms = next(configuration_generator)
+            except StopIteration:
+                break
 
             structure = AseAtomsAdaptor.get_structure(atoms)
             structure.add_site_property(
@@ -566,9 +578,6 @@ class Cathode(Structure):
                      if site.species_string == "Lr"]
                 )
                 configuration_list.append(cathode)
-
-            if len(configuration_list) == max_configurations:
-                break
 
         return configuration_list
 

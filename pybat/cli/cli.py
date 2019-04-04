@@ -619,7 +619,8 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     except ValueError:
         sub_sites = eval(sub_sites)
     try:
-        element_list = [el for el in element_list.split(" ")]
+        element_list = [el for el in element_list.split(" ")] # TODO Make it possible
+        # to also provide an actual list!
     except ValueError:
         sub_sites = eval(sub_sites)
     try:
