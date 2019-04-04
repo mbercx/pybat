@@ -585,22 +585,30 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 @click.argument("structure_file", nargs=1)
 @click.option("--sub_sites", "-s", default=None,
               help="Indices of the sites that should be substituted to generate the "
-                   "possible configurations.")
+                   "possible configurations. Can either be a List of integers or a "
+                   "range()."
+                   "\nExamples:\n"
+                   "\"range(4)\"\n"
+                   "\"[0, 2, 4]\"")
 @click.option("--element_list", "-E", default=None,
               help="List of elements that should be placed on the substitution sites to "
-                   "generate the configurations.")
+                   "generate the configurations."
+                   "\nExamples:\n"
+                   "\"['Ni', 'Mn', 'Co']\"\n"
+                   "\"['Li', 'Vac']\"")
 @click.option("--sizes", "-S", default=None,
               help="Allowed unit cell sizes for the generation of configurations. Can "
                    "be either a List of numbers or a range(). \nExamples:\n"
-                   "'[1, 2, 5]'\n"
-                   "'range(1,7)'")
+                   "\"range(1, 7)\" \n"
+                   "\"[1,2,5]\"")
 @click.option("--conc_restrict", "-R", default=None,
               help="Dictionary of the allowed concentration ranges for each element. "
                    "Note that the concentration is defined versus the total amount of "
-                   "atoms in the unit cell. \n Examples:\n {'Li':(0.2, 0.3)}\n "
-                   "{'Ni':(0.1, 0.2), 'Mn':(0, 0.1)}")
+                   "atoms in the unit cell. \n Examples:\n \"{'Li':(0.2, 0.3)}\"\n "
+                   "\"{'Ni':(0.1, 0.2), 'Mn':(0, 0.1)}\"")
 @click.option("--max_conf", "-M", default=0,
-              help="Maximum number of configurations to generate.")
+              help="Maximum number of *new* configurations to generate. Note that this "
+                   "is on top of already existing configurations in the directory tree.")
 @click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
 @click.option("--directory", "-d", default="",
               help="Directory in which to set up the configuration workflow.")
@@ -609,15 +617,20 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 def configuration(structure_file, functional, sub_sites, element_list, sizes,
                   directory, conc_restrict, max_conf, in_custodian, number_nodes):
     """
-    Set up a geometry optimization workflow for a range of configurations.
+    Set up a workflow for a set of configurations.
+
+    Calculate the geometry and total energy of a set of configurations. The
+    configurations can be specified using the various options. In case some required
+    input is not specified during command execution, it will be requested from the user.
+
     """
     from pybat.workflow.workflows import configuration_workflow
 
     # Process the sizes format to one that can be used by the configuration workflow
     try:
-        sub_sites = [int(site) for site in sub_sites.split(" ")]
-    except ValueError:
         sub_sites = eval(sub_sites)
+    except SyntaxError:
+        sub_sites = [int(site) for site in sub_sites.split(" ")]
     try:
         element_list = [el for el in element_list.split(" ")]
     except ValueError:
