@@ -410,20 +410,47 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
                            max_configurations=None, functional=("pbe", {}),
                            directory=None, in_custodian=False, number_nodes=None):
     """
+    Set up a workflow for a set of atomic configurations, which includes a geometric
+    optimization as well as a SCF calculation based on the final geometry.
 
     Args:
-        structure_file:
-        substitution_sites:
-        element_list:
-        sizes:
-        concentration_restrictions:
-        max_configurations:
-        functional:
-        directory:
-        in_custodian:
-        number_nodes:
+        structure_file (str): Structure file of the cathode material. Note
+            that the structure file should be a json format file that is
+            derived from the Cathode class, i.e. it should contain the cation
+            configuration of the structure.
+        substitution_sites (list): List of site indices or pymatgen.Sites to be
+            substituted.
+        element_list (list): List of string representations of the cation elements
+            which have to be substituted on the substitution sites. Can also
+            include "Vac" to introduce vacancy sites.
+            E.g. ["Li", "Vac"]; ["Mn", "Co", "Ni"]; ...
+        sizes (list): List of unit supercell sizes to be considered for the
+            enumeration of the configurations.
+            E.g. [1, 2]; range(1, 4); ...
+        concentration_restrictions (dict): Dictionary of allowed concentration
+            ranges for each element. Note that the concentration is defined
+            versus the total amount of atoms in the unit cell.
+            E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
+        max_configurations (int): Maximum number of new configurations to generate.
+            Note that the function detects all the cathode.json files present
+            in the directory tree and ignores the corresponding configurations.
+            max_configurations is the maximum number of new configurations that need
+            to be generated, i.e. on top of the configurations already present in the
+            directory tree in the form of cathode.json files.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        directory (str): Path to the directory in which the configurations and
+            calculations should be set up.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
 
     Returns:
+        None
 
     """
 
@@ -476,12 +503,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
 
         conf_hash = configuration.__hash__()
 
-        if conf_hash in hash_dict.keys():
-
-            conf_dir = os.path.join(directory, hash_dict[conf_hash].strip("/"))
-            print(conf_dir)
-
-        else:
+        if not conf_hash in hash_dict.keys():
 
             conf_dir = generate_conf_dir(
                 directory, element_list, configuration, conf_number
@@ -489,8 +511,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
             conf_number += 1
             os.makedirs(conf_dir)
             configuration.to("json", os.path.join(conf_dir, "cathode.json"))
-
-        conf_directories.append(conf_dir)
+            conf_directories.append(conf_dir)
 
     firework_list = []
 
@@ -519,11 +540,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
             fw_action=fw_action
         )
 
-        if os.path.exists(os.path.join(relax_dir, "final_cathode.json")):
-            if not os.path.exists(scf_dir):
-                firework_list.append(scf_firework)
-        else:
-            firework_list.append(relax_firework)
+        firework_list.append(relax_firework)
 
     # Set up a (sort of) clear name for the workflow
     workflow_name = str(cat.composition.reduced_formula).replace(" ", "")
@@ -534,8 +551,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     workflow = Workflow(fireworks=firework_list,
                         name=workflow_name)
 
-    print(workflow)
-    # LAUNCHPAD.add_wf(workflow)
+    LAUNCHPAD.add_wf(workflow)
 
 
 def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
