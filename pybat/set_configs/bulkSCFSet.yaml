@@ -11,7 +11,7 @@ INCAR:
   LREAL: AUTO
   LWAVE: false
   MAGMOM: 0
-  NELM: 100
+  NELM: 200
   NELMIN: 4
   PREC: Accurate
 KPOINTS:
