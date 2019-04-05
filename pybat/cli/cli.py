@@ -632,9 +632,9 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     except SyntaxError:
         sub_sites = [int(site) for site in sub_sites.split(" ")]
     try:
+        element_list = eval(element_list)
+    except SyntaxError:
         element_list = [el for el in element_list.split(" ")]
-    except ValueError:
-        sub_sites = eval(sub_sites)
     try:
         sizes = [int(i) for i in sizes.strip("[]").split(",")]
     except ValueError:

@@ -522,6 +522,8 @@ class Cathode(Structure):
         if concentration_restrictions and "Vac" in concentration_restrictions.keys():
             concentration_restrictions["Lr"] = concentration_restrictions.pop("Vac")
 
+        # TODO Currently, the user can't specify the final magnetic moment of the
+        #  substituted elements....
         # Check if the magnetic moment is defined in the Cathode
         try:
             self.site_properties["magmom"]
