@@ -4,15 +4,17 @@
 
 import os
 import subprocess
+
 import numpy as np
-
-from pymatgen import Structure
 from custodian import Custodian
-from custodian.vasp.jobs import VaspJob
 from custodian.vasp.handlers import VaspErrorHandler, UnconvergedErrorHandler
-from fireworks import Firework, FWAction, ScriptTask
-
+from custodian.vasp.jobs import VaspJob
 from fireworks import FiretaskBase
+from fireworks import Firework, FWAction, ScriptTask
+from pymatgen import Structure
+
+from pybat.core import Cathode
+from pybat.workflow.fireworks import ScfFirework, RelaxFirework
 
 __author__ = "Marnik Bercx"
 __copyright__ = "Copyright 2019, Marnik Bercx, University of Antwerp"
@@ -26,7 +28,7 @@ class VaspTask(FiretaskBase):
     """
     Firetask that represents a VASP calculation run.
 
-    Required parameters:
+    Required params:
         directory (str): Directory in which the VASP calculation should be run.
 
     """
@@ -42,7 +44,7 @@ class CustodianTask(FiretaskBase):
     """
     Firetask that represents a calculation run inside a Custodian.
 
-    Required parameters:
+    Required params:
         directory (str): Directory in which the VASP calculation should be run.
 
     """
@@ -75,11 +77,11 @@ class PulayTask(FiretaskBase):
     the geometry optimization, which could indicate that there where Pulay stresses
     present. If so, start a new geometry optimization with the final structure.
 
-    Required parameters:
+    Required params:
         directory (str): Directory in which the geometry optimization calculation
             was run.
 
-    Optional parameters:
+    Optional params:
         in_custodian (bool): Flag that indicates whether the calculation should be
             run inside a Custodian.
         number_nodes (int): Number of nodes that should be used for the calculations.
@@ -177,6 +179,123 @@ class PulayTask(FiretaskBase):
             return FWAction(additions=relax_firework)
 
 
+class ConfigurationTask(FiretaskBase):
+    """
+    Construct a set of configurations based on the specified parameters. Will
+    automatically check the directory for configurations present in the directory tree
+    and ignore these for generating new ones.
+
+    Required params:
+
+
+    """
+
+    required_params = ["structure", "directory", "substitution_sites", "element_list",
+                       "sizes"]
+    optional_params = ["concentration_restrictions", "max_configurations"]
+
+    def run_task(self, fw_spec):
+
+        # Set up a dictionary of configurations, considering existing configurations in
+        # directory tree
+        current_conf_dict = find_configuration_dict(self["directory"])
+
+        configurations = self["structure"].get_cation_configurations(
+            substitution_sites=self["substitution_sites"],
+            cation_list=self["element_list"],
+            sizes=self["sizes"],
+            concentration_restrictions=self.get("configuration_restrictions", None),
+            max_configurations=self.get("max_configurations", None)
+                               + len(current_conf_dict)
+        )
+
+        configuration_dict = {}
+        conf_number = 0
+        for configuration in configurations:
+
+            conf_hash = configuration.__hash__()
+
+            # If the configuration is not found in the directory tree
+            if conf_hash not in current_conf_dict.keys():
+
+                # Make sure the configuration directory number is new
+                while "conf_" + conf_number in [
+                    e for l in [v["directory"].split("/") for v in
+                                current_conf_dict.values()] for e in l if "conf" in e]:
+                    conf_number += 1
+
+                configuration_dir = os.path.join(self["directory"], "conf_" + conf_number,
+                                                 "prim")
+                configuration.to("json", os.path.join(configuration_dir, "cathode.json"))
+                configuration_dict[conf_hash] = {
+                    "structure": configuration.as_dict(),
+                    "directory": configuration_dir
+                }
+                conf_number += 1
+
+        return FWAction(update_spec={"configuration_dict": configuration_dict})
+
+
+class EnergyConfTask(FiretaskBase):
+    """
+    Add a list of FireWorks to the workflow that first optimize the geometry and
+    then perform an SCF calculation for all the configurations in the
+    configuration_dict in the fw_spec.
+
+    """
+
+    required_params = ["functional"]
+    optional_params = ["in_custodian", "number_nodes"]
+
+    def run_task(self, fw_spec):
+
+        try:
+            configuration_dict = fw_spec["configuration_dict"]
+        except KeyError:
+            raise KeyError("Can not find the configuration_dict in the fw_spec.")
+
+        functional_dir = self["functional[0]"]
+        if self["functional"][0] == "pbeu":
+            functional_dir += "_" + "".join(
+                k + str(self["functional"][1]["LDAUU"][k])
+                for k in self["functional"][1]["LDAUU"].keys()
+            )
+
+        firework_list = []
+
+        for configuration in configuration_dict:
+            relax_dir = os.path.join(
+                configuration["directory"], functional_dir + "_relax"
+            )
+            scf_dir = os.path.join(
+                configuration["directory"], functional_dir + "_scf"
+            )
+
+            scf_firework = ScfFirework(
+                structure_file=os.path.join(relax_dir, "final_cathode.json"),
+                functional=self["functional"],
+                directory=scf_dir,
+                write_chgcar=False,
+                in_custodian=self.get("in_custodian", False),
+                number_nodes=self.get("number_nodes", None)
+            )
+
+            fw_action = FWAction(additions=scf_firework)
+
+            relax_firework = RelaxFirework(
+                structure_file=os.path.join(configuration["directory"], "cathode.json"),
+                functional=self["functional"],
+                directory=relax_dir,
+                in_custodian=self.get("in_custodian", False),
+                number_nodes=self.get("number_nodes", None),
+                fw_action=fw_action
+            )
+
+            firework_list.append(relax_firework)
+
+        return FWAction(additions=firework_list)
+
+
 # region * Token FireTasks for testing
 
 class MiddleTask(FiretaskBase):
@@ -206,5 +325,25 @@ class MiddleTask(FiretaskBase):
             print()
 
             return FWAction.from_dict(self.get("fw_action", {}))
+
+
+# endregion
+
+# region * Utility scripts
+
+def find_all(name, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            result.append(os.path.join(root, name))
+    return result
+
+
+def find_configuration_dict(path):
+    path = os.path.abspath(path)
+    return {Cathode.from_file(file).__hash__(): {
+        "structure": Cathode.from_file(file).as_dict(),
+        "directory": file.replace(path, "").replace("cathode.json", "")
+    } for file in find_all("cathode.json", path)}
 
 # endregion
