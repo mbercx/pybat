@@ -3,25 +3,23 @@
 # Distributed under the terms of the MIT License
 
 import itertools
-import math
 import json
+import math
 import os
-import pdb
 
 import numpy as np
-
+from icet.tools.structure_enumeration import enumerate_structures
 from monty.io import zopen
 from monty.json import jsanitize, MSONable
-from pymatgen.core import Structure, Composition, Molecule, Site, Element
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
-from pymatgen.io.vasp.outputs import Outcar
-from pymatgen.io.ase import AseAtomsAdaptor
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.analysis.transition_state import NEBAnalysis
+from pymatgen.core import Structure, Composition, Molecule, Site, Element
+from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.io.vasp.outputs import Outcar
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.util.plotting import pretty_plot
 from tabulate import tabulate
-from icet.tools.structure_enumeration import enumerate_structures
 
 scipy_old_piecewisepolynomial = True
 try:
@@ -480,10 +478,8 @@ class Cathode(Structure):
         cell sizes and based on certain restrictions.
 
         Based on the icet.tools.structure_enumeration.enumerate_structures() method.
-        Because there are some issues with this method, related to the allowed
-        concentrations, the method will have to be updated later. There is also the fact
-        that vacancies can not be inserted in enumerate_structures, which will require
-        some workaround using Lawrencium.
+        Because of the fact that vacancies can not be inserted in enumerate_structures,
+        we will introduce a little workaround using Lawrencium.
 
         Currently also returns a list of Cathodes, for easy implementation and usage. It
         might be more useful/powerful to design it as a generator later.
@@ -522,53 +518,44 @@ class Cathode(Structure):
             else:
                 configuration_space.append([site.species_string, ])
 
-        # TODO adjust this once concentration restrictions work correctly for
-        # enumerate_structures
-        if concentration_restrictions:
-            # Get the largest concentration restriction
-            enum_conc_restrictions = [
-                {k: v} for k, v in concentration_restrictions.items()
-                if v == max(concentration_restrictions.values())][0]
-        else:
-            concentration_restrictions = {}
-            enum_conc_restrictions = None
+        # Substitute the concentration restriction for "Vac" by "Lr"
+        if concentration_restrictions and "Vac" in concentration_restrictions.keys():
+            concentration_restrictions["Lr"] = concentration_restrictions.pop("Vac")
 
-        configuration_list = []
-        configuration_generator = enumerate_structures(
-            atoms=AseAtomsAdaptor.get_atoms(self.as_ordered_structure()),
-            sizes=sizes,
-            chemical_symbols=configuration_space,
-            concentration_restrictions=enum_conc_restrictions
-        )
+        # Check if the magnetic moment is defined in the Cathode
         try:
             self.site_properties["magmom"]
         except KeyError:
             print("No magnetic moments found in structure, setting to zero.")
             self.add_site_property("magmom", [0] * len(self))
 
+        # Set up the icet configuration generator
+        configuration_generator = enumerate_structures(
+            atoms=AseAtomsAdaptor.get_atoms(self.as_ordered_structure()),
+            sizes=sizes,
+            chemical_symbols=configuration_space,
+            concentration_restrictions=concentration_restrictions
+        )
+        configuration_list = []
+
         for atoms in configuration_generator:
 
             structure = AseAtomsAdaptor.get_structure(atoms)
+            # Add the magnetic moment
             structure.add_site_property(
                 "magmom",
                 self.site_properties["magmom"] * int(len(structure) / len(self))
             )
-
-            frac_composition = structure.composition.fractional_composition
-            elements = [str(el) for el in structure.composition.elements]
-            c = concentration_restrictions
-
-            if all([c[el][0] < frac_composition[el] < c[el][1]
-                    for el in elements if c.get(el, False)]):
-                cathode = Cathode.from_structure(structure.get_sorted_structure())
-                cathode.remove_working_ions(
-                    [i for i, site in enumerate(cathode)
-                     if site.species_string == "Lr"]
-                )
-                configuration_list.append(cathode)
+            # Sort the structure and redefine it as a cathode
+            cathode = Cathode.from_structure(structure.get_sorted_structure())
+            cathode.remove_working_ions(
+                [i for i, site in enumerate(cathode)
+                 if site.species_string == "Lr"]
+            )
+            configuration_list.append(cathode)
 
             if len(configuration_list) == max_configurations:
-                break
+                break  # Quit if the number of configurations is obtained
 
         return configuration_list
 
