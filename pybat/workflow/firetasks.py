@@ -226,7 +226,11 @@ class ConfigurationTask(FiretaskBase):
 
                 configuration_dir = os.path.join(self["directory"], "conf_" + conf_number,
                                                  "prim")
-                configuration.to("json", os.path.join(configuration_dir, "cathode.json"))
+
+                # Create the configuration directory and write the structure to a file
+                os.makedirs(configuration_dir)
+                configuration.to("json", os.path.join(configuration_dir,
+                                                      "configuration.json"))
                 configuration_dict[conf_hash] = {
                     "structure": configuration.as_dict(),
                     "directory": configuration_dir
@@ -283,7 +287,8 @@ class EnergyConfTask(FiretaskBase):
             fw_action = FWAction(additions=scf_firework)
 
             relax_firework = RelaxFirework(
-                structure_file=os.path.join(configuration["directory"], "cathode.json"),
+                structure_file=os.path.join(configuration["directory"],
+                                            "configuration.json"),
                 functional=self["functional"],
                 directory=relax_dir,
                 in_custodian=self.get("in_custodian", False),
@@ -343,7 +348,7 @@ def find_configuration_dict(path):
     path = os.path.abspath(path)
     return {Cathode.from_file(file).__hash__(): {
         "structure": Cathode.from_file(file).as_dict(),
-        "directory": file.replace(path, "").replace("cathode.json", "")
-    } for file in find_all("cathode.json", path)}
+        "directory": file.replace(path, "").replace("configuration.json", "")
+    } for file in find_all("configuration.json", path)}
 
 # endregion
