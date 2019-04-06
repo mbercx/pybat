@@ -14,7 +14,6 @@ from fireworks import Firework, FWAction, ScriptTask
 from pymatgen import Structure
 
 from pybat.core import Cathode
-from pybat.workflow.fireworks import ScfFirework, RelaxFirework
 
 __author__ = "Marnik Bercx"
 __copyright__ = "Copyright 2019, Marnik Bercx, University of Antwerp"
@@ -219,12 +218,13 @@ class ConfigurationTask(FiretaskBase):
             if conf_hash not in current_conf_dict.keys():
 
                 # Make sure the configuration directory number is new
-                while "conf_" + conf_number in [
+                while "conf_" + str(conf_number) in [
                     e for l in [v["directory"].split("/") for v in
                                 current_conf_dict.values()] for e in l if "conf" in e]:
                     conf_number += 1
 
-                configuration_dir = os.path.join(self["directory"], "conf_" + conf_number,
+                configuration_dir = os.path.join(self["directory"], "conf_" +
+                                                 str(conf_number),
                                                  "prim")
 
                 # Create the configuration directory and write the structure to a file
@@ -274,6 +274,10 @@ class EnergyConfTask(FiretaskBase):
             scf_dir = os.path.join(
                 configuration["directory"], functional_dir + "_scf"
             )
+
+            # This import needs to happen here because the Fireworks depend on the
+            # firetasks in this module. # TODO fix this?
+            from pybat.workflow.fireworks import ScfFirework, RelaxFirework
 
             scf_firework = ScfFirework(
                 structure_file=os.path.join(relax_dir, "final_cathode.json"),
