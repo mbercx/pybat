@@ -5,14 +5,15 @@
 import os
 
 import numpy as np
-from fireworks import Firework, LaunchPad, PyTask, Workflow, FWAction
+from fireworks import Firework, LaunchPad, PyTask, Workflow
 from pymongo.errors import ServerSelectionTimeoutError
 from ruamel.yaml import YAML
 
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
 from pybat.core import Cathode, LiRichCathode, Dimer
-from pybat.workflow.firetasks import VaspTask, CustodianTask
+from pybat.workflow.firetasks import VaspTask, CustodianTask, ConfigurationTask, \
+    EnergyConfTask
 from pybat.workflow.fireworks import ScfFirework, RelaxFirework, NebFirework
 
 """
@@ -455,11 +456,11 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     """
 
     # Load the cathode from the structure file
-    cat = Cathode.from_file(structure_file)
+    cathode = Cathode.from_file(structure_file)
 
     # Check for the required input, and request if necessary
     if not substitution_sites or not element_list or not sizes:
-        print(cat)
+        print(cathode)
         print()
     if not substitution_sites:
         substitution_sites = [int(i) for i in input(
@@ -474,82 +475,38 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
             "Please provide the possible unit cell sizes, separated by a space: "
         ).split(" ")]
 
+    # Set up the directory
     if directory == "":
         directory = os.getcwd()
     directory = os.path.abspath(directory)
 
-    functional_dir = functional[0]
-    if functional[0] == "pbeu":
-        functional_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
-                                        in functional[1]["LDAUU"].keys())
-
-    # Set up a dictionary of configurations, considering existing configurations in
-    # directory tree
-    hash_dict = find_hash_dict(directory)
-
-    configurations = cat.get_cation_configurations(
+    configuration_task = ConfigurationTask(
+        structure=cathode,
+        directory=directory,
         substitution_sites=substitution_sites,
-        cation_list=element_list,
+        element_list=element_list,
         sizes=sizes,
         concentration_restrictions=concentration_restrictions,
-        max_configurations=max_configurations + len(hash_dict)
+        max_configurations=max_configurations
     )
-    print("Found " + str(len(configurations)) + " configurations.")
 
-    conf_directories = []
-    conf_number = len(hash_dict)
-
-    for configuration in configurations:
-
-        conf_hash = configuration.__hash__()
-
-        if not conf_hash in hash_dict.keys():
-
-            conf_dir = generate_conf_dir(
-                directory, element_list, configuration, conf_number
-            )
-            conf_number += 1
-            os.makedirs(conf_dir)
-            configuration.to("json", os.path.join(conf_dir, "cathode.json"))
-            conf_directories.append(conf_dir)
-
-    firework_list = []
-
-    for conf_directory in conf_directories:
-
-        relax_dir = os.path.join(conf_directory, functional_dir + "_relax")
-        scf_dir = os.path.join(conf_directory, functional_dir + "_scf")
-
-        scf_firework = ScfFirework(
-            structure_file=os.path.join(relax_dir, "final_cathode.json"),
-            functional=functional,
-            directory=scf_dir,
-            write_chgcar=False,
-            in_custodian=in_custodian,
-            number_nodes=number_nodes
-        )
-
-        fw_action = FWAction(additions=scf_firework)
-
-        relax_firework = RelaxFirework(
-            structure_file=os.path.join(conf_directory, "cathode.json"),
-            functional=functional,
-            directory=relax_dir,
-            in_custodian=in_custodian,
-            number_nodes=number_nodes,
-            fw_action=fw_action
-        )
-
-        firework_list.append(relax_firework)
+    energy_task = EnergyConfTask(
+        functional=functional,
+        in_custodian=in_custodian,
+        number_nodes=number_nodes
+    )
 
     # Set up a (sort of) clear name for the workflow
-    workflow_name = str(cat.composition.reduced_formula).replace(" ", "")
+    workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
     workflow_name += " " + str(element_list)
     workflow_name += " " + str(functional)
 
     # Create the workflow
-    workflow = Workflow(fireworks=firework_list,
-                        name=workflow_name)
+    workflow = Workflow(
+        fireworks=[Firework(tasks=[configuration_task, energy_task],
+                            name="Configuration Setup")],
+        name=workflow_name
+    )
 
     LAUNCHPAD.add_wf(workflow)
 
