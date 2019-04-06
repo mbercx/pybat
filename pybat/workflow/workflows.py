@@ -501,10 +501,13 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     workflow_name += " " + str(element_list)
     workflow_name += " " + str(functional)
 
+    configuration_fw = Firework(tasks=[configuration_task, energy_task],
+                                name="Configuration Setup",
+                                spec={"_category": "none"})
+
     # Create the workflow
     workflow = Workflow(
-        fireworks=[Firework(tasks=[configuration_task, energy_task],
-                            name="Configuration Setup")],
+        fireworks=[configuration_fw],
         name=workflow_name
     )
 

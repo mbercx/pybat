@@ -192,6 +192,7 @@ class ConfigurationTask(FiretaskBase):
     required_params = ["structure", "directory", "substitution_sites", "element_list",
                        "sizes"]
     optional_params = ["concentration_restrictions", "max_configurations"]
+    _fw_name = "{{pybat.workflow.firetasks.ConfigurationTask}}"
 
     def run_task(self, fw_spec):
 
@@ -250,6 +251,7 @@ class EnergyConfTask(FiretaskBase):
 
     required_params = ["functional"]
     optional_params = ["in_custodian", "number_nodes"]
+    _fw_name = "{{pybat.workflow.firetasks.EnergyConfTask}}"
 
     def run_task(self, fw_spec):
 
