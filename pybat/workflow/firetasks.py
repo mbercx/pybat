@@ -200,17 +200,18 @@ class ConfigurationTask(FiretaskBase):
         # directory tree
         current_conf_dict = find_configuration_dict(self["directory"])
 
+        # Make sure to generate enough new configurations
         if self.get("max_configurations", None):
-            max_configurations = self.get("max_configurations") + len(current_conf_dict)
+            max_conf_to_generate = self.get("max_configurations") + len(current_conf_dict)
         else:
-            max_configurations = None
+            max_conf_to_generate = None
 
         configurations = self["structure"].get_cation_configurations(
             substitution_sites=self["substitution_sites"],
             cation_list=self["element_list"],
             sizes=self["sizes"],
             concentration_restrictions=self.get("configuration_restrictions", None),
-            max_configurations=max_configurations
+            max_configurations=max_conf_to_generate
         )
 
         configuration_dict = {}
@@ -241,6 +242,10 @@ class ConfigurationTask(FiretaskBase):
                     "directory": configuration_dir
                 }
                 conf_number += 1
+
+            # Break out of the loop if we have enough configurations
+            if len(configuration_dict) == self["max_configuration"]:
+                break
 
         return FWAction(update_spec={"configuration_dict": configuration_dict})
 
