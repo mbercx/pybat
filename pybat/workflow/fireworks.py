@@ -83,7 +83,7 @@ class RelaxFirework(Firework):
         # Create the PyTask that sets up the calculation
         setup_relax = PyTask(
             func="pybat.cli.commands.setup.relax",
-            kwargs={"structure_file": structure,
+            kwargs={"structure": structure,
                     "functional": functional,
                     "calculation_dir": directory,
                     "is_metal": is_metal}
