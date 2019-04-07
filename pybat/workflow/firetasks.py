@@ -244,7 +244,7 @@ class ConfigurationTask(FiretaskBase):
                 conf_number += 1
 
             # Break out of the loop if we have enough configurations
-            if len(configuration_dict) == self["max_configuration"]:
+            if len(configuration_dict) == self.get("configuration_restrictions", None):
                 break
 
         return FWAction(update_spec={"configuration_dict": configuration_dict})
