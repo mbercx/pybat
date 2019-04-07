@@ -161,7 +161,7 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
         directory += "_relax"
 
     # Set up the geometry optimization Firework
-    relax_firework = RelaxFirework(structure_file=structure,
+    relax_firework = RelaxFirework(structure=structure,
                                    functional=functional,
                                    directory=directory,
                                    is_metal=is_metal,
@@ -169,8 +169,7 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
                                    number_nodes=number_nodes)
 
     # Set up a clear name for the workflow
-    cathode = LiRichCathode.from_file(structure_file)
-    workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
+    workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
     workflow_name += str(functional)
 
     # Create the workflow
