@@ -4,8 +4,9 @@
 
 import os
 
-from pybat.workflow.firetasks import VaspTask, CustodianTask, PulayTask, MiddleTask
 from fireworks import Firework, FWAction, ScriptTask, PyTask
+
+from pybat.workflow.firetasks import VaspTask, CustodianTask, PulayTask, MiddleTask
 
 """
 Package that contains all the fireworks used by pybat to construct Workflows.
@@ -108,7 +109,7 @@ class RelaxFirework(Firework):
                                fw_action=fw_action)
 
         # Only add number of nodes to spec if specified
-        firework_spec = {"_launch_dir": os.getcwd()}
+        firework_spec = {"_launch_dir": directory}
         if number_nodes is None or number_nodes == 0:
             firework_spec.update({"_category": "none"})
         else:
