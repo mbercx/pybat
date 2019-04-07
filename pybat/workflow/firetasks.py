@@ -202,6 +202,8 @@ class ConfigurationTask(FiretaskBase):
 
         if self.get("max_configurations", None):
             max_configurations = self.get("max_configurations") + len(current_conf_dict)
+        else:
+            max_configurations = None
 
         configurations = self["structure"].get_cation_configurations(
             substitution_sites=self["substitution_sites"],
