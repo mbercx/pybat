@@ -483,9 +483,9 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     configuration_task = ConfigurationTask(
         structure=cathode,
         directory=directory,
-        substitution_sites=substitution_sites,
+        substitution_sites=list(substitution_sites),
         element_list=element_list,
-        sizes=sizes,
+        sizes=list(sizes),
         concentration_restrictions=concentration_restrictions,
         max_configurations=max_configurations
     )
