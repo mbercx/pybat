@@ -236,7 +236,7 @@ class ConfigurationTask(FiretaskBase):
                 os.makedirs(configuration_dir)
                 configuration.to("json", os.path.join(configuration_dir,
                                                       "configuration.json"))
-                configuration_dict[conf_hash] = {
+                configuration_dict[str(conf_hash)] = {
                     "structure": configuration.as_dict(),
                     "directory": configuration_dir
                 }
