@@ -109,7 +109,7 @@ class RelaxFirework(Firework):
                                fw_action=fw_action)
 
         # Only add number of nodes to spec if specified
-        firework_spec = {"_launch_dir": directory}
+        firework_spec = {}
         if number_nodes is None or number_nodes == 0:
             firework_spec.update({"_category": "none"})
         else:
