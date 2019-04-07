@@ -2,18 +2,18 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
-import numpy as np
 import os
 import shutil
-import pdb
 
-from pybat.core import Cathode, LiRichCathode
-from pybat.sets import BulkSCFSet, BulkRelaxSet, PybatNEBSet
+import numpy as np
 from monty.serialization import loadfn
-from pymatgen.core import Structure
 from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
+from pymatgen.core import Structure
 from pymatgen.io.vasp.outputs import Chgcar, Outcar
 from pymatgen.io.vasp.sets import MPStaticSet
+
+from pybat.core import Cathode
+from pybat.sets import BulkSCFSet, BulkRelaxSet, PybatNEBSet
 
 """
 Setup scripts for the calculations.
@@ -107,15 +107,15 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
     return calculation_dir
 
 
-def relax(structure_file, functional=("pbe", {}), calculation_dir="",
+def relax(structure, functional=("pbe", {}), calculation_dir="",
           is_metal=False):
     """
     Set up a standard geometry optimization calculation of a Cathode
     structure. Optimizes both the atomic positions as well as the unit cell.
 
     Args:
-        structure_file (str): Path to the Cathode structure file, either
-            relative or absolute.
+        structure (pymatgen.Structure): Structure for which to set up the geometry
+            optimization calculation.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
@@ -130,17 +130,6 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
         str: Path to the directory in which the calculation is set up.
 
     """
-
-    # Import the structure as a Cathode instance from the structure file
-    structure_file = os.path.abspath(structure_file)
-    structure = Cathode.from_file(structure_file).as_ordered_structure()
-
-    # Check if a magnetic moment was not provided for the sites. If not, make
-    # sure it is zero for the calculations._
-    if "magmom" not in structure.site_properties.keys():
-        structure.add_site_property("magmom", [0] * len(structure.sites))
-
-    # Set up the calculation
     user_incar_settings = {}
 
     # Set up the functional
@@ -156,8 +145,19 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
             calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                              in functional[1]["LDAUU"].keys())
         calculation_dir += "_relax"
+    os.mkdir(calculation_dir)
 
-    # For metals, add some Methfessel Paxton smearing
+    # If the structure is a cathode object
+    if isinstance(structure, Cathode):
+        structure.to("json", os.path.join(calculation_dir, "initial_cathode.json"))
+        structure = structure.as_ordered_structure()
+
+    # Check if a magnetic moment was not provided for the sites. If not, make
+    # sure it is zero for the calculations._
+    if "magmom" not in structure.site_properties.keys():
+        structure.add_site_property("magmom", [0] * len(structure.sites))
+
+    # For metals, use Methfessel Paxton smearing
     if is_metal:
         user_incar_settings.update({"ISMEAR": 2, "SIGMA": 0.2})
 
@@ -168,8 +168,6 @@ def relax(structure_file, functional=("pbe", {}), calculation_dir="",
 
     # Write the input files to the geometry optimization directory
     geo_optimization.write_input(calculation_dir)
-    shutil.copy(structure_file,
-                os.path.join(calculation_dir, "initial_cathode.json"))
 
     return calculation_dir
 

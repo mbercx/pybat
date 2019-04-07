@@ -124,14 +124,15 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
     LAUNCHPAD.add_wf(workflow)
 
 
-def relax_workflow(structure_file, functional=("pbe", {}), directory="",
+def relax_workflow(structure, functional=("pbe", {}), directory="",
                    is_metal=False, in_custodian=False, number_nodes=None):
     """
     Set up a geometry optimization workflow and add it to the launchpad of the
     mongoDB server defined in the config file.
 
     Args:
-        structure_file (str): Path to the geometry file of the structure.
+        structure (pymatgen.Structure): Structure for which to set up the geometry
+            optimization workflow.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
@@ -160,7 +161,7 @@ def relax_workflow(structure_file, functional=("pbe", {}), directory="",
         directory += "_relax"
 
     # Set up the geometry optimization Firework
-    relax_firework = RelaxFirework(structure_file=structure_file,
+    relax_firework = RelaxFirework(structure_file=structure,
                                    functional=functional,
                                    directory=directory,
                                    is_metal=is_metal,
