@@ -77,13 +77,13 @@ class ScfFirework(Firework):
 
 class RelaxFirework(Firework):
 
-    def __init__(self, structure_file, functional, directory, is_metal=False,
+    def __init__(self, structure, functional, directory, is_metal=False,
                  in_custodian=False, number_nodes=None, fw_action=None):
 
         # Create the PyTask that sets up the calculation
         setup_relax = PyTask(
             func="pybat.cli.commands.setup.relax",
-            kwargs={"structure_file": structure_file,
+            kwargs={"structure_file": structure,
                     "functional": functional,
                     "calculation_dir": directory,
                     "is_metal": is_metal}
