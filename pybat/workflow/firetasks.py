@@ -273,7 +273,7 @@ class EnergyConfTask(FiretaskBase):
 
         firework_list = []
 
-        for configuration in configuration_dict:
+        for configuration in configuration_dict.values():
             relax_dir = os.path.join(
                 configuration["directory"], functional_dir + "_relax"
             )
