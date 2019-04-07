@@ -264,7 +264,7 @@ class EnergyConfTask(FiretaskBase):
         except KeyError:
             raise KeyError("Can not find the configuration_dict in the fw_spec.")
 
-        functional_dir = self["functional[0]"]
+        functional_dir = self["functional"][0]
         if self["functional"][0] == "pbeu":
             functional_dir += "_" + "".join(
                 k + str(self["functional"][1]["LDAUU"][k])
