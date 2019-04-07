@@ -200,13 +200,15 @@ class ConfigurationTask(FiretaskBase):
         # directory tree
         current_conf_dict = find_configuration_dict(self["directory"])
 
+        if self.get("max_configurations", None):
+            max_configurations = self.get("max_configurations") + len(current_conf_dict)
+
         configurations = self["structure"].get_cation_configurations(
             substitution_sites=self["substitution_sites"],
             cation_list=self["element_list"],
             sizes=self["sizes"],
             concentration_restrictions=self.get("configuration_restrictions", None),
-            max_configurations=self.get("max_configurations", None)
-                               + len(current_conf_dict)
+            max_configurations=max_configurations
         )
 
         configuration_dict = {}
