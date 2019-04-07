@@ -145,7 +145,10 @@ def relax(structure, functional=("pbe", {}), calculation_dir="",
             calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                              in functional[1]["LDAUU"].keys())
         calculation_dir += "_relax"
-    os.mkdir(calculation_dir)
+    try:
+        os.makedirs(calculation_dir)
+    except FileExistsError:
+        pass
 
     # If the structure is a cathode object
     if isinstance(structure, Cathode):
