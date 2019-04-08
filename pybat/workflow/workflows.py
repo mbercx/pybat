@@ -71,14 +71,14 @@ else:
 # It's really getting time to do this. Think about what unit tests you need and make a
 # test suite.
 
-def scf_workflow(structure_file, functional=("pbe", {}), directory="",
+def scf_workflow(structure, functional=("pbe", {}), directory="",
                  write_chgcar=False, in_custodian=False, number_nodes=None):
     """
     Set up a self consistent field calculation (SCF) workflow and add it to the
     launchpad of the mongoDB server defined in the config file.
 
     Args:
-        structure_file (str): Path to the geometry file of the structure.
+        structure (pymatgen.Structure): Structure for which to set up the SCF workflow.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
@@ -107,14 +107,13 @@ def scf_workflow(structure_file, functional=("pbe", {}), directory="",
 
     # Set up the SCF Firework
     scf_firework = ScfFirework(
-        structure_file=structure_file, functional=functional,
+        structure=structure, functional=functional,
         directory=directory, write_chgcar=write_chgcar,
         in_custodian=in_custodian, number_nodes=number_nodes
     )
 
     # Set up a clear name for the workflow
-    cathode = LiRichCathode.from_file(structure_file)
-    workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
+    workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
     workflow_name += str(functional)
 
     # Create the workflow
