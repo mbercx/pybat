@@ -6,7 +6,6 @@ import os
 
 from fireworks import Firework, FWAction, ScriptTask, PyTask
 
-from pybat.core import Cathode
 from pybat.workflow.firetasks import VaspTask, CustodianTask, PulayTask, MiddleTask
 
 """
@@ -49,9 +48,6 @@ class ScfFirework(Firework):
             Firework: A firework that represents an SCF calculation.
 
         """
-        # In case the structure is given as a string, load it from the specified path
-        if isinstance(structure, str):
-            structure = Cathode.from_file(structure)
 
         # Create the PyTask that sets up the calculation
         setup_scf = PyTask(
@@ -85,10 +81,6 @@ class RelaxFirework(Firework):
 
     def __init__(self, structure, functional, directory, is_metal=False,
                  in_custodian=False, number_nodes=None, fw_action=None):
-
-        # In case the structure is given as a string, load it from the specified path
-        if isinstance(structure, str):
-            structure = Cathode.from_file(structure)
 
         # Create the PyTask that sets up the calculation
         setup_relax = PyTask(

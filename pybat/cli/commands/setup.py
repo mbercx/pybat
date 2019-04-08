@@ -57,6 +57,10 @@ def scf(structure, functional=("pbe", {}), calculation_dir="",
         str: Path to the directory in which the calculation is set up.
 
     """
+    # In case the structure is given as a string, load it from the specified path
+    if isinstance(structure, str):
+        structure = Cathode.from_file(structure)
+
     # Set up the calculation
     user_incar_settings = {}
 
@@ -130,6 +134,10 @@ def relax(structure, functional=("pbe", {}), calculation_dir="",
         str: Path to the directory in which the calculation is set up.
 
     """
+    # In case the structure is given as a string, load it from the specified path
+    if isinstance(structure, str):
+        structure = Cathode.from_file(structure)
+
     user_incar_settings = {}
 
     # Set up the functional

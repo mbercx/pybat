@@ -70,6 +70,29 @@ class CustodianTask(FiretaskBase):
         c.run()
 
 
+class PassCathodeTask(FiretaskBase):
+    """
+    Pass a final cathode structure to children Fireworks in the Workflow through the
+    fw_spec and write the final cathode to the directory specified.
+
+    """
+
+    required_params = ["directory"]
+    optional_params = ["ignore_magmom"]
+
+    def run_task(self, fw_spec):
+        directory = os.path.abspath(self["directory"])
+        cathode = Cathode.from_file(os.path.join(directory,
+                                                 "initial_cathode.json"))
+        cathode.update_sites(directory, ignore_magmom=self.get("ignore_magmom", False))
+
+        cathode.to("json", os.path.join(directory, "final_cathode.json"))
+
+        FWAction()
+
+        return FWAction(update_spec={"structure": cathode.as_dict()})
+
+
 class PulayTask(FiretaskBase):
     """
     Check if the lattice vectors of a structure have changed significantly during
