@@ -325,7 +325,9 @@ def relax(structure_file, functional, calculation_dir, is_metal):
     """
     from pybat.cli.commands.setup import relax
 
-    relax(structure_file=structure_file,
+    cat = Cathode.from_file(structure_file)
+
+    relax(structure=cat,
           functional=string_to_functional(functional),
           calculation_dir=calculation_dir,
           is_metal=is_metal)
