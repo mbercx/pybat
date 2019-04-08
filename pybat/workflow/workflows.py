@@ -405,7 +405,7 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     LAUNCHPAD.add_wf(workflow)
 
 
-def configuration_workflow(structure_file, substitution_sites=None, element_list=None,
+def configuration_workflow(structure, substitution_sites=None, element_list=None,
                            sizes=None, concentration_restrictions=None,
                            max_configurations=None, functional=("pbe", {}),
                            directory=None, in_custodian=False, number_nodes=None):
@@ -454,12 +454,9 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
 
     """
 
-    # Load the cathode from the structure file
-    cathode = Cathode.from_file(structure_file)
-
     # Check for the required input, and request if necessary
     if not substitution_sites or not element_list or not sizes:
-        print(cathode)
+        print(structure)
         print()
     if not substitution_sites:
         substitution_sites = [int(i) for i in input(
@@ -480,7 +477,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     directory = os.path.abspath(directory)
 
     configuration_task = ConfigurationTask(
-        structure=cathode,
+        structure=structure,
         directory=directory,
         substitution_sites=list(substitution_sites),
         element_list=element_list,
@@ -496,7 +493,7 @@ def configuration_workflow(structure_file, substitution_sites=None, element_list
     )
 
     # Set up a (sort of) clear name for the workflow
-    workflow_name = str(cathode.composition.reduced_formula).replace(" ", "")
+    workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
     workflow_name += " " + str(element_list)
     workflow_name += " " + str(functional)
 
