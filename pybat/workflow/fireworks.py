@@ -23,13 +23,14 @@ __date__ = "Mar 2019"
 
 class ScfFirework(Firework):
 
-    def __init__(self, structure_file, functional, directory, write_chgcar=False,
+    def __init__(self, structure, functional, directory, write_chgcar=False,
                  in_custodian=False, number_nodes=None):
         """
         Create a FireWork for performing an SCF calculation.
 
         Args:
-            structure_file (str): Path to the geometry file of the structure.
+            structure (pymatgen.Structure): Structure for which to run the SCF
+                calculation.
             functional (tuple): Tuple with the functional choices. The first element
                 contains a string that indicates the functional used ("pbe", "hse", ...),
                 whereas the second element contains a dictionary that allows the user
@@ -50,7 +51,7 @@ class ScfFirework(Firework):
         # Create the PyTask that sets up the calculation
         setup_scf = PyTask(
             func="pybat.cli.commands.setup.scf",
-            kwargs={"structure_file": structure_file,
+            kwargs={"structure": structure,
                     "functional": functional,
                     "calculation_dir": directory,
                     "write_chgcar": write_chgcar}

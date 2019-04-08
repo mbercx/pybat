@@ -44,8 +44,7 @@ def scf(structure, functional=("pbe", {}), calculation_dir="",
     calculate accurate total energies.
 
     Args:
-        structure_file (str): Path to the Cathode structure file, either
-            relative or absolute.
+        structure (pymatgen.Structure): Structure for which to set up the SCF calculation.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
