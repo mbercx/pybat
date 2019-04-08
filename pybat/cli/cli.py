@@ -293,7 +293,9 @@ def scf(structure_file, functional, calculation_dir, write_chgcar):
     """
     from pybat.cli.commands.setup import scf
 
-    scf(structure_file=structure_file,
+    cat = Cathode.from_file(structure_file)
+
+    scf(structure=cat,
         functional=string_to_functional(functional),
         calculation_dir=calculation_dir,
         write_chgcar=write_chgcar)
@@ -556,7 +558,9 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
     if number_nodes == 0:
         number_nodes = None
 
-    scf_workflow(structure_file=structure_file,
+    cat = Cathode.from_file(structure_file)
+
+    scf_workflow(structure=cat,
                  functional=string_to_functional(functional),
                  directory=directory,
                  write_chgcar=write_chgcar,
