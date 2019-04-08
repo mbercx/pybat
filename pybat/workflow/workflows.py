@@ -414,10 +414,8 @@ def configuration_workflow(structure, substitution_sites=None, element_list=None
     optimization as well as a SCF calculation based on the final geometry.
 
     Args:
-        structure_file (str): Structure file of the cathode material. Note
-            that the structure file should be a json format file that is
-            derived from the Cathode class, i.e. it should contain the cation
-            configuration of the structure.
+        structure (pymatgen.Structure): Structure for which to set up the configuration
+            Workflow.
         substitution_sites (list): List of site indices or pymatgen.Sites to be
             substituted.
         element_list (list): List of string representations of the cation elements
