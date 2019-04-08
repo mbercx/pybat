@@ -4,7 +4,7 @@
 
 import click
 
-from pybat.core import Cathode
+from pybat.core import Cathode, LiRichCathode
 
 """
 Command line interface for the pybat package.
@@ -52,8 +52,8 @@ NUMBER_NODES_HELP = "Number of nodes that should be used for the calculations. I
                     "required to add the proper `_category` to the Firework generated, " \
                     "so it is picked up by the right Fireworker."
 
-WRITE_CIF_HELP = "Flag that indicates that the structure(s) should also be written as a " \
-                 ".cif file."
+WRITE_CIF_HELP = "Flag that indicates that the structure(s) should also be written as " \
+                 "a .cif file."
 
 
 # endregion
@@ -140,7 +140,9 @@ def migration(structure_file, migration_indices, write_cif):
     """
     from pybat.cli.commands.define import define_migration
 
-    define_migration(structure_file=structure_file,
+    cat = Cathode.from_file(structure_file)
+
+    define_migration(structure=cat,
                      migration_indices=migration_indices,
                      write_cif=write_cif)
 
@@ -159,7 +161,9 @@ def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
     """
     from pybat.cli.commands.define import define_dimer
 
-    define_dimer(structure_file=structure_file,
+    cat = LiRichCathode.from_file(structure_file)
+
+    define_dimer(structure=cat,
                  dimer_indices=dimer_indices,
                  distance=distance,
                  remove_cations=remove_cations,
@@ -654,7 +658,9 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     except TypeError:
         conc_restrict = None
 
-    configuration_workflow(structure_file=structure_file,
+    cat = Cathode.from_file(structure_file)
+
+    configuration_workflow(structure=cat,
                            substitution_sites=sub_sites,
                            element_list=element_list,
                            sizes=sizes,
@@ -681,7 +687,9 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
     """
     from pybat.workflow.workflows import dimer_workflow
 
-    dimer_workflow(structure_file=structure_file,
+    cat = LiRichCathode.from_file(structure_file)
+
+    dimer_workflow(structure=cat,
                    dimer_indices=dimer_indices,
                    distance=distance,
                    functional=string_to_functional(functional),
@@ -736,7 +744,9 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
     """
     from pybat.workflow.workflows import noneq_dimers_workflow
 
-    noneq_dimers_workflow(structure_file=structure_file,
+    cat = LiRichCathode.from_file(structure_file)
+
+    noneq_dimers_workflow(structure=cat,
                           distance=distance,
                           functional=string_to_functional(functional),
                           is_metal=is_metal,
@@ -759,7 +769,9 @@ def site_dimers(site_index, structure_file, distance, functional, is_metal, in_c
     """
     from pybat.workflow.workflows import site_dimers_workflow
 
-    site_dimers_workflow(structure_file=structure_file,
+    cat = LiRichCathode.from_file(structure_file)
+
+    site_dimers_workflow(structure=cat,
                          site_index=site_index,
                          distance=distance,
                          functional=string_to_functional(functional),
