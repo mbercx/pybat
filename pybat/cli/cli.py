@@ -4,6 +4,8 @@
 
 import click
 
+from pybat.core import Cathode
+
 """
 Command line interface for the pybat package.
 
@@ -573,7 +575,9 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
     """
     from pybat.workflow.workflows import relax_workflow
 
-    relax_workflow(structure_file=structure_file,
+    cat = Cathode.from_file(structure_file)
+
+    relax_workflow(structure=cat,
                    functional=string_to_functional(functional),
                    directory=directory,
                    is_metal=is_metal,
