@@ -2,12 +2,13 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
-import os
 import _warnings as warnings
-
+import os
 from string import ascii_letters
-from pybat.core import Cathode
+
 from pymatgen.core import Composition
+
+from pybat.core import Cathode
 
 """
 Set of scripts used to define structural changes easily using the command line
@@ -172,7 +173,7 @@ def define_migration(structure_file, migration_indices=(0, 0),
     return migration_dir
 
 
-def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
+def define_dimer(structure, dimer_indices=(0, 0), distance=0,
                  remove_cations=False, write_cif=False):
     """
     Define the formation of an oxygen dimer in a Cathode structure.
@@ -181,12 +182,12 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
     the dimer, as well as the final distance between the oxygen atoms.
 
     Args:
-        structure_file (str): Path to the Cathode structure file.
+        structure (pybat.core.LiRichCathode): LiRichCathode for which to define a dimer.
         dimer_indices (tuple): Indices of the oxygen sites which are to form a
-        dimer.
+            dimer.
         distance (float): Final distance between the oxygen atoms.
         remove_cations (bool): Flag that allows the user to remove the
-        cations (Li, Na, ...) around the chosen oxygen pair.
+            cations (Li, Na, ...) around the chosen oxygen pair.
         write_cif (bool): Flag that indicates that the initial and final
         structure files should also be written in a cif format.
 
@@ -195,13 +196,11 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
 
     """
 
-    cathode = Cathode.from_file(structure_file)
-
     if dimer_indices == (0, 0):
         print("")
         print("No site indices were given for structure:")
         print("")
-        print(cathode)
+        print(structure)
         print("")
         dimer_indices = input("Please provide the two indices of the elements "
                               "that need to form a dimer, separated by a "
@@ -218,10 +217,10 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
 
     if remove_cations:
         # Remove the cations around the oxygen dimer
-        cathode.remove_dimer_cations(dimer_indices)
+        structure.remove_dimer_cations(dimer_indices)
 
     # Change the distance between the oxygen atoms for the dimer structure
-    dimer_structure = cathode.copy()
+    dimer_structure = structure.copy()
     dimer_structure.change_site_distance(dimer_indices, distance)
 
     # Create the dimer directory
@@ -235,24 +234,19 @@ def define_dimer(structure_file, dimer_indices=(0, 0), distance=0,
                                                 "overwriting...")
 
     # Set up the filenames
-    initial_structure_file = ".".join(
-        structure_file.split("/")[-1].split(".")[0:-1]) + "_d_" \
-                             + "_".join([str(el) for el in dimer_indices]) \
-                             + "_init"
-    dimer_structure_file = ".".join(
-        structure_file.split("/")[-1].split(".")[0:-1]) + "_d_" \
-                           + "_".join([str(el) for el in dimer_indices]) \
-                           + "_final"
+    struc_name = str(structure.composition.reduced_composition).replace(" ", "")
+    dimer_name = "_d_" + "_".join([str(el) for el in dimer_indices])
+
+    initial_structure_file = struc_name + dimer_name + "_init"
+    dimer_structure_file = struc_name + dimer_name + "_final"
 
     # Write out the initial and final structures
-    cathode.to("json", dimer_dir + "/" + initial_structure_file + ".json")
-    dimer_structure.to("json",
-                       dimer_dir + "/" + dimer_structure_file + ".json")
+    structure.to("json", os.path.join(dimer_dir, initial_structure_file + ".json"))
+    dimer_structure.to("json", os.path.join(dimer_dir, dimer_structure_file + ".json"))
 
     # Write the structures to a cif format if requested
     if write_cif:
-        cathode.to("cif", dimer_dir + "/" + initial_structure_file + ".cif")
-        dimer_structure.to("cif",
-                           dimer_dir + "/" + dimer_structure_file + ".cif")
+        structure.to("cif", os.path.join(dimer_dir, initial_structure_file + ".cif"))
+        dimer_structure.to("cif", os.path.join(dimer_dir, dimer_structure_file + ".cif"))
 
     return dimer_dir

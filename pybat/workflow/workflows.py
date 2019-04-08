@@ -11,7 +11,7 @@ from ruamel.yaml import YAML
 
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
-from pybat.core import Cathode, LiRichCathode, Dimer
+from pybat.core import Cathode, Dimer
 from pybat.workflow.firetasks import VaspTask, CustodianTask, ConfigurationTask, \
     EnergyConfTask
 from pybat.workflow.fireworks import ScfFirework, RelaxFirework, NebFirework
@@ -174,98 +174,6 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
     # Create the workflow
     workflow = Workflow(fireworks=[relax_firework, ],
                         name=workflow_name)
-
-    LAUNCHPAD.add_wf(workflow)
-
-
-def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
-                   functional=("pbe", {}), is_metal=False, in_custodian=False,
-                   number_nodes=None):
-    """
-    Set up a workflow that calculates the thermodynamics for a dimer
-    formation in the current directory.
-
-    Can later be expanded to also include kinetic barrier calculation.
-
-    Args:
-        structure_file (str): Structure file of the cathode material. Note
-            that the structure file should be a json format file that is
-            derived from the Cathode class, i.e. it should contain the cation
-            configuration of the structure.
-        dimer_indices (tuple): Indices of the oxygen sites which are to form a
-            dimer. If no indices are provided, the user will be prompted.
-        distance (float): Final distance between the oxygen atoms. If no
-            distance is provided, the user will be prompted.
-        functional (tuple): Tuple with the functional choices. The first element
-            contains a string that indicates the functional used ("pbe", "hse", ...),
-            whereas the second element contains a dictionary that allows the user
-            to specify the various functional tags.
-        is_metal (bool): Flag that indicates the material being studied is a
-            metal, which changes the smearing from Gaussian to second order
-            Methfessel-Paxton of 0.2 eV. Defaults to False.
-        in_custodian (bool): Flag that indicates that the calculations
-            should be run within a Custodian. Defaults to False.
-        number_nodes (int): Number of nodes that should be used for the calculations.
-            Is required to add the proper `_category` to the Firework generated, so
-            it is picked up by the right Fireworker.
-
-    """
-    # TODO Change naming scheme
-
-    # Let the user define a dimer, unless one is provided
-    dimer_dir = define_dimer(structure_file=structure_file,
-                             dimer_indices=dimer_indices,
-                             distance=distance,
-                             write_cif=True)
-
-    # Set up the FireTask that sets up the transition calculation
-    setup_transition = PyTask(
-        func="pybat.cli.commands.setup.transition",
-        kwargs={"directory": dimer_dir,
-                "functional": functional,
-                "is_metal": is_metal,
-                "is_migration": False}
-    )
-
-    # Create the PyTask that runs the calculation
-    if in_custodian:
-        vasprun = CustodianTask(directory=os.path.join(dimer_dir, "final"))
-    else:
-        vasprun = VaspTask(directory=os.path.join(dimer_dir, "final"))
-
-    # Extract the final cathode from the geometry optimization
-    get_cathode = PyTask(
-        func="pybat.cli.commands.get.get_cathode",
-        kwargs={"directory": os.path.join(dimer_dir, "final"),
-                "write_cif": True}
-    )
-
-    # Add number of nodes to spec, or "none"
-    firework_spec = {"_launch_dir": os.getcwd()}
-    if number_nodes is None:
-        firework_spec.update({"_category": "none"})
-    else:
-        firework_spec.update({"_category": str(number_nodes) + "nodes"})
-
-    transition_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
-                                   name="Dimer Geometry optimization",
-                                   spec=firework_spec)
-
-    # Set up the SCF calculation directory
-    scf_dir = os.path.join(dimer_dir, "scf_final")
-
-    final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
-
-    # Set up the SCF calculation
-    scf_firework = ScfFirework(
-        structure=final_cathode, functional=functional,
-        directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
-        number_nodes=number_nodes
-    )
-
-    workflow = Workflow(fireworks=[transition_firework, scf_firework],
-                        name=structure_file + dimer_dir.split("/")[-1],
-                        links_dict={transition_firework: [scf_firework]})
 
     LAUNCHPAD.add_wf(workflow)
 
@@ -508,16 +416,108 @@ def configuration_workflow(structure, substitution_sites=None, element_list=None
     LAUNCHPAD.add_wf(workflow)
 
 
-def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
+def dimer_workflow(structure, dimer_indices=(0, 0), distance=0,
+                   functional=("pbe", {}), is_metal=False, in_custodian=False,
+                   number_nodes=None):
+    """
+    Set up a workflow that calculates the thermodynamics for a dimer
+    formation in the current directory.
+
+    Can later be expanded to also include kinetic barrier calculation.
+
+    Args:
+        structure (pybat.core.LiRichCathode): LiRichCathode for which to perform a
+            dimer workflow. Should be a LiRichCathode, as only for this class the dimer
+            scripts are defined.
+        dimer_indices (tuple): Indices of the oxygen sites which are to form a
+            dimer. If no indices are provided, the user will be prompted.
+        distance (float): Final distance between the oxygen atoms. If no
+            distance is provided, the user will be prompted.
+        functional (tuple): Tuple with the functional choices. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        is_metal (bool): Flag that indicates the material being studied is a
+            metal, which changes the smearing from Gaussian to second order
+            Methfessel-Paxton of 0.2 eV. Defaults to False.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
+
+    """
+    # TODO Change naming scheme
+
+    # Let the user define a dimer, unless one is provided
+    dimer_dir = define_dimer(structure=structure,
+                             dimer_indices=dimer_indices,
+                             distance=distance,
+                             write_cif=True)
+
+    # Set up the FireTask that sets up the transition calculation
+    setup_transition = PyTask(
+        func="pybat.cli.commands.setup.transition",
+        kwargs={"directory": dimer_dir,
+                "functional": functional,
+                "is_metal": is_metal,
+                "is_migration": False}
+    )
+
+    # Create the PyTask that runs the calculation
+    if in_custodian:
+        vasprun = CustodianTask(directory=os.path.join(dimer_dir, "final"))
+    else:
+        vasprun = VaspTask(directory=os.path.join(dimer_dir, "final"))
+
+    # Extract the final cathode from the geometry optimization
+    get_cathode = PyTask(
+        func="pybat.cli.commands.get.get_cathode",
+        kwargs={"directory": os.path.join(dimer_dir, "final"),
+                "write_cif": True}
+    )
+
+    # Add number of nodes to spec, or "none"
+    firework_spec = {"_launch_dir": os.getcwd()}
+    if number_nodes is None:
+        firework_spec.update({"_category": "none"})
+    else:
+        firework_spec.update({"_category": str(number_nodes) + "nodes"})
+
+    transition_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
+                                   name="Dimer Geometry optimization",
+                                   spec=firework_spec)
+
+    # Set up the SCF calculation directory
+    scf_dir = os.path.join(dimer_dir, "scf_final")
+
+    final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
+
+    # Set up the SCF calculation
+    scf_firework = ScfFirework(
+        structure=final_cathode, functional=functional,
+        directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
+        number_nodes=number_nodes
+    )
+
+    struc_name = str(structure.composition.reduced_composition).replace(" ", "")
+
+    workflow = Workflow(fireworks=[transition_firework, scf_firework],
+                        name=struc_name + dimer_dir.split("/")[-1],
+                        links_dict={transition_firework: [scf_firework]})
+
+    LAUNCHPAD.add_wf(workflow)
+
+
+def noneq_dimers_workflow(structure, distance, functional=("pbe", {}),
                           is_metal=False, in_custodian=False, number_nodes=None):
     """
     Run dimer calculations for all the nonequivalent dimers in a structure.
 
     Args:
-        structure_file (str): Structure file of the cathode material. Note
-            that the structure file should be a json format file that is
-            derived from the Cathode class, i.e. it should contain the cation
-            configuration of the structure.
+        structure (pybat.core.LiRichCathode): LiRichCathode for which to perform a
+            non-equivalent dimer workflow. Should be a LiRichCathode, as only for this
+            class the dimer scripts are defined.
         distance (float): Final distance between the oxygen atoms. If no
             distance is provided, the user will be prompted.
         functional (tuple): Tuple with the functional choices. The first element
@@ -538,8 +538,7 @@ def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
 
     """
 
-    lirich = LiRichCathode.from_file(structure_file)
-    dimer_lists = lirich.list_noneq_dimers()
+    dimer_lists = structure.list_noneq_dimers()
 
     for dimer_list in dimer_lists:
 
@@ -549,15 +548,15 @@ def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
 
         for dimer in dimer_list:
 
-            dimer_center = Dimer(lirich, dimer).center
-            lattice_center = np.sum(lirich.lattice.matrix, 0) / 3
+            dimer_center = Dimer(structure, dimer).center
+            lattice_center = np.sum(structure.lattice.matrix, 0) / 3
 
             dist_to_center = np.linalg.norm(dimer_center - lattice_center)
 
             if dist_to_center < central_dimer[1]:
                 central_dimer = [dimer, dist_to_center]
 
-        dimer_workflow(structure_file=structure_file,
+        dimer_workflow(structure=structure,
                        dimer_indices=central_dimer[0],
                        distance=distance,
                        functional=functional,
@@ -566,17 +565,15 @@ def noneq_dimers_workflow(structure_file, distance, functional=("pbe", {}),
                        number_nodes=number_nodes)
 
 
-def site_dimers_workflow(structure_file, site_index, distance,
+def site_dimers_workflow(structure, site_index, distance,
                          functional=("pbe", {}), is_metal=False,
                          in_custodian=False, number_nodes=None):
     """
     Run dimer calculations for all the dimers around a site.
 
     Args:
-        structure_file (str): Structure file of the cathode material. Note
-            that the structure file should be a json format file that is
-            derived from the Cathode class, i.e. it should contain the cation
-            configuration of the structure.
+        structure (pybat.core.LiRichCathode): Structure of the cathode material. Should
+            be a LiRichCathode, as only for this class the dimer scripts are defined.
         site_index (int): Index of the site around which the dimers should
             be investigated. Corresponds to the internal Python index.
         distance (float): Final distance between the oxygen atoms. If no
@@ -599,11 +596,10 @@ def site_dimers_workflow(structure_file, site_index, distance,
 
     """
 
-    lirich = LiRichCathode.from_file(structure_file)
-    dimer_list = lirich.find_noneq_dimers(int(site_index))
+    dimer_list = structure.find_noneq_dimers(int(site_index))
 
     for dimer in dimer_list:
-        dimer_workflow(structure_file=structure_file,
+        dimer_workflow(structure=structure,
                        dimer_indices=dimer,
                        distance=distance,
                        functional=functional,
