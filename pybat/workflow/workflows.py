@@ -178,7 +178,7 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
     LAUNCHPAD.add_wf(workflow)
 
 
-def migration_workflow(structure_file, migration_indices=(0, 0),
+def migration_workflow(structure, migration_indices=(0, 0),
                        functional=("pbe", {}), is_metal=False,
                        in_custodian=False, number_nodes=None):
     """
@@ -188,10 +188,8 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     Can later be expanded to also include kinetic barrier calculation.
 
     Args:
-        structure_file (str): Structure file of the cathode material. Note
-            that the structure file should be a json format file that is
-            derived from the Cathode class, i.e. it should contain the cation
-            configuration of the structure.
+        structure (pybat.core.Cathode): Cathode for which to calculate the reaction
+            energy of the migration.
         migration_indices (tuple): Tuple of the indices which designate the
             migrating site and the vacant site to which the cation will
             migrate. If no indices are provided, the user will be prompted.
@@ -217,7 +215,7 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
     #  instead of simply relying on the fireworks commands.
 
     # Let the user define a migration
-    migration_dir = define_migration(structure_file=structure_file,
+    migration_dir = define_migration(structure=structure,
                                      migration_indices=migration_indices,
                                      write_cif=True)
 
@@ -244,8 +242,10 @@ def migration_workflow(structure_file, migration_indices=(0, 0),
                                    name="Migration Geometry optimization",
                                    spec=firework_spec)
 
+    struc_name = str(structure.composition.reduced_composition).replace(" ", "")
+
     workflow = Workflow(fireworks=[transition_firework],
-                        name=structure_file + migration_dir.split("/")[-1])
+                        name=struc_name + " " + migration_dir.split("/")[-1])
 
     LAUNCHPAD.add_wf(workflow)
 

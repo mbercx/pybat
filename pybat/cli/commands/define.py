@@ -8,8 +8,6 @@ from string import ascii_letters
 
 from pymatgen.core import Composition
 
-from pybat.core import Cathode
-
 """
 Set of scripts used to define structural changes easily using the command line
 interface.
@@ -24,7 +22,7 @@ __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
 
 
-def define_migration(structure_file, migration_indices=(0, 0),
+def define_migration(structure, migration_indices=(0, 0),
                      write_cif=False):
     """
     This script allows the user to define a migration of a cation in a
@@ -35,7 +33,7 @@ def define_migration(structure_file, migration_indices=(0, 0),
     index.
 
     Args:
-        structure_file (str): Path to the structure file.
+        structure (pybat.core.Cathode): Cathode for which to define a migration.
         migration_indices (tuple): Tuple of the indices which designate the
         migrating site and the vacant site to which the cation will migrate.
         write_cif (bool): Flag that determines if the initial and final
@@ -45,20 +43,19 @@ def define_migration(structure_file, migration_indices=(0, 0),
         migration_dir (str): The absolute path to the migration directory.
 
     """
-    cathode = Cathode.from_file(structure_file)
-    final_structure = cathode.copy()
+    final_structure = structure.copy()
 
     if migration_indices == (0, 0):
         # Prompt the user for the migration site
         print("")
-        print(cathode)
+        print(structure)
         print("")
         migration_site_index = int(input("Please provide the index of the "
                                          "migrating cation (Note: Not the "
                                          "VESTA index!): "))
         print("")
 
-        migration_site = cathode.sites[migration_site_index]
+        migration_site = structure.sites[migration_site_index]
         migration_species = migration_site.species_and_occu
 
         # Check if the site to which the ion should migrate is actually
@@ -75,7 +72,7 @@ def define_migration(structure_file, migration_indices=(0, 0),
                         in list(final_coords.split(" "))]
     else:
         migration_site_index = migration_indices[0]
-        migration_site = cathode.sites[migration_site_index]
+        migration_site = structure.sites[migration_site_index]
         migration_species = migration_site.species_and_occu
 
         # Check if the site to which the ion should migrate is actually
@@ -89,7 +86,7 @@ def define_migration(structure_file, migration_indices=(0, 0),
 
         # Grab the required information about the final site
         final_site_index = int(final_coords[0])
-        final_site = cathode.sites[final_site_index]
+        final_site = structure.sites[final_site_index]
         final_coords = final_site.frac_coords
         final_species = final_site.species_and_occu
 
@@ -153,22 +150,24 @@ def define_migration(structure_file, migration_indices=(0, 0),
         print("WARNING: Migration directory already exists.")
 
     # Set up the filenames
-    initial_structure_file = ".".join(structure_file.split("/")[-1].split(".")[
-                                      0:-1]) + "_m_" + migration_id + "_init"
-    final_structure_file = ".".join(structure_file.split("/")[-1].split(".")[
-                                    0:-1]) + "_m_" + migration_id + "_final"
+    struc_name = str(structure.composition.reduced_composition).replace(" ", "")
+    migration_name = "_m_" + "_".join([str(el) for el in migration_indices])
+
+    initial_structure_file = struc_name + migration_name + "_init"
+    dimer_structure_file = struc_name + migration_name + "_final"
 
     # Write out the initial and final structures
-    cathode.to("json", migration_dir + "/" + initial_structure_file + ".json")
-    final_structure.to("json",
-                       migration_dir + "/" + final_structure_file + ".json")
+    structure.to("json", os.path.join(migration_dir, initial_structure_file + ".json"))
+    final_structure.to(
+        "json", os.path.join(migration_dir, dimer_structure_file + ".json")
+    )
 
     # Write the structures to a cif format if requested
     if write_cif:
-        cathode.to("cif",
-                   migration_dir + "/" + initial_structure_file + ".cif")
-        final_structure.to("cif",
-                           migration_dir + "/" + final_structure_file + ".cif")
+        structure.to("cif", os.path.join(migration_dir, initial_structure_file + ".cif"))
+        final_structure.to(
+            "cif", os.path.join(migration_dir, dimer_structure_file + ".cif")
+        )
 
     return migration_dir
 
