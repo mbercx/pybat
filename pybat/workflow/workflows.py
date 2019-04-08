@@ -258,7 +258,7 @@ def dimer_workflow(structure_file, dimer_indices=(0, 0), distance=0,
 
     # Set up the SCF calculation
     scf_firework = ScfFirework(
-        structure_file=final_cathode, functional=functional,
+        structure=final_cathode, functional=functional,
         directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
         number_nodes=number_nodes
     )

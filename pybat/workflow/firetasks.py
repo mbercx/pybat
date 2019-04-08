@@ -291,7 +291,7 @@ class EnergyConfTask(FiretaskBase):
             from pybat.workflow.fireworks import ScfFirework, RelaxFirework
 
             scf_firework = ScfFirework(
-                structure_file=os.path.join(relax_dir, "final_cathode.json"),
+                structure=os.path.join(relax_dir, "final_cathode.json"),
                 functional=self["functional"],
                 directory=scf_dir,
                 write_chgcar=False,
@@ -302,8 +302,7 @@ class EnergyConfTask(FiretaskBase):
             fw_action = FWAction(additions=scf_firework)
 
             relax_firework = RelaxFirework(
-                structure_file=os.path.join(configuration["directory"],
-                                            "configuration.json"),
+                structure=configuration["structure"],
                 functional=self["functional"],
                 directory=relax_dir,
                 in_custodian=self.get("in_custodian", False),
