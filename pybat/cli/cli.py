@@ -597,25 +597,25 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--sub_sites", "-s", default=None,
+@click.option("--sub_sites", "-s", default="None",
               help="Indices of the sites that should be substituted to generate the "
                    "possible configurations. Can either be a List of integers or a "
                    "range()."
                    "\nExamples:\n"
                    "\"range(4)\"\n"
                    "\"[0, 2, 4]\"")
-@click.option("--element_list", "-E", default=None,
+@click.option("--element_list", "-E", default="None",
               help="List of elements that should be placed on the substitution sites to "
                    "generate the configurations."
                    "\nExamples:\n"
                    "\"['Ni', 'Mn', 'Co']\"\n"
                    "\"['Li', 'Vac']\"")
-@click.option("--sizes", "-S", default=None,
+@click.option("--sizes", "-S", default="None",
               help="Allowed unit cell sizes for the generation of configurations. Can "
                    "be either a List of numbers or a range(). \nExamples:\n"
                    "\"range(1, 7)\" \n"
                    "\"[1,2,5]\"")
-@click.option("--conc_restrict", "-R", default=None,
+@click.option("--conc_restrict", "-R", default="None",
               help="Dictionary of the allowed concentration ranges for each element. "
                    "Note that the concentration is defined versus the total amount of "
                    "atoms in the unit cell. \n Examples:\n \"{'Li':(0.2, 0.3)}\"\n "
