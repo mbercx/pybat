@@ -3,7 +3,6 @@
 # Distributed under the terms of the MIT License
 
 import os
-import shutil
 
 import numpy as np
 from monty.serialization import loadfn
@@ -38,7 +37,7 @@ def _load_yaml_config(filename):
     return config
 
 
-def scf(structure_file, functional=("pbe", {}), calculation_dir="",
+def scf(structure, functional=("pbe", {}), calculation_dir="",
         write_chgcar=False):
     """
     Set up a standard scf calculation. Always uses the tetrahedron method to
@@ -59,16 +58,6 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
         str: Path to the directory in which the calculation is set up.
 
     """
-
-    # Import the structure as a Cathode instance from the structure file
-    structure_file = os.path.abspath(structure_file)
-    structure = Cathode.from_file(structure_file).as_ordered_structure()
-
-    # Check if a magnetic moment was not provided for the sites. If not, make
-    # sure it is zero for the calculations.
-    if "magmom" not in structure.site_properties.keys():
-        structure.add_site_property("magmom", [0] * len(structure.sites))
-
     # Set up the calculation
     user_incar_settings = {}
 
@@ -85,6 +74,10 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
             calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                              in functional[1]["LDAUU"].keys())
         calculation_dir += "_scf"
+    try:
+        os.makedirs(calculation_dir)
+    except FileExistsError:
+        pass
 
     # Set charge density to be written if requested
     if write_chgcar:
@@ -94,6 +87,16 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
         if functional[0] == "hse":
             user_incar_settings.update({"PRECFOCK": "Accurate"})
 
+    # If the structure is a cathode object
+    if isinstance(structure, Cathode):
+        structure.to("json", os.path.join(calculation_dir, "initial_cathode.json"))
+        structure = structure.as_ordered_structure()
+
+    # Check if a magnetic moment was not provided for the sites. If not, make
+    # sure it is zero for the calculations.
+    if "magmom" not in structure.site_properties.keys():
+        structure.add_site_property("magmom", [0] * len(structure.sites))
+
     # Set up the BulkSCFSet
     scf_calculation = BulkSCFSet(structure=structure,
                                  user_incar_settings=user_incar_settings,
@@ -101,8 +104,6 @@ def scf(structure_file, functional=("pbe", {}), calculation_dir="",
 
     # Write the input files to the SCF calculation directory
     scf_calculation.write_input(calculation_dir)
-    shutil.copy(structure_file,
-                os.path.join(calculation_dir, "initial_cathode.json"))
 
     return calculation_dir
 
