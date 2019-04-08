@@ -81,6 +81,24 @@ class RelaxFirework(Firework):
 
     def __init__(self, structure, functional, directory, is_metal=False,
                  in_custodian=False, number_nodes=None, fw_action=None):
+        """
+
+        Args:
+            structure: pymatgen.Structure OR path to structure file for which to run
+                the SCF calculation.
+            functional (tuple): Tuple with the functional choices. The first element
+                contains a string that indicates the functional used ("pbe", "hse", ...),
+                whereas the second element contains a dictionary that allows the user
+                to specify the various functional tags.
+            directory (str): Directory in which the SCF calculation should be performed.
+            is_metal:
+            in_custodian (bool): Flag that indicates whether the calculation should be
+                run inside a Custodian.
+            number_nodes (int): Number of nodes that should be used for the calculations.
+                Is required to add the proper `_category` to the Firework generated, so
+                it is picked up by the right Fireworker.
+            fw_action:
+        """
 
         # Create the PyTask that sets up the calculation
         setup_relax = PyTask(
