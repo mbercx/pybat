@@ -1,0 +1,6 @@
+# SCAN calculation settings
+INCAR:
+  METAGGA: SCAN
+  AMIX: 0.1
+  LUSE_VDW: True
+  BPARAM: 15.7
