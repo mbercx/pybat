@@ -621,15 +621,21 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
                    "atoms in the unit cell. \n Examples:\n \"{'Li':(0.2, 0.3)}\"\n "
                    "\"{'Ni':(0.1, 0.2), 'Mn':(0, 0.1)}\"")
 @click.option("--max_conf", "-M", default=0,
-              help="Maximum number of *new* configurations to generate. Note that this "
-                   "is on top of already existing configurations in the directory tree.")
+              help="Maximum number of configurations to generate. Note that this "
+                   "is on top of the number of already existing configurations in the "
+                   "directory tree in case ignore_existing is set to True.")
 @click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
 @click.option("--directory", "-d", default="",
               help="Directory in which to set up the configuration workflow.")
+@click.option("--ignore_existing", "-X", default=False,
+              help="Ignore the existing configurations when generating new ones, "
+                   "i.e. do not generate and calculate the energy for those "
+                   "configurations again.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def configuration(structure_file, functional, sub_sites, element_list, sizes,
-                  directory, conc_restrict, max_conf, in_custodian, number_nodes):
+                  directory, ignore_existing, conc_restrict, max_conf, in_custodian,
+                  number_nodes):
     """
     Set up a workflow for a set of configurations.
 
@@ -668,6 +674,7 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
                            max_configurations=max_conf,
                            functional=string_to_functional(functional),
                            directory=directory,
+                           ignore_existing=ignore_existing,
                            in_custodian=in_custodian,
                            number_nodes=number_nodes)
 
