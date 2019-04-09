@@ -103,7 +103,7 @@ def main():
 
 
 @main.command(context_settings=CONTEXT_SETTINGS)
-@click.option("-L", "-lpad_name", default="base")
+@click.option("-L", "--lpad_name", default="base")
 @click.option("-F", "--fworker_name", default="base")
 def qlaunch(lpad_name, fworker_name):
     """
