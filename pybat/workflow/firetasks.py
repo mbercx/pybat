@@ -268,7 +268,7 @@ class ConfigurationTask(FiretaskBase):
                 }
                 conf_number += 1
 
-            else:
+            elif self.get("include_existing", True):
 
                 configuration_dict[str(conf_hash)] = {
                     "structure": configuration.as_dict(),
