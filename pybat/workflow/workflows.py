@@ -12,7 +12,7 @@ from pybat.cli.commands.setup import transition
 from pybat.core import Cathode, Dimer
 from pybat.workflow.firetasks import VaspTask, CustodianTask, ConfigurationTask, \
     EnergyConfTask
-from pybat.workflow.fireworks import ScfFirework, RelaxFirework, NebFirework
+from pybat.workflow.fireworks import PybatStaticFW, PybatOptimizeFW, NebFirework
 
 """
 Package that contains all the Workflows of the pybat package.
@@ -42,10 +42,11 @@ __date__ = "Mar 2019"
 def get_wf_static(structure, directory, functional=("pbe", {}),
                   write_chgcar=False, in_custodian=False, number_nodes=None):
     """
-    Set up a static workflow.
+    Set up a workflow for a standard static calculation.
 
     Args:
-        structure (pymatgen.Structure): Structure for which to set up the SCF workflow.
+        structure (pymatgen.Structure): Structure for which to set up the static
+            calculation workflow.
         directory (str): Directory in which the static calculation should be performed.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
@@ -64,8 +65,8 @@ def get_wf_static(structure, directory, functional=("pbe", {}),
 
     """
 
-    # Set up the SCF Firework
-    scf_firework = ScfFirework(
+    # Set up the static Firework
+    static_fw = PybatStaticFW(
         structure=structure, functional=functional,
         directory=directory, write_chgcar=write_chgcar,
         in_custodian=in_custodian, number_nodes=number_nodes
@@ -75,12 +76,12 @@ def get_wf_static(structure, directory, functional=("pbe", {}),
     workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
     workflow_name += " " + str(functional)
 
-    return Workflow(fireworks=[scf_firework, ],
+    return Workflow(fireworks=[static_fw, ],
                     name=workflow_name)
 
 
-def get_wf_relax(structure, directory, functional=("pbe", {}),
-                 is_metal=False, in_custodian=False, number_nodes=None):
+def get_wf_optimize(structure, directory, functional=("pbe", {}),
+                    is_metal=False, in_custodian=False, number_nodes=None):
     """
     Set up a geometry optimization workflow and add it to the launchpad of the
     mongoDB server defined in the config file.
@@ -108,19 +109,19 @@ def get_wf_relax(structure, directory, functional=("pbe", {}),
     """
 
     # Set up the geometry optimization Firework
-    relax_firework = RelaxFirework(structure=structure,
-                                   functional=functional,
-                                   directory=directory,
-                                   is_metal=is_metal,
-                                   in_custodian=in_custodian,
-                                   number_nodes=number_nodes)
+    optimize_fw = PybatOptimizeFW(structure=structure,
+                                  functional=functional,
+                                  directory=directory,
+                                  is_metal=is_metal,
+                                  in_custodian=in_custodian,
+                                  number_nodes=number_nodes)
 
     # Set up a clear name for the workflow
     workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
     workflow_name += " " + str(functional)
 
     # Create the workflow
-    return Workflow(fireworks=[relax_firework, ],
+    return Workflow(fireworks=[optimize_fw, ],
                     name=workflow_name)
 
 
@@ -416,24 +417,24 @@ def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
                                    name="Dimer Geometry optimization",
                                    spec=firework_spec)
 
-    # Set up the SCF calculation directory
-    scf_dir = os.path.join(dimer_dir, "scf_final")
+    # Set up the static calculation directory
+    static_dir = os.path.join(dimer_dir, "static_final")
 
     final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
 
-    # Set up the SCF calculation
-    scf_firework = ScfFirework(
+    # Set up the static calculation
+    static_fw = PybatStaticFW(
         structure=final_cathode, functional=functional,
-        directory=scf_dir, write_chgcar=False, in_custodian=in_custodian,
+        directory=static_dir, write_chgcar=False, in_custodian=in_custodian,
         number_nodes=number_nodes
     )
 
     struc_name = str(structure.composition.reduced_composition).replace(" ", "")
 
     return Workflow(
-        fireworks=[transition_firework, scf_firework],
+        fireworks=[transition_firework, static_fw],
         name=struc_name + dimer_dir.split("/")[-1],
-        links_dict={transition_firework: [scf_firework]}
+        links_dict={transition_firework: [static_fw]}
     )
 
 

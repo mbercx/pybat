@@ -37,15 +37,15 @@ def _load_yaml_config(filename):
     return config
 
 
-def scf(structure, functional=("pbe", {}), calculation_dir="",
-        write_chgcar=False):
+def static(structure, functional=("pbe", {}), calculation_dir="",
+           write_chgcar=False):
     """
-    Set up a standard scf calculation. Always uses the tetrahedron method to
+    Set up a standard static calculation. Always uses the tetrahedron method to
     calculate accurate total energies.
 
     Args:
         structure: pymatgen.Structure OR path to structure file for which to set up
-            the SCF calculation.
+            the static calculation.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
@@ -77,7 +77,7 @@ def scf(structure, functional=("pbe", {}), calculation_dir="",
         if functional[0] == "pbeu":
             calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                              in functional[1]["LDAUU"].keys())
-        calculation_dir += "_scf"
+        calculation_dir += "_static"
     try:
         os.makedirs(calculation_dir)
     except FileExistsError:
@@ -102,18 +102,18 @@ def scf(structure, functional=("pbe", {}), calculation_dir="",
         structure.add_site_property("magmom", [0] * len(structure.sites))
 
     # Set up the BulkSCFSet
-    scf_calculation = BulkSCFSet(structure=structure,
-                                 user_incar_settings=user_incar_settings,
-                                 potcar_functional=DFT_FUNCTIONAL)
+    static_calculation = BulkSCFSet(structure=structure,
+                                    user_incar_settings=user_incar_settings,
+                                    potcar_functional=DFT_FUNCTIONAL)
 
     # Write the input files to the SCF calculation directory
-    scf_calculation.write_input(calculation_dir)
+    static_calculation.write_input(calculation_dir)
 
     return calculation_dir
 
 
-def relax(structure, functional=("pbe", {}), calculation_dir="",
-          is_metal=False):
+def optimize(structure, functional=("pbe", {}), calculation_dir="",
+             is_metal=False):
     """
     Set up a standard geometry optimization calculation of a Cathode
     structure. Optimizes both the atomic positions as well as the unit cell.
@@ -153,7 +153,7 @@ def relax(structure, functional=("pbe", {}), calculation_dir="",
         if functional[0] == "pbeu":
             calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                              in functional[1]["LDAUU"].keys())
-        calculation_dir += "_relax"
+        calculation_dir += "_optimize"
     try:
         os.makedirs(calculation_dir)
     except FileExistsError:

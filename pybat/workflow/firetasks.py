@@ -194,11 +194,11 @@ class PulayTask(FiretaskBase):
                 firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
             # Combine the two FireTasks into one FireWork
-            relax_firework = Firework(tasks=[copy_contcar, vasprun, pulay_task],
-                                      name="Pulay Step",
-                                      spec=firework_spec)
+            optimize_fw = Firework(tasks=[copy_contcar, vasprun, pulay_task],
+                                   name="Pulay Step",
+                                   spec=firework_spec)
 
-            return FWAction(additions=relax_firework)
+            return FWAction(additions=optimize_fw)
 
 
 class ConfigurationTask(FiretaskBase):
@@ -288,7 +288,7 @@ class ConfigurationTask(FiretaskBase):
 class EnergyConfTask(FiretaskBase):
     """
     Add a list of FireWorks to the workflow that first optimize the geometry and
-    then perform an SCF calculation for all the configurations in the
+    then perform an static calculation for all the configurations in the
     configuration_dict in the fw_spec.
 
     """
@@ -314,38 +314,38 @@ class EnergyConfTask(FiretaskBase):
         firework_list = []
 
         for configuration in configuration_dict.values():
-            relax_dir = os.path.join(
-                configuration["directory"], functional_dir + "_relax"
+            optimize_dir = os.path.join(
+                configuration["directory"], functional_dir + "_optimize"
             )
-            scf_dir = os.path.join(
-                configuration["directory"], functional_dir + "_scf"
+            static_dir = os.path.join(
+                configuration["directory"], functional_dir + "static"
             )
 
             # This import needs to happen here because the Fireworks depend on the
             # firetasks in this module. # TODO fix this?
-            from pybat.workflow.fireworks import ScfFirework, RelaxFirework
+            from pybat.workflow.fireworks import PybatStaticFW, PybatOptimizeFW
 
-            scf_firework = ScfFirework(
-                structure=os.path.join(relax_dir, "final_cathode.json"),
+            static_fw = PybatStaticFW(
+                structure=os.path.join(optimize_dir, "final_cathode.json"),
                 functional=self["functional"],
-                directory=scf_dir,
+                directory=static_dir,
                 write_chgcar=False,
                 in_custodian=self.get("in_custodian", False),
                 number_nodes=self.get("number_nodes", None)
             )
 
-            fw_action = FWAction(additions=scf_firework)
+            fw_action = FWAction(additions=static_fw)
 
-            relax_firework = RelaxFirework(
+            optimize_fw = PybatOptimizeFW(
                 structure=configuration["structure"],
                 functional=self["functional"],
-                directory=relax_dir,
+                directory=optimize_dir,
                 in_custodian=self.get("in_custodian", False),
                 number_nodes=self.get("number_nodes", None),
                 fw_action=fw_action
             )
 
-            firework_list.append(relax_firework)
+            firework_list.append(optimize_fw)
 
         return FWAction(additions=firework_list)
 

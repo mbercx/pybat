@@ -21,21 +21,22 @@ __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
 
 
-class ScfFirework(Firework):
+class PybatStaticFW(Firework):
 
     def __init__(self, structure, functional, directory, write_chgcar=False,
                  in_custodian=False, number_nodes=None):
         """
-        Create a FireWork for performing an SCF calculation.
+        Create a FireWork for performing a static calculation.
 
         Args:
             structure: pymatgen.Structure OR path to structure file for which to run
-                the SCF calculation.
+                the static calculation.
             functional (tuple): Tuple with the functional choices. The first element
                 contains a string that indicates the functional used ("pbe", "hse", ...),
                 whereas the second element contains a dictionary that allows the user
                 to specify the various functional tags.
-            directory (str): Directory in which the SCF calculation should be performed.
+            directory (str): Directory in which the static calculation should be
+                performed.
             write_chgcar (bool): Flag that indicates whether the CHGCAR file should
                 be written.
             in_custodian (bool): Flag that indicates whether the calculation should be
@@ -45,13 +46,13 @@ class ScfFirework(Firework):
                 it is picked up by the right Fireworker.
 
         Returns:
-            Firework: A firework that represents an SCF calculation.
+            Firework: A firework that represents a static calculation.
 
         """
 
         # Create the PyTask that sets up the calculation
-        setup_scf = PyTask(
-            func="pybat.cli.commands.setup.scf",
+        setup_static = PyTask(
+            func="pybat.cli.commands.setup.static",
             kwargs={"structure": structure,
                     "functional": functional,
                     "calculation_dir": directory,
@@ -72,12 +73,12 @@ class ScfFirework(Firework):
             firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
         # Combine the two FireTasks into one FireWork
-        super(ScfFirework, self).__init__(
-            tasks=[setup_scf, vasprun], name="SCF calculation", spec=firework_spec
+        super(PybatStaticFW, self).__init__(
+            tasks=[setup_static, vasprun], name="Static calculation", spec=firework_spec
         )
 
 
-class RelaxFirework(Firework):
+class PybatOptimizeFW(Firework):
 
     def __init__(self, structure, functional, directory, is_metal=False,
                  in_custodian=False, number_nodes=None, fw_action=None):
@@ -86,12 +87,13 @@ class RelaxFirework(Firework):
 
         Args:
             structure: pymatgen.Structure OR path to structure file for which to run
-                the SCF calculation.
+                the geometry optimization.
             functional (tuple): Tuple with the functional choices. The first element
                 contains a string that indicates the functional used ("pbe", "hse", ...),
                 whereas the second element contains a dictionary that allows the user
                 to specify the various functional tags.
-            directory (str): Directory in which the SCF calculation should be performed.
+            directory (str): Directory in which the geometry optimization should be
+                performed.
             is_metal (bool): Flag that indicates the material being studied is a
                 metal, which changes the smearing from Gaussian to second order
                 Methfessel-Paxton of 0.2 eV.
@@ -105,8 +107,8 @@ class RelaxFirework(Firework):
         """
 
         # Create the PyTask that sets up the calculation
-        setup_relax = PyTask(
-            func="pybat.cli.commands.setup.relax",
+        setup_optimize = PyTask(
+            func="pybat.cli.commands.setup.optimize",
             kwargs={"structure": structure,
                     "functional": functional,
                     "calculation_dir": directory,
@@ -140,8 +142,8 @@ class RelaxFirework(Firework):
             firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
         # Combine the FireTasks into one FireWork
-        super(RelaxFirework, self).__init__(
-            tasks=[setup_relax, vasprun, get_cathode, pulay_task],
+        super(PybatOptimizeFW, self).__init__(
+            tasks=[setup_optimize, vasprun, get_cathode, pulay_task],
             name="Geometry optimization", spec=firework_spec
         )
 

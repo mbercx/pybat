@@ -325,20 +325,20 @@ def setup():
 @click.argument("structure_file", nargs=1)
 @click.option("--calculation_dir", "-d", default="",
               help="The directory in which to set up the calculation. "
-                   "Default is FUNCTIONAL_relax.")
+                   "Default is FUNCTIONAL_static.")
 @click.option("--write_chgcar", "-C", is_flag=True)
-def scf(structure_file, functional, calculation_dir, write_chgcar):
+def static(structure_file, functional, calculation_dir, write_chgcar):
     """
-    Set up a geometry optimization for a structure.
+    Set up a static calculation for a structure.
     """
-    from pybat.cli.commands.setup import scf
+    from pybat.cli.commands.setup import static
 
     cat = Cathode.from_file(structure_file)
 
-    scf(structure=cat,
-        functional=string_to_functional(functional),
-        calculation_dir=calculation_dir,
-        write_chgcar=write_chgcar)
+    static(structure=cat,
+           functional=string_to_functional(functional),
+           calculation_dir=calculation_dir,
+           write_chgcar=write_chgcar)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -356,23 +356,23 @@ def scf(structure_file, functional, calculation_dir, write_chgcar):
               )
 @click.option("--calculation_dir", "-d", default="",
               help="The directory in which to set up the calculation. "
-                   "Default is FUNCTIONAL_relax.")
+                   "Default is FUNCTIONAL_.")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-def relax(structure_file, functional, calculation_dir, is_metal):
+def optimize(structure_file, functional, calculation_dir, is_metal):
     """
     Set up a geometry optimization for a structure.
     """
-    from pybat.cli.commands.setup import relax
+    from pybat.cli.commands.setup import optimize
 
     cat = Cathode.from_file(structure_file)
 
-    relax(structure=cat,
-          functional=string_to_functional(functional),
-          calculation_dir=calculation_dir,
-          is_metal=is_metal)
+    optimize(structure=cat,
+             functional=string_to_functional(functional),
+             calculation_dir=calculation_dir,
+             is_metal=is_metal)
 
 
 @setup.command(context_settings=CONTEXT_SETTINGS)
@@ -581,7 +581,7 @@ def workflow():
               help=FUNCTIONAL_HELP
               )
 @click.option("--directory", "-d", default="",
-              help="Directory in which the SCF calculation will be performed.")
+              help="Directory in which the static calculation will be performed.")
 @click.option("--write_chgcar", "-C", is_flag=True,
               help="Flag that indicates that the CHGCAR should be written, which "
                    "is not done by default to conserve space.")
@@ -589,9 +589,10 @@ def workflow():
               help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0,
               help=NUMBER_NODES_HELP)
-def scf(structure_file, functional, directory, write_chgcar, in_custodian, number_nodes):
+def static(structure_file, functional, directory, write_chgcar, in_custodian,
+           number_nodes):
     """
-    Set up an SCF calculation workflow.
+    Set up an static calculation workflow.
     """
     from pybat.workflow.workflows import get_wf_static
 
@@ -601,7 +602,7 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
     functional = string_to_functional(functional)
 
     # Set up the calculation directory
-    directory = set_up_directory(directory, functional, "scf")
+    directory = set_up_directory(directory, functional, "static")
 
     cat = Cathode.from_file(structure_file)
 
@@ -622,11 +623,11 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
-def relax(structure_file, functional, directory, is_metal, in_custodian, number_nodes):
+def optimize(structure_file, functional, directory, is_metal, in_custodian, number_nodes):
     """
     Set up a geometry optimization workflow.
     """
-    from pybat.workflow.workflows import get_wf_relax
+    from pybat.workflow.workflows import get_wf_optimize
 
     cat = Cathode.from_file(structure_file)
 
@@ -636,15 +637,15 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
     functional = string_to_functional(functional)
 
     # Set up the calculation directory
-    directory = set_up_directory(directory, functional, "relax")
+    directory = set_up_directory(directory, functional, "optimize")
 
     LAUNCHPAD.add_wf(
-        get_wf_relax(structure=cat,
-                     functional=functional,
-                     directory=directory,
-                     is_metal=is_metal,
-                     in_custodian=in_custodian,
-                     number_nodes=number_nodes)
+        get_wf_optimize(structure=cat,
+                        functional=functional,
+                        directory=directory,
+                        is_metal=is_metal,
+                        in_custodian=in_custodian,
+                        number_nodes=number_nodes)
     )
 
 
