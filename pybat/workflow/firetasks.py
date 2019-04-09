@@ -221,14 +221,15 @@ class ConfigurationTask(FiretaskBase):
     def run_task(self, fw_spec):
 
         # If requested, check for existing configurations in the directory tree
-        if self.get("ignore_existing", False):
-            current_conf_dict = find_configuration_dict(self["directory"])
-        else:
-            current_conf_dict = {}
+        current_conf_dict = find_configuration_dict(self["directory"])
 
         # Adjust max_configurations based on existing configurations
         if self.get("max_configurations", None):
-            max_conf_to_generate = self.get("max_configurations") + len(current_conf_dict)
+            if self.get("ignore_existing", False):
+                max_conf_to_generate = self.get("max_configurations")
+            else:
+                max_conf_to_generate = self.get("max_configurations") \
+                                       + len(current_conf_dict)
         else:
             max_conf_to_generate = None
 
@@ -268,6 +269,13 @@ class ConfigurationTask(FiretaskBase):
                     "directory": configuration_dir
                 }
                 conf_number += 1
+
+            elif self.get("ignore_existing", False):
+
+                configuration_dict[str(conf_hash)] = {
+                    "structure": configuration.as_dict(),
+                    "directory": current_conf_dict[conf_hash]["directory"]
+                }
 
             # Break out of the loop if we have enough configurations
             if len(configuration_dict) == self.get("max_configurations", None):
