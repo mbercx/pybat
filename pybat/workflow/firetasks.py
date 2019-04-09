@@ -228,7 +228,6 @@ class ConfigurationTask(FiretaskBase):
             else:
                 max_conf_to_generate = self.get("max_configurations") \
                                        + len(current_conf_dict)
-
         else:
             max_conf_to_generate = None
 
@@ -269,7 +268,7 @@ class ConfigurationTask(FiretaskBase):
                 }
                 conf_number += 1
 
-            elif self.get("include_existing", True):
+            else:
 
                 configuration_dict[str(conf_hash)] = {
                     "structure": configuration.as_dict(),
