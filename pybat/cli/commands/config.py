@@ -155,3 +155,30 @@ def jobscript(template_file, fworker_name="base"):
                                         "fworker", fworker_name + "_job_template.sh")
 
     shutil.move(template_file, config_template_file)
+
+
+def load_config(config, name="base"):
+    """
+
+    Args:
+        config:
+        name:
+
+    Returns:
+
+    """
+    if config == "launchpad":
+        return LaunchPad.from_file(
+            os.path.join(os.path.expanduser("~"), ".pybat_config",
+                         "launchpad", name + "_launchpad.yaml")
+        )
+    if config == "fworker":
+        return FWorker.from_file(
+            os.path.join(os.path.expanduser("~"), ".pybat_config",
+                         "fworker", name + "_fworker.yaml")
+        )
+    if config == "qadapter":
+        return CommonAdapter.from_file(
+            os.path.join(os.path.expanduser("~"), ".pybat_config",
+                         "fworker", name + "_qadapter.yaml")
+        )
