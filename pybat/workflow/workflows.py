@@ -134,7 +134,7 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
     Args:
         structure (pymatgen.Structure): Structure for which to set up the geometry
             optimization workflow.
-        functional (tuple): Tuple with the functional choices. The first element
+        functional (tuple): Tuple with the functional details. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
@@ -197,7 +197,7 @@ def migration_workflow(structure, migration_indices=(0, 0),
         migration_indices (tuple): Tuple of the indices which designate the
             migrating site and the vacant site to which the cation will
             migrate. If no indices are provided, the user will be prompted.
-        functional (tuple): Tuple with the functional choices. The first element
+        functional (tuple): Tuple with the functional details. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
@@ -267,7 +267,7 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     Args:
         directory (str): Directory in which the NEB calculation should be performed.
         nimages (int): Number of images to use for the NEB calculation.
-        functional (tuple): Tuple with the functional choices. The first element
+        functional (tuple): Tuple with the functional details. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
@@ -326,7 +326,7 @@ def configuration_workflow(structure, substitution_sites=None, element_list=None
                            number_nodes=None):
     """
     Set up a workflow for a set of atomic configurations, which includes a geometric
-    optimization as well as a SCF calculation based on the final geometry.
+    optimization as well as a static calculation based on the final geometry.
 
     Args:
         structure (pymatgen.Structure): Structure for which to set up the configuration
@@ -344,8 +344,11 @@ def configuration_workflow(structure, substitution_sites=None, element_list=None
             ranges for each element. Note that the concentration is defined
             versus the total amount of atoms in the unit cell.
             E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
-        max_configurations (int): Maximum number of configurations to generate.
-        functional (tuple): Tuple with the functional choices. The first element
+        max_configurations (int): Maximum number of configurations for which the total
+            energy should be calculated. Note that that in case include_existing is
+            set to False, the existing configurations in the directory tree are not
+            included in this number.
+        functional (tuple): Tuple with the functional details. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
