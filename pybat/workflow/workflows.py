@@ -660,9 +660,113 @@ def generate_conf_dir(directory, element_list, configuration, number):
 
     return conf_dir
 
+
 # endregion
 
 # region * Token workflows for testing
 
+def get_configuration_workflow(structure, substitution_sites=None, element_list=None,
+                               sizes=None, concentration_restrictions=None,
+                               max_configurations=None, functional=("pbe", {}),
+                               directory=None, include_existing=True, in_custodian=False,
+                               number_nodes=None):
+    """
+    Set up a workflow for a set of atomic configurations, which includes a geometric
+    optimization as well as a static calculation based on the final geometry.
+
+    Args:
+        structure (pymatgen.Structure): Structure for which to set up the configuration
+            Workflow.
+        substitution_sites (list): List of site indices or pymatgen.Sites to be
+            substituted.
+        element_list (list): List of string representations of the cation elements
+            which have to be substituted on the substitution sites. Can also
+            include "Vac" to introduce vacancy sites.
+            E.g. ["Li", "Vac"]; ["Mn", "Co", "Ni"]; ...
+        sizes (list): List of unit supercell sizes to be considered for the
+            enumeration of the configurations.
+            E.g. [1, 2]; range(1, 4); ...
+        concentration_restrictions (dict): Dictionary of allowed concentration
+            ranges for each element. Note that the concentration is defined
+            versus the total amount of atoms in the unit cell.
+            E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
+        max_configurations (int): Maximum number of configurations for which the total
+            energy should be calculated. Note that that in case include_existing is
+            set to False, the existing configurations in the directory tree are not
+            included in this number.
+        functional (tuple): Tuple with the functional details. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        directory (str): Path to the directory in which the configurations and
+            calculations should be set up.
+        include_existing (bool): Include the existing configurations in the directory
+            tree for the calculations.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
+
+    Returns:
+        None
+
+    """
+
+    # Check for the required input, and request if necessary
+    if not substitution_sites or not element_list or not sizes:
+        print(structure)
+        print()
+    if not substitution_sites:
+        substitution_sites = [int(i) for i in input(
+            "Please provide the substitution site indices, separated by a space: "
+        ).split(" ")]
+    if not element_list:
+        element_list = [i for i in input(
+            "Please provide the substitution elements, separated by a space: "
+        ).split(" ")]
+    if not sizes:
+        sizes = [int(i) for i in input(
+            "Please provide the possible unit cell sizes, separated by a space: "
+        ).split(" ")]
+
+    # Set up the directory
+    if directory == "":
+        directory = os.getcwd()
+    directory = os.path.abspath(directory)
+
+    configuration_task = ConfigurationTask(
+        structure=structure,
+        directory=directory,
+        substitution_sites=list(substitution_sites),
+        element_list=element_list,
+        sizes=list(sizes),
+        concentration_restrictions=concentration_restrictions,
+        max_configurations=max_configurations,
+        include_existing=include_existing
+    )
+
+    energy_task = EnergyConfTask(
+        functional=functional,
+        in_custodian=in_custodian,
+        number_nodes=number_nodes
+    )
+
+    # Set up a (sort of) clear name for the workflow
+    workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
+    workflow_name += " " + str(element_list)
+    workflow_name += " " + str(functional)
+
+    configuration_fw = Firework(tasks=[configuration_task, energy_task],
+                                name="Configuration Setup",
+                                spec={"_category": "none"})
+
+    # Create the workflow
+    workflow = Workflow(
+        fireworks=[configuration_fw],
+        name=workflow_name
+    )
+
+    return workflow
 
 # endregion
