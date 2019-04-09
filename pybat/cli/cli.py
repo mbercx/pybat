@@ -102,6 +102,24 @@ def main():
     pass
 
 
+@main.command(context_settings=CONTEXT_SETTINGS)
+@click.option("-L", "--launcher", default="base")
+def qlaunch(launcher):
+    """
+    Launch jobs to the queue that will accept Fireworks.
+
+    Returns:
+
+    """
+    from fireworks.queue.queue_launcher import launch_rocket_to_queue
+
+    launch_rocket_to_queue(
+        launchpad=launcher, fworker=None, qadapter=launcher, launcher_dir='.',
+        reserve=False,
+        strm_lvl='INFO', create_launcher_dir=False,
+        fill_mode=False,
+        fw_id=None)
+
 # TODO Add checks for U-value input
 
 # region * Config
@@ -110,7 +128,7 @@ def main():
 @main.group(context_settings=CONTEXT_SETTINGS)
 def config():
     """
-    Configure the workflows server and script.
+    Configure the Workflows setup.
 
     """
     pass
@@ -118,35 +136,56 @@ def config():
 
 @config.command(context_settings=CONTEXT_SETTINGS)
 @click.option("-l", "--launchpad_file", default="")
-def lpad(launchpad_file):
+@click.option("-N", "--name", default="base")
+def launchpad(launchpad_file, name):
     """
-    Configure the workflows server.
+    Configure a Workflows server or launchpad.
 
     """
     if launchpad_file == "":
         launchpad_file = None
-    from pybat.cli.commands.config import lpad
-    lpad(launchpad_file=launchpad_file)
+    from pybat.cli.commands.config import launchpad
+    launchpad(launchpad_file=launchpad_file, database=name)
 
 
 @config.command(context_settings=CONTEXT_SETTINGS)
-@click.option("-s", "--script_path", default="")
-def script(script_path):
+@click.option("-F", "--fworker_file", default="")
+@click.option("-N", "--name", default="base")
+def fworker(fworker_file, name):
     """
-    Configure the workflow script.
+    Configure the base settings of a fireworker.
 
     """
-    if script_path == "":
-        script_path = None
-    from pybat.cli.commands.config import script
-    script(script_path=script_path)
+    if fworker_file == "":
+        fworker_file = None
+    from pybat.cli.commands.config import fworker
+    fworker(fireworker_file=fworker_file, fworker_name=name)
 
 
 @config.command(context_settings=CONTEXT_SETTINGS)
-def test():
-    from pybat.cli.commands.config import test
+@click.argument("qadapter_file", nargs=1)
+@click.option("-N", "--name", default="base")
+def queue(qadapter_file, name):
+    """
+    Configure the standard queue adapter of a fireworker.
 
-    test()
+    """
+    from pybat.cli.commands.config import queue
+
+    queue(qadapter_file=qadapter_file, fworker_name=name)
+
+
+@config.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("template_file", nargs=1)
+@click.option("-N", "--name", default="base")
+def jobscript(template_file, name):
+    """
+    Configure the standard queue adapter of a fireworker.
+
+    """
+    from pybat.cli.commands.config import jobscript
+
+    jobscript(template_file=template_file, fworker_name=name)
 
 
 # endregion

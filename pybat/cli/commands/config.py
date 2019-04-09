@@ -3,10 +3,11 @@
 # Distributed under the terms of the MIT License
 
 
-import os, pdb
+import os
+import shutil
 
-from pathlib import Path
-from ruamel.yaml import YAML
+from fireworks import LaunchPad, FWorker
+from fireworks.user_objects.queue_adapters.common_adapter import CommonAdapter
 
 """
 Set of scripts for configuring the pybat package.
@@ -19,11 +20,8 @@ __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
 
-# Load the workflow configuration
-CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
 
-
-def lpad(launchpad_file=None):
+def launchpad(launchpad_file=None, database="base"):
     """
     Script to set up the configuration of the launchpad for accessing the workflow
     server.
@@ -36,101 +34,82 @@ def lpad(launchpad_file=None):
         None
 
     """
-    yaml = YAML()
-    yaml.default_flow_style = False
 
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as config_file:
-            config_dict = yaml.load(config_file.read())
-    else:
-        config_dict = {"SERVER": {}, "WORKFLOW": {}}
+    config_lpad_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
+                                    "launchpad", database + "_launchpad.yaml")
 
     if launchpad_file:
-        with open(launchpad_file, 'r') as launchpad_file:
-            config_dict["SERVER"].update(yaml.load(launchpad_file.read()))
+        lpad = LaunchPad.from_file(launchpad_file)
     else:
-        config_dict["SERVER"]["host"] = input("Please provide the server "
-                                              "host: ")
-        config_dict["SERVER"]["port"] = input("Please provide the port "
-                                              "number: ")
-        config_dict["SERVER"]["name"] = input("Please provide the server "
-                                              "name: ")
-        config_dict["SERVER"]["username"] = input("Please provide your "
-                                                  "username: ")
-        config_dict["SERVER"]["password"] = input("Please provide your "
-                                                  "password: ")
+        host = input("Please provide the server host: ")
+        port = int(input("Please provide the port number: "))
+        name = input("Please provide the server name: ")
+        username = input("Please provide your username: ")
+        password = input("Please provide your password: ")
+
+        lpad = LaunchPad(
+            host=host, port=port, name=name, username=username, password=password,
+            ssl=True, authsource="admin"
+        )
         # TODO Add server checks
 
-    with Path(CONFIG_FILE) as config_file:
-        yaml.dump(config_dict, config_file)
+    lpad.to_file(config_lpad_file)
 
 
-def script(script_path=None):
+def fworker(fireworker_file=None, fworker_name="base"):
     """
-    Script to set up the configuration of the workflow jobscript.
+    Script to set up the configuration of the fireworker.
 
     Returns:
         None
 
     """
-    yaml = YAML()
-    yaml.default_flow_style = False
+    config_fw_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
+                                  "fworker", fworker_name + "_fworker.yaml")
 
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as config_file:
-            config_dict = yaml.load(config_file.read())
+    if fireworker_file:
+        fireworker = FWorker.from_file(fireworker_file)
     else:
-        config_dict = {"SERVER": {}, "WORKFLOW": {}}
+        name = input("Please provide the fireworker name: ")
+        vasp_cmd = input("Please provide the full vasp command: ")
+        fireworker = FWorker(name=name, category=["none", "1nodes"],
+                             env={"vasp_cmd": vasp_cmd})
 
-    if not script_path:
-        script_path = input(
-            "Please provide the full path to the workflow script: "
-        )
-        while not os.path.exists(script_path):
-
-            script_path = input(
-                "Provided path does not exist. Please provide the full path to the "
-                "workflow script again: "
-            )
-
-        if not os.path.isabs(script_path):
-
-            print("Provided path is not an absolute path. Finding absolute "
-                  "path for proper configuration of the workflows...")
-            script_path = os.path.abspath(script_path)
-
-    else:
-        script_path = os.path.abspath(script_path)
-
-    config_dict["WORKFLOW"].update({"script_path": script_path})
-
-    with Path(CONFIG_FILE) as config_file:
-        yaml.dump(config_dict, config_file)
+    fireworker.to_file(config_fw_file)
 
 
-def test():
+def queue(qadapter_file, fworker_name="base"):
     """
-    Script to set up the configuration of the workflow server and jobscripts.
+    Script to set up the configuration of the queueing system. Note that we store the
+    queue_adapter in the same configuration directory as the Fireworker, i.e. fworker.
+    This is in the assumption that each worker has one preferred queueing system.
 
     Returns:
         None
 
     """
-    yaml = YAML()
-    yaml.default_flow_style = False
+    config_q_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
+                                 "fworker", fworker_name + "_qadapter.yaml")
 
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as config_file:
-            config_dict = yaml.load(config_file.read())
-    else:
-        config_dict = {"SERVER": {}, "WORKFLOW": {}}
+    CommonAdapter.from_file(qadapter_file).to_file(config_q_file)
 
-    config_dict["SERVER"]["host"] = "1"
-    config_dict["SERVER"]["port"] = "2"
-    config_dict["SERVER"]["name"] = "3"
-    config_dict["SERVER"]["username"] = "4"
-    config_dict["SERVER"]["password"] = "5"
-    config_dict["WORKFLOW"]["script_path"] = "job.sh"
 
-    with Path(CONFIG_FILE) as config_file:
-        yaml.dump(config_dict, config_file)
+def jobscript(template_file, fworker_name="base"):
+    """
+    Add a template jobscript for submitting jobs to a queueing system. Should be
+    adaptable by a queue_adapter, i.e. it should contain variable such as $${nnodes},
+    $${rocket_launch}, etc... Again, we'll assume for now that one template per
+    fireworker is sufficient.
+
+    Args:
+        template_file:
+        fworker_name:
+
+    Returns:
+
+    """
+
+    config_template_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
+                                        "fworker", fworker_name + "_job_template.sh")
+
+    shutil.move(template_file, config_template_file)
