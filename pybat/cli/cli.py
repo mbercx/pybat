@@ -553,7 +553,7 @@ def supercell(cell, structure_file, file_format):
 
 @util.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-def print(structure_file):
+def show(structure_file):
     """
     Print the cathode details to the screen.
 
@@ -700,12 +700,14 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     """
     from pybat.workflow.workflows import get_wf_configurations
 
+    cat = Cathode.from_file(structure_file)
+
     # Set up the directory
     if directory == "":
         directory = os.getcwd()
     directory = os.path.abspath(directory)
 
-    # Process the sizes format to one that can be used by the configuration workflow
+    # Process the option input
     try:
         substitution_sites = eval(sub_sites)
     except SyntaxError:
@@ -723,11 +725,10 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     except TypeError:
         conc_restrict = None
 
-    # Check for the required input, and request if necessary
-    if not substitution_sites or not element_list or not sizes:
-        print(Cathode.from_file(structure_file))
-        print()
+    # In case some required settings are missing, request them
     if not substitution_sites:
+        print(cat)
+        print()
         substitution_sites = [int(i) for i in input(
             "Please provide the substitution site indices, separated by a space: "
         ).split(" ")]
@@ -739,8 +740,6 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
         sizes = [int(i) for i in input(
             "Please provide the possible unit cell sizes, separated by a space: "
         ).split(" ")]
-
-    cat = Cathode.from_file(structure_file)
 
     LAUNCHPAD.add_wf(
         get_wf_configurations(structure=cat,
