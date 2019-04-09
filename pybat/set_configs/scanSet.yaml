@@ -1,3 +1,4 @@
 # SCAN calculation settings
 INCAR:
   METAGGA: SCAN
+  AMIX: 0.1
