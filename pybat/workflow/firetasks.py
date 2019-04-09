@@ -36,7 +36,7 @@ class VaspTask(FiretaskBase):
 
     def run_task(self, fw_spec):
         os.chdir(self["directory"])
-        subprocess.run(fw_spec["_fw_env"]["vasp_command"], shell=True)
+        subprocess.run(fw_spec["_fw_env"]["vasp_cmd"], shell=True)
 
 
 class CustodianTask(FiretaskBase):
@@ -56,7 +56,7 @@ class CustodianTask(FiretaskBase):
 
         output = os.path.join(directory, "out")
         # TODO Make the output file more general
-        vasp_cmd = fw_spec["_fw_env"]["vasp_command"]
+        vasp_cmd = fw_spec["_fw_env"]["vasp_cmd"]
 
         handlers = [VaspErrorHandler(output_filename=output),
                     UnconvergedErrorHandler(output_filename=output)]
