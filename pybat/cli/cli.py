@@ -2,7 +2,12 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
+import os
+
 import click
+from fireworks import LaunchPad
+from pymongo.errors import ServerSelectionTimeoutError
+from ruamel.yaml import YAML
 
 from pybat.core import Cathode, LiRichCathode
 
@@ -17,6 +22,39 @@ __version__ = "pre-alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
+
+
+# Load the workflow configuration
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
+
+if os.path.exists(CONFIG_FILE):
+    with open(CONFIG_FILE, 'r') as configfile:
+        yaml = YAML()
+        yaml.default_flow_style = False
+        CONFIG = yaml.load(configfile.read())
+
+        try:
+            LAUNCHPAD = LaunchPad(
+                host=CONFIG["SERVER"].get("host", ""),
+                port=int(CONFIG["SERVER"].get("port", 0)),
+                name=CONFIG["SERVER"].get("name", ""),
+                username=CONFIG["SERVER"].get("username", ""),
+                password=CONFIG["SERVER"].get("password", ""),
+                ssl=CONFIG["SERVER"].get("ssl", False),
+                authsource=CONFIG["SERVER"].get("authsource", None)
+            )
+        except ServerSelectionTimeoutError:
+            raise TimeoutError("Could not connect to server. Please make "
+                               "sure the details of the server are correctly "
+                               "set up.")
+
+else:
+    raise FileNotFoundError("No configuration file found in user's home "
+                            "directory. Please use pybat config  "
+                            "in order to set up the configuration for "
+                            "the workflows.")
+
+
 
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
