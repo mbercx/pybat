@@ -5,8 +5,12 @@
 import os
 
 import click
+from fireworks import LaunchPad
+from pymongo.errors import ServerSelectionTimeoutError
+from ruamel.yaml import YAML
 
-from pybat.core import Cathode, LiRichCathode
+from pybat.core import Cathode
+from pybat.core import LiRichCathode
 
 """
 Command line interface for the pybat package.
@@ -19,6 +23,36 @@ __version__ = "pre-alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
+
+# Load the workflow configuration
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
+
+if os.path.exists(CONFIG_FILE):
+    with open(CONFIG_FILE, 'r') as configfile:
+        yaml = YAML()
+        yaml.default_flow_style = False
+        CONFIG = yaml.load(configfile.read())
+
+        try:
+            LAUNCHPAD = LaunchPad(
+                host=CONFIG["SERVER"].get("host", ""),
+                port=int(CONFIG["SERVER"].get("port", 0)),
+                name=CONFIG["SERVER"].get("name", ""),
+                username=CONFIG["SERVER"].get("username", ""),
+                password=CONFIG["SERVER"].get("password", ""),
+                ssl=CONFIG["SERVER"].get("ssl", False),
+                authsource=CONFIG["SERVER"].get("authsource", None)
+            )
+        except ServerSelectionTimeoutError:
+            raise TimeoutError("Could not connect to server. Please make "
+                               "sure the details of the server are correctly "
+                               "set up.")
+
+else:
+    raise FileNotFoundError("No configuration file found in user's home "
+                            "directory. Please use pybat config  "
+                            "in order to set up the configuration for "
+                            "the workflows.")
 
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -567,14 +601,7 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
     functional = string_to_functional(functional)
 
     # Set up the calculation directory
-    if directory == "":
-        directory = os.path.join(os.getcwd(), functional[0])
-        if functional[0] == "pbeu":
-            directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
-                                       in functional[1]["LDAUU"].keys())
-        directory += "_scf"
-    else:
-        directory = os.path.abspath(directory)
+    directory = set_up_directory(directory, functional, "scf")
 
     cat = Cathode.from_file(structure_file)
 
@@ -599,16 +626,26 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
     """
     Set up a geometry optimization workflow.
     """
-    from pybat.workflow.workflows import relax_workflow
+    from pybat.workflow.workflows import get_wf_relax
 
     cat = Cathode.from_file(structure_file)
 
-    relax_workflow(structure=cat,
-                   functional=string_to_functional(functional),
-                   directory=directory,
-                   is_metal=is_metal,
-                   in_custodian=in_custodian,
-                   number_nodes=number_nodes)
+    # Process the input options
+    if number_nodes == 0:
+        number_nodes = None
+    functional = string_to_functional(functional)
+
+    # Set up the calculation directory
+    directory = set_up_directory(directory, functional, "relax")
+
+    LAUNCHPAD.add_wf(
+        get_wf_relax(structure=cat,
+                     functional=functional,
+                     directory=directory,
+                     is_metal=is_metal,
+                     in_custodian=in_custodian,
+                     number_nodes=number_nodes)
+    )
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -661,13 +698,18 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     input is not specified during command execution, it will be requested from the user.
 
     """
-    from pybat.workflow.workflows import configuration_workflow
+    from pybat.workflow.workflows import get_wf_configurations
+
+    # Set up the directory
+    if directory == "":
+        directory = os.getcwd()
+    directory = os.path.abspath(directory)
 
     # Process the sizes format to one that can be used by the configuration workflow
     try:
-        sub_sites = eval(sub_sites)
+        substitution_sites = eval(sub_sites)
     except SyntaxError:
-        sub_sites = [int(site) for site in sub_sites.split(" ")]
+        substitution_sites = [int(site) for site in sub_sites.split(" ")]
     try:
         element_list = eval(element_list)
     except SyntaxError:
@@ -681,19 +723,38 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
     except TypeError:
         conc_restrict = None
 
+    # Check for the required input, and request if necessary
+    if not substitution_sites or not element_list or not sizes:
+        print(Cathode.from_file(structure_file))
+        print()
+    if not substitution_sites:
+        substitution_sites = [int(i) for i in input(
+            "Please provide the substitution site indices, separated by a space: "
+        ).split(" ")]
+    if not element_list:
+        element_list = [i for i in input(
+            "Please provide the substitution elements, separated by a space: "
+        ).split(" ")]
+    if not sizes:
+        sizes = [int(i) for i in input(
+            "Please provide the possible unit cell sizes, separated by a space: "
+        ).split(" ")]
+
     cat = Cathode.from_file(structure_file)
 
-    configuration_workflow(structure=cat,
-                           substitution_sites=sub_sites,
-                           element_list=element_list,
-                           sizes=sizes,
-                           concentration_restrictions=conc_restrict,
-                           max_configurations=max_conf,
-                           functional=string_to_functional(functional),
-                           directory=directory,
-                           include_existing=include_existing,
-                           in_custodian=in_custodian,
-                           number_nodes=number_nodes)
+    LAUNCHPAD.add_wf(
+        get_wf_configurations(structure=cat,
+                              substitution_sites=substitution_sites,
+                              element_list=element_list,
+                              sizes=sizes,
+                              concentration_restrictions=conc_restrict,
+                              max_configurations=max_conf,
+                              functional=string_to_functional(functional),
+                              directory=directory,
+                              include_existing=include_existing,
+                              in_custodian=in_custodian,
+                              number_nodes=number_nodes)
+    )
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -850,5 +911,19 @@ def string_to_functional(dict_string):
         return functional, pbeu_dict
     else:
         return functional, functional_dict
+
+
+def set_up_directory(directory, functional, calculation):
+    # Set up the calculation directory
+    if directory == "":
+        directory = os.path.join(os.getcwd(), functional[0])
+        if functional[0] == "pbeu":
+            directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                       in functional[1]["LDAUU"].keys())
+        directory += "_" + calculation
+    else:
+        directory = os.path.abspath(directory)
+
+    return directory
 
 # endregion

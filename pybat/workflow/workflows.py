@@ -5,9 +5,7 @@
 import os
 
 import numpy as np
-from fireworks import Firework, LaunchPad, PyTask, Workflow
-from pymongo.errors import ServerSelectionTimeoutError
-from ruamel.yaml import YAML
+from fireworks import Firework, PyTask, Workflow
 
 from pybat.cli.commands.define import define_dimer, define_migration
 from pybat.cli.commands.setup import transition
@@ -28,35 +26,6 @@ __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
 
-# Load the workflow configuration
-CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
-
-if os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'r') as configfile:
-        yaml = YAML()
-        yaml.default_flow_style = False
-        CONFIG = yaml.load(configfile.read())
-
-        try:
-            LAUNCHPAD = LaunchPad(
-                host=CONFIG["SERVER"].get("host", ""),
-                port=int(CONFIG["SERVER"].get("port", 0)),
-                name=CONFIG["SERVER"].get("name", ""),
-                username=CONFIG["SERVER"].get("username", ""),
-                password=CONFIG["SERVER"].get("password", ""),
-                ssl=CONFIG["SERVER"].get("ssl", False),
-                authsource=CONFIG["SERVER"].get("authsource", None)
-            )
-        except ServerSelectionTimeoutError:
-            raise TimeoutError("Could not connect to server. Please make "
-                               "sure the details of the server are correctly "
-                               "set up.")
-
-else:
-    raise FileNotFoundError("No configuration file found in user's home "
-                            "directory. Please use pybat config  "
-                            "in order to set up the configuration for "
-                            "the workflows.")
 
 # TODO Extend configuration and make the whole configuration setup more user friendly
 # Currently the user is not guided to the workflow setup when attempting to use
@@ -77,11 +46,11 @@ def get_wf_static(structure, directory, functional=("pbe", {}),
 
     Args:
         structure (pymatgen.Structure): Structure for which to set up the SCF workflow.
+        directory (str): Directory in which the static calculation should be performed.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
-        directory (str): Directory in which the SCF calculation should be performed.
         write_chgcar (bool): Flag that indicates whether the CHGCAR file should
             be written.
         in_custodian (bool): Flag that indicates whether the calculation should be
@@ -104,14 +73,14 @@ def get_wf_static(structure, directory, functional=("pbe", {}),
 
     # Set up a clear name for the workflow
     workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
-    workflow_name += str(functional)
+    workflow_name += " " + str(functional)
 
     return Workflow(fireworks=[scf_firework, ],
                     name=workflow_name)
 
 
-def relax_workflow(structure, functional=("pbe", {}), directory="",
-                   is_metal=False, in_custodian=False, number_nodes=None):
+def get_wf_relax(structure, directory, functional=("pbe", {}),
+                 is_metal=False, in_custodian=False, number_nodes=None):
     """
     Set up a geometry optimization workflow and add it to the launchpad of the
     mongoDB server defined in the config file.
@@ -119,11 +88,11 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
     Args:
         structure (pymatgen.Structure): Structure for which to set up the geometry
             optimization workflow.
+        directory (str): Directory in which the geometry optimization should be performed.
         functional (tuple): Tuple with the functional details. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
-        directory (str): Directory in which the SCF calculation should be performed.
         is_metal (bool): Flag that indicates whether the material for which the
             geometry optimization should be performed is metallic. Determines the
             smearing method used.
@@ -138,16 +107,6 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
 
     """
 
-    # Set up the calculation directory
-    if directory == "":
-        directory = os.path.join(os.getcwd(), functional[0])
-        if functional[0] == "pbeu":
-            directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
-                                       in functional[1]["LDAUU"].keys())
-        directory += "_relax"
-    else:
-        directory = os.path.abspath(directory)
-
     # Set up the geometry optimization Firework
     relax_firework = RelaxFirework(structure=structure,
                                    functional=functional,
@@ -158,13 +117,93 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
 
     # Set up a clear name for the workflow
     workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
-    workflow_name += str(functional)
+    workflow_name += " " + str(functional)
 
     # Create the workflow
-    workflow = Workflow(fireworks=[relax_firework, ],
-                        name=workflow_name)
+    return Workflow(fireworks=[relax_firework, ],
+                    name=workflow_name)
 
-    LAUNCHPAD.add_wf(workflow)
+
+def get_wf_configurations(structure, directory, substitution_sites=None,
+                          element_list=None,
+                          sizes=None, concentration_restrictions=None,
+                          max_configurations=None, functional=("pbe", {}),
+                          include_existing=True, in_custodian=False,
+                          number_nodes=None):
+    """
+    Set up a workflow for a set of atomic configurations, which includes a geometric
+    optimization as well as a static calculation based on the final geometry.
+
+    Args:
+        structure (pymatgen.Structure): Structure for which to set up the configuration
+            Workflow.
+        directory (str): Path to the directory in which the configurations and
+            calculations should be set up.
+        substitution_sites (list): List of site indices or pymatgen.Sites to be
+            substituted.
+        element_list (list): List of string representations of the cation elements
+            which have to be substituted on the substitution sites. Can also
+            include "Vac" to introduce vacancy sites.
+            E.g. ["Li", "Vac"]; ["Mn", "Co", "Ni"]; ...
+        sizes (list): List of unit supercell sizes to be considered for the
+            enumeration of the configurations.
+            E.g. [1, 2]; range(1, 4); ...
+        concentration_restrictions (dict): Dictionary of allowed concentration
+            ranges for each element. Note that the concentration is defined
+            versus the total amount of atoms in the unit cell.
+            E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
+        max_configurations (int): Maximum number of configurations for which the total
+            energy should be calculated. Note that that in case include_existing is
+            set to False, the existing configurations in the directory tree are not
+            included in this number.
+        functional (tuple): Tuple with the functional details. The first element
+            contains a string that indicates the functional used ("pbe", "hse", ...),
+            whereas the second element contains a dictionary that allows the user
+            to specify the various functional tags.
+        include_existing (bool): Include the existing configurations in the directory
+            tree for the calculations.
+        in_custodian (bool): Flag that indicates that the calculations
+            should be run within a Custodian. Defaults to False.
+        number_nodes (int): Number of nodes that should be used for the calculations.
+            Is required to add the proper `_category` to the Firework generated, so
+            it is picked up by the right Fireworker.
+
+    Returns:
+        None
+
+    """
+
+    configuration_task = ConfigurationTask(
+        structure=structure,
+        directory=directory,
+        substitution_sites=list(substitution_sites),
+        element_list=element_list,
+        sizes=list(sizes),
+        concentration_restrictions=concentration_restrictions,
+        max_configurations=max_configurations,
+        include_existing=include_existing
+    )
+
+    energy_task = EnergyConfTask(
+        functional=functional,
+        in_custodian=in_custodian,
+        number_nodes=number_nodes
+    )
+
+    # Set up a (sort of) clear name for the workflow
+    workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
+    workflow_name += " " + str(element_list)
+    workflow_name += " " + str(functional)
+
+    configuration_fw = Firework(tasks=[configuration_task, energy_task],
+                                name="Configuration Setup",
+                                spec={"_category": "none"})
+
+    # Create the workflow
+    return Workflow(
+        fireworks=[configuration_fw],
+        name=workflow_name
+    )
 
 
 def migration_workflow(structure, migration_indices=(0, 0),
@@ -300,111 +339,6 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
 
     workflow = Workflow(fireworks=[neb_firework, ],
                         name=workflow_name)
-
-    LAUNCHPAD.add_wf(workflow)
-
-
-def configuration_workflow(structure, substitution_sites=None, element_list=None,
-                           sizes=None, concentration_restrictions=None,
-                           max_configurations=None, functional=("pbe", {}),
-                           directory=None, include_existing=True, in_custodian=False,
-                           number_nodes=None):
-    """
-    Set up a workflow for a set of atomic configurations, which includes a geometric
-    optimization as well as a static calculation based on the final geometry.
-
-    Args:
-        structure (pymatgen.Structure): Structure for which to set up the configuration
-            Workflow.
-        substitution_sites (list): List of site indices or pymatgen.Sites to be
-            substituted.
-        element_list (list): List of string representations of the cation elements
-            which have to be substituted on the substitution sites. Can also
-            include "Vac" to introduce vacancy sites.
-            E.g. ["Li", "Vac"]; ["Mn", "Co", "Ni"]; ...
-        sizes (list): List of unit supercell sizes to be considered for the
-            enumeration of the configurations.
-            E.g. [1, 2]; range(1, 4); ...
-        concentration_restrictions (dict): Dictionary of allowed concentration
-            ranges for each element. Note that the concentration is defined
-            versus the total amount of atoms in the unit cell.
-            E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
-        max_configurations (int): Maximum number of configurations for which the total
-            energy should be calculated. Note that that in case include_existing is
-            set to False, the existing configurations in the directory tree are not
-            included in this number.
-        functional (tuple): Tuple with the functional details. The first element
-            contains a string that indicates the functional used ("pbe", "hse", ...),
-            whereas the second element contains a dictionary that allows the user
-            to specify the various functional tags.
-        directory (str): Path to the directory in which the configurations and
-            calculations should be set up.
-        include_existing (bool): Include the existing configurations in the directory
-            tree for the calculations.
-        in_custodian (bool): Flag that indicates that the calculations
-            should be run within a Custodian. Defaults to False.
-        number_nodes (int): Number of nodes that should be used for the calculations.
-            Is required to add the proper `_category` to the Firework generated, so
-            it is picked up by the right Fireworker.
-
-    Returns:
-        None
-
-    """
-
-    # Check for the required input, and request if necessary
-    if not substitution_sites or not element_list or not sizes:
-        print(structure)
-        print()
-    if not substitution_sites:
-        substitution_sites = [int(i) for i in input(
-            "Please provide the substitution site indices, separated by a space: "
-        ).split(" ")]
-    if not element_list:
-        element_list = [i for i in input(
-            "Please provide the substitution elements, separated by a space: "
-        ).split(" ")]
-    if not sizes:
-        sizes = [int(i) for i in input(
-            "Please provide the possible unit cell sizes, separated by a space: "
-        ).split(" ")]
-
-    # Set up the directory
-    if directory == "":
-        directory = os.getcwd()
-    directory = os.path.abspath(directory)
-
-    configuration_task = ConfigurationTask(
-        structure=structure,
-        directory=directory,
-        substitution_sites=list(substitution_sites),
-        element_list=element_list,
-        sizes=list(sizes),
-        concentration_restrictions=concentration_restrictions,
-        max_configurations=max_configurations,
-        include_existing=include_existing
-    )
-
-    energy_task = EnergyConfTask(
-        functional=functional,
-        in_custodian=in_custodian,
-        number_nodes=number_nodes
-    )
-
-    # Set up a (sort of) clear name for the workflow
-    workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
-    workflow_name += " " + str(element_list)
-    workflow_name += " " + str(functional)
-
-    configuration_fw = Firework(tasks=[configuration_task, energy_task],
-                                name="Configuration Setup",
-                                spec={"_category": "none"})
-
-    # Create the workflow
-    workflow = Workflow(
-        fireworks=[configuration_fw],
-        name=workflow_name
-    )
 
     LAUNCHPAD.add_wf(workflow)
 
@@ -645,113 +579,8 @@ def generate_conf_dir(directory, element_list, configuration, number):
 
     return conf_dir
 
-
 # endregion
 
 # region * Token workflows for testing
-
-def get_configuration_workflow(structure, substitution_sites=None, element_list=None,
-                               sizes=None, concentration_restrictions=None,
-                               max_configurations=None, functional=("pbe", {}),
-                               directory=None, include_existing=True, in_custodian=False,
-                               number_nodes=None):
-    """
-    Set up a workflow for a set of atomic configurations, which includes a geometric
-    optimization as well as a static calculation based on the final geometry.
-
-    Args:
-        structure (pymatgen.Structure): Structure for which to set up the configuration
-            Workflow.
-        substitution_sites (list): List of site indices or pymatgen.Sites to be
-            substituted.
-        element_list (list): List of string representations of the cation elements
-            which have to be substituted on the substitution sites. Can also
-            include "Vac" to introduce vacancy sites.
-            E.g. ["Li", "Vac"]; ["Mn", "Co", "Ni"]; ...
-        sizes (list): List of unit supercell sizes to be considered for the
-            enumeration of the configurations.
-            E.g. [1, 2]; range(1, 4); ...
-        concentration_restrictions (dict): Dictionary of allowed concentration
-            ranges for each element. Note that the concentration is defined
-            versus the total amount of atoms in the unit cell.
-            E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
-        max_configurations (int): Maximum number of configurations for which the total
-            energy should be calculated. Note that that in case include_existing is
-            set to False, the existing configurations in the directory tree are not
-            included in this number.
-        functional (tuple): Tuple with the functional details. The first element
-            contains a string that indicates the functional used ("pbe", "hse", ...),
-            whereas the second element contains a dictionary that allows the user
-            to specify the various functional tags.
-        directory (str): Path to the directory in which the configurations and
-            calculations should be set up.
-        include_existing (bool): Include the existing configurations in the directory
-            tree for the calculations.
-        in_custodian (bool): Flag that indicates that the calculations
-            should be run within a Custodian. Defaults to False.
-        number_nodes (int): Number of nodes that should be used for the calculations.
-            Is required to add the proper `_category` to the Firework generated, so
-            it is picked up by the right Fireworker.
-
-    Returns:
-        None
-
-    """
-
-    # Check for the required input, and request if necessary
-    if not substitution_sites or not element_list or not sizes:
-        print(structure)
-        print()
-    if not substitution_sites:
-        substitution_sites = [int(i) for i in input(
-            "Please provide the substitution site indices, separated by a space: "
-        ).split(" ")]
-    if not element_list:
-        element_list = [i for i in input(
-            "Please provide the substitution elements, separated by a space: "
-        ).split(" ")]
-    if not sizes:
-        sizes = [int(i) for i in input(
-            "Please provide the possible unit cell sizes, separated by a space: "
-        ).split(" ")]
-
-    # Set up the directory
-    if directory == "":
-        directory = os.getcwd()
-    directory = os.path.abspath(directory)
-
-    configuration_task = ConfigurationTask(
-        structure=structure,
-        directory=directory,
-        substitution_sites=list(substitution_sites),
-        element_list=element_list,
-        sizes=list(sizes),
-        concentration_restrictions=concentration_restrictions,
-        max_configurations=max_configurations,
-        include_existing=include_existing
-    )
-
-    energy_task = EnergyConfTask(
-        functional=functional,
-        in_custodian=in_custodian,
-        number_nodes=number_nodes
-    )
-
-    # Set up a (sort of) clear name for the workflow
-    workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
-    workflow_name += " " + str(element_list)
-    workflow_name += " " + str(functional)
-
-    configuration_fw = Firework(tasks=[configuration_task, energy_task],
-                                name="Configuration Setup",
-                                spec={"_category": "none"})
-
-    # Create the workflow
-    workflow = Workflow(
-        fireworks=[configuration_fw],
-        name=workflow_name
-    )
-
-    return workflow
 
 # endregion
