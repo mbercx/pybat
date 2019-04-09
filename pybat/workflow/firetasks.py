@@ -203,9 +203,9 @@ class PulayTask(FiretaskBase):
 
 class ConfigurationTask(FiretaskBase):
     """
-    Construct a set of configurations based on the specified parameters. Will
-    automatically check the directory for configurations present in the directory tree
-    and ignore these for generating new ones.
+    Construct a set of configurations based on the specified parameters. If requested,
+    the FireTask will automatically check the directory for configurations already in
+    the directory tree and ignore these for generating new ones.
 
     Required params:
 
@@ -214,16 +214,19 @@ class ConfigurationTask(FiretaskBase):
 
     required_params = ["structure", "directory", "substitution_sites", "element_list",
                        "sizes"]
-    optional_params = ["concentration_restrictions", "max_configurations"]
+    optional_params = ["concentration_restrictions", "max_configurations",
+                       "ignore_existing"]
     _fw_name = "{{pybat.workflow.firetasks.ConfigurationTask}}"
 
     def run_task(self, fw_spec):
 
-        # Set up a dictionary of configurations, considering existing configurations in
-        # directory tree
-        current_conf_dict = find_configuration_dict(self["directory"])
+        # If requested, check for existing configurations in the directory tree
+        if self.get("ignore_existing", False):
+            current_conf_dict = find_configuration_dict(self["directory"])
+        else:
+            current_conf_dict = {}
 
-        # Make sure to generate enough new configurations
+        # Adjust max_configurations based on existing configurations
         if self.get("max_configurations", None):
             max_conf_to_generate = self.get("max_configurations") + len(current_conf_dict)
         else:

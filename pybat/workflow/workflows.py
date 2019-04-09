@@ -322,7 +322,8 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
 def configuration_workflow(structure, substitution_sites=None, element_list=None,
                            sizes=None, concentration_restrictions=None,
                            max_configurations=None, functional=("pbe", {}),
-                           directory=None, in_custodian=False, number_nodes=None):
+                           directory=None, ignore_existing=False, in_custodian=False,
+                           number_nodes=None):
     """
     Set up a workflow for a set of atomic configurations, which includes a geometric
     optimization as well as a SCF calculation based on the final geometry.
@@ -355,6 +356,7 @@ def configuration_workflow(structure, substitution_sites=None, element_list=None
             to specify the various functional tags.
         directory (str): Path to the directory in which the configurations and
             calculations should be set up.
+        ignore_existing (bool): Ignore the existing configurations in the directory tree.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
         number_nodes (int): Number of nodes that should be used for the calculations.
@@ -395,7 +397,8 @@ def configuration_workflow(structure, substitution_sites=None, element_list=None
         element_list=element_list,
         sizes=list(sizes),
         concentration_restrictions=concentration_restrictions,
-        max_configurations=max_configurations
+        max_configurations=max_configurations,
+        ignore_existing=ignore_existing
     )
 
     energy_task = EnergyConfTask(
