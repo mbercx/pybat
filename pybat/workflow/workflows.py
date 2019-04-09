@@ -206,9 +206,9 @@ def get_wf_configurations(structure, directory, substitution_sites=None,
     )
 
 
-def migration_workflow(structure, migration_indices=(0, 0),
-                       functional=("pbe", {}), is_metal=False,
-                       in_custodian=False, number_nodes=None):
+def get_fw_migration(structure, migration_indices=(0, 0),
+                     functional=("pbe", {}), is_metal=False,
+                     in_custodian=False, number_nodes=None):
     """
     Set up a workflow that calculates the thermodynamics for a migration in
     the current directory.
@@ -272,15 +272,15 @@ def migration_workflow(structure, migration_indices=(0, 0),
 
     struc_name = str(structure.composition.reduced_composition).replace(" ", "")
 
-    workflow = Workflow(fireworks=[transition_firework],
-                        name=struc_name + " " + migration_dir.split("/")[-1])
+    return Workflow(
+        fireworks=[transition_firework],
+        name=struc_name + " " + migration_dir.split("/")[-1]
+    )
 
-    LAUNCHPAD.add_wf(workflow)
 
-
-def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
-                 is_migration=False, in_custodian=False,
-                 number_nodes=None):
+def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
+               is_migration=False, in_custodian=False,
+               number_nodes=None):
     """
     Set up a workflow that calculates the kinetic barrier between two geometries.
 
@@ -337,15 +337,15 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     dir_name = os.path.abspath(directory).split("/")[-1]
     workflow_name = str(cathode.composition).replace(" ", "") + " " + dir_name
 
-    workflow = Workflow(fireworks=[neb_firework, ],
-                        name=workflow_name)
+    return Workflow(
+        fireworks=[neb_firework, ],
+        name=workflow_name
+    )
 
-    LAUNCHPAD.add_wf(workflow)
 
-
-def dimer_workflow(structure, dimer_indices=(0, 0), distance=0,
-                   functional=("pbe", {}), is_metal=False, in_custodian=False,
-                   number_nodes=None):
+def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
+                 functional=("pbe", {}), is_metal=False, in_custodian=False,
+                 number_nodes=None):
     """
     Set up a workflow that calculates the thermodynamics for a dimer
     formation in the current directory.
@@ -375,6 +375,7 @@ def dimer_workflow(structure, dimer_indices=(0, 0), distance=0,
 
     """
     # TODO Change naming scheme
+    # TODO Can currently not be executed from jupyter notebook
 
     # Let the user define a dimer, unless one is provided
     dimer_dir = define_dimer(structure=structure,
@@ -429,15 +430,15 @@ def dimer_workflow(structure, dimer_indices=(0, 0), distance=0,
 
     struc_name = str(structure.composition.reduced_composition).replace(" ", "")
 
-    workflow = Workflow(fireworks=[transition_firework, scf_firework],
-                        name=struc_name + dimer_dir.split("/")[-1],
-                        links_dict={transition_firework: [scf_firework]})
+    return Workflow(
+        fireworks=[transition_firework, scf_firework],
+        name=struc_name + dimer_dir.split("/")[-1],
+        links_dict={transition_firework: [scf_firework]}
+    )
 
-    LAUNCHPAD.add_wf(workflow)
 
-
-def noneq_dimers_workflow(structure, distance, functional=("pbe", {}),
-                          is_metal=False, in_custodian=False, number_nodes=None):
+def get_wfs_noneq_dimers(structure, distance, functional=("pbe", {}),
+                         is_metal=False, in_custodian=False, number_nodes=None):
     """
     Run dimer calculations for all the nonequivalent dimers in a structure.
 
@@ -466,6 +467,7 @@ def noneq_dimers_workflow(structure, distance, functional=("pbe", {}),
     """
 
     dimer_lists = structure.list_noneq_dimers()
+    workflows = []
 
     for dimer_list in dimer_lists:
 
@@ -483,18 +485,22 @@ def noneq_dimers_workflow(structure, distance, functional=("pbe", {}),
             if dist_to_center < central_dimer[1]:
                 central_dimer = [dimer, dist_to_center]
 
-        dimer_workflow(structure=structure,
-                       dimer_indices=central_dimer[0],
-                       distance=distance,
-                       functional=functional,
-                       is_metal=is_metal,
-                       in_custodian=in_custodian,
-                       number_nodes=number_nodes)
+        workflows.append(
+            get_wf_dimer(structure=structure,
+                         dimer_indices=central_dimer[0],
+                         distance=distance,
+                         functional=functional,
+                         is_metal=is_metal,
+                         in_custodian=in_custodian,
+                         number_nodes=number_nodes)
+        )
+
+    return workflows
 
 
-def site_dimers_workflow(structure, site_index, distance,
-                         functional=("pbe", {}), is_metal=False,
-                         in_custodian=False, number_nodes=None):
+def get_wfs_site_dimers(structure, site_index, distance,
+                        functional=("pbe", {}), is_metal=False,
+                        in_custodian=False, number_nodes=None):
     """
     Run dimer calculations for all the dimers around a site.
 
@@ -524,15 +530,20 @@ def site_dimers_workflow(structure, site_index, distance,
     """
 
     dimer_list = structure.find_noneq_dimers(int(site_index))
+    workflows = []
 
     for dimer in dimer_list:
-        dimer_workflow(structure=structure,
-                       dimer_indices=dimer,
-                       distance=distance,
-                       functional=functional,
-                       is_metal=is_metal,
-                       in_custodian=in_custodian,
-                       number_nodes=number_nodes)
+        workflows.append(
+            get_wf_dimer(structure=structure,
+                         dimer_indices=dimer,
+                         distance=distance,
+                         functional=functional,
+                         is_metal=is_metal,
+                         in_custodian=in_custodian,
+                         number_nodes=number_nodes)
+        )
+
+    return workflows
 
 
 # region * Utility scripts

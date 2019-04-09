@@ -770,17 +770,19 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
     """
     Set up dimer calculation workflows.
     """
-    from pybat.workflow.workflows import dimer_workflow
+    from pybat.workflow.workflows import get_wf_dimer
 
     cat = LiRichCathode.from_file(structure_file)
 
-    dimer_workflow(structure=cat,
-                   dimer_indices=dimer_indices,
-                   distance=distance,
-                   functional=string_to_functional(functional),
-                   is_metal=is_metal,
-                   in_custodian=in_custodian,
-                   number_nodes=number_nodes)
+    LAUNCHPAD.add_wf(
+        get_wf_dimer(structure=cat,
+                     dimer_indices=dimer_indices,
+                     distance=distance,
+                     functional=string_to_functional(functional),
+                     is_metal=is_metal,
+                     in_custodian=in_custodian,
+                     number_nodes=number_nodes)
+    )
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -804,15 +806,17 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
     """
     Set up dimer calculation workflows.
     """
-    from pybat.workflow.workflows import neb_workflow
+    from pybat.workflow.workflows import get_wf_neb
 
-    neb_workflow(directory=directory,
-                 nimages=nimages,
-                 functional=string_to_functional(functional),
-                 is_metal=is_metal,
-                 is_migration=is_migration,
-                 in_custodian=in_custodian,
-                 number_nodes=number_nodes)
+    LAUNCHPAD.add_wf(
+        get_wf_neb(directory=directory,
+                   nimages=nimages,
+                   functional=string_to_functional(functional),
+                   is_metal=is_metal,
+                   is_migration=is_migration,
+                   in_custodian=in_custodian,
+                   number_nodes=number_nodes)
+    )
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -827,16 +831,17 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
-    from pybat.workflow.workflows import noneq_dimers_workflow
+    from pybat.workflow.workflows import get_wfs_noneq_dimers
 
     cat = LiRichCathode.from_file(structure_file)
 
-    noneq_dimers_workflow(structure=cat,
-                          distance=distance,
-                          functional=string_to_functional(functional),
-                          is_metal=is_metal,
-                          in_custodian=in_custodian,
-                          number_nodes=number_nodes)
+    for wf in get_wfs_noneq_dimers(structure=cat,
+                                   distance=distance,
+                                   functional=string_to_functional(functional),
+                                   is_metal=is_metal,
+                                   in_custodian=in_custodian,
+                                   number_nodes=number_nodes):
+        LAUNCHPAD.add_wf(wf)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -852,17 +857,18 @@ def site_dimers(site_index, structure_file, distance, functional, is_metal, in_c
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
-    from pybat.workflow.workflows import site_dimers_workflow
+    from pybat.workflow.workflows import get_wfs_site_dimers
 
     cat = LiRichCathode.from_file(structure_file)
 
-    site_dimers_workflow(structure=cat,
-                         site_index=site_index,
-                         distance=distance,
-                         functional=string_to_functional(functional),
-                         is_metal=is_metal,
-                         in_custodian=in_custodian,
-                         number_nodes=number_nodes)
+    for wf in get_wfs_site_dimers(structure=cat,
+                                  site_index=site_index,
+                                  distance=distance,
+                                  functional=string_to_functional(functional),
+                                  is_metal=is_metal,
+                                  in_custodian=in_custodian,
+                                  number_nodes=number_nodes):
+        LAUNCHPAD.add_wf(wf)
 
 
 # endregion
