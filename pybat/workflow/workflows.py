@@ -344,12 +344,7 @@ def configuration_workflow(structure, substitution_sites=None, element_list=None
             ranges for each element. Note that the concentration is defined
             versus the total amount of atoms in the unit cell.
             E.g. {"Li": (0.2, 0.3)}; {"Ni": (0.1, 0.2, "Mn": (0.05, 0.1)}; ...
-        max_configurations (int): Maximum number of new configurations to generate.
-            Note that the function detects all the cathode.json files present
-            in the directory tree and ignores the corresponding configurations.
-            max_configurations is the maximum number of new configurations that need
-            to be generated, i.e. on top of the configurations already present in the
-            directory tree in the form of cathode.json files.
+        max_configurations (int): Maximum number of configurations to generate.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user

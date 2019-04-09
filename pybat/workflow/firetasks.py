@@ -272,7 +272,9 @@ class ConfigurationTask(FiretaskBase):
 
                 configuration_dict[str(conf_hash)] = {
                     "structure": configuration.as_dict(),
-                    "directory": current_conf_dict[conf_hash]["directory"]
+                    "directory": os.path.join(
+                        self["directory"], current_conf_dict[conf_hash]["directory"]
+                    )
                 }
 
             # Break out of the loop if we have enough configurations
