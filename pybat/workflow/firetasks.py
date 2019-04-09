@@ -5,6 +5,7 @@
 import os
 import subprocess
 
+import ipdb
 import numpy as np
 from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, UnconvergedErrorHandler
@@ -270,10 +271,13 @@ class ConfigurationTask(FiretaskBase):
 
             elif self.get("include_existing", True):
 
+                ipdb.set_trace()
+
                 configuration_dict[str(conf_hash)] = {
                     "structure": configuration.as_dict(),
                     "directory": os.path.join(
-                        self["directory"], current_conf_dict[conf_hash]["directory"]
+                        self["directory"],
+                        current_conf_dict[conf_hash]["directory"]
                     )
                 }
 
@@ -396,7 +400,7 @@ def find_configuration_dict(path):
     path = os.path.abspath(path)
     return {Cathode.from_file(file).__hash__(): {
         "structure": Cathode.from_file(file).as_dict(),
-        "directory": file.replace(path, "").replace("configuration.json", "")
+        "directory": file.replace(path, "").replace("configuration.json", "").strip("/")
     } for file in find_all("configuration.json", path)}
 
 # endregion
