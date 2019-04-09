@@ -627,7 +627,7 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 @click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
 @click.option("--directory", "-d", default="",
               help="Directory in which to set up the configuration workflow.")
-@click.option("--ignore_existing", "-X", default=False,
+@click.option("--ignore_existing", "-X", if_flag=True,
               help="Ignore the existing configurations when generating new ones, "
                    "i.e. do not generate and calculate the energy for those "
                    "configurations again.")
