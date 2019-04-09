@@ -5,7 +5,6 @@
 import os
 import subprocess
 
-import ipdb
 import numpy as np
 from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, UnconvergedErrorHandler
@@ -270,8 +269,6 @@ class ConfigurationTask(FiretaskBase):
                 conf_number += 1
 
             elif self.get("include_existing", True):
-
-                ipdb.set_trace()
 
                 configuration_dict[str(conf_hash)] = {
                     "structure": configuration.as_dict(),
