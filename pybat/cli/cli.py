@@ -103,8 +103,9 @@ def main():
 
 
 @main.command(context_settings=CONTEXT_SETTINGS)
-@click.option("-L", "--launcher", default="base")
-def qlaunch(launcher):
+@click.option("-L", "-lpad_name", default="base")
+@click.option("-F", "--fworker_name", default="base")
+def qlaunch(lpad_name, fworker_name):
     """
     Launch jobs to the queue that will accept Fireworks.
 
@@ -112,13 +113,15 @@ def qlaunch(launcher):
 
     """
     from fireworks.queue.queue_launcher import launch_rocket_to_queue
+    from pybat.cli.commands.config import load_config
+
+    fireworker = load_config("fworker", fworker_name)
+    qadapter = load_config("qadapter", fworker_name)
 
     launch_rocket_to_queue(
-        launchpad=launcher, fworker=None, qadapter=launcher, launcher_dir='.',
-        reserve=False,
-        strm_lvl='INFO', create_launcher_dir=False,
-        fill_mode=False,
-        fw_id=None)
+        launchpad=load_config("launchpad", lpad_name), fworker=fireworker,
+        qadapter=qadapter, launcher_dir='.', create_launcher_dir=False, fill_mode=True
+    )
 
 # TODO Add checks for U-value input
 
