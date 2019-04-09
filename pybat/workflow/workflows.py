@@ -104,6 +104,8 @@ def scf_workflow(structure, functional=("pbe", {}), directory="",
             directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                        in functional[1]["LDAUU"].keys())
         directory += "_scf"
+    else:
+        directory = os.path.abspath(directory)
 
     # Set up the SCF Firework
     scf_firework = ScfFirework(
@@ -158,6 +160,8 @@ def relax_workflow(structure, functional=("pbe", {}), directory="",
             directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
                                        in functional[1]["LDAUU"].keys())
         directory += "_relax"
+    else:
+        directory = os.path.abspath(directory)
 
     # Set up the geometry optimization Firework
     relax_firework = RelaxFirework(structure=structure,
@@ -279,6 +283,8 @@ def neb_workflow(directory, nimages=7, functional=("pbe", {}), is_metal=False,
             it is picked up by the right Fireworker. Defaults to the number of images.
 
     """
+    directory = os.path.abspath(directory)
+
     # If no number of nodes is specified, take the number of images
     if number_nodes is None:
         number_nodes = nimages
