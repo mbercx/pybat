@@ -623,18 +623,19 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 @click.option("--max_conf", "-M", default=0,
               help="Maximum number of configurations to generate. Note that this "
                    "is on top of the number of already existing configurations in the "
-                   "directory tree in case ignore_existing is set to True.")
+                   "directory tree in case the existing configurations "
+                   "are not included using the include_existing option.")
 @click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
 @click.option("--directory", "-d", default="",
               help="Directory in which to set up the configuration workflow.")
-@click.option("--ignore_existing", "-X", is_flag=True,
-              help="Ignore the existing configurations when generating new ones, "
-                   "i.e. do not generate and calculate the energy for those "
-                   "configurations again.")
+@click.option("--include_existing", "-X", is_flag=True,
+              help="Include the existing configurations in the directory tree for the "
+                   "calculations. This means that the energy will also be calculated "
+                   "for configuration.json files found in the directory tree.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def configuration(structure_file, functional, sub_sites, element_list, sizes,
-                  directory, ignore_existing, conc_restrict, max_conf, in_custodian,
+                  directory, include_existing, conc_restrict, max_conf, in_custodian,
                   number_nodes):
     """
     Set up a workflow for a set of configurations.
@@ -674,7 +675,7 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
                            max_configurations=max_conf,
                            functional=string_to_functional(functional),
                            directory=directory,
-                           ignore_existing=ignore_existing,
+                           include_existing=include_existing,
                            in_custodian=in_custodian,
                            number_nodes=number_nodes)
 
