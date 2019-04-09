@@ -5,6 +5,7 @@
 
 import os
 import shutil
+import warnings
 
 from fireworks import LaunchPad, FWorker
 from fireworks.user_objects.queue_adapters.common_adapter import CommonAdapter
@@ -35,9 +36,6 @@ def launchpad(launchpad_file=None, database="base"):
 
     """
 
-    config_lpad_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
-                                    "launchpad", database + "_launchpad.yaml")
-
     if launchpad_file:
         lpad = LaunchPad.from_file(launchpad_file)
     else:
@@ -53,6 +51,15 @@ def launchpad(launchpad_file=None, database="base"):
         )
         # TODO Add server checks
 
+    config_lpad_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
+                                    "launchpad", database + "_launchpad.yaml")
+    try:
+        os.makedirs(
+            os.path.join(os.path.expanduser("~"), ".pybat_config", "launchpad")
+        )
+    except FileExistsError:
+        pass
+
     lpad.to_file(config_lpad_file)
 
 
@@ -64,8 +71,6 @@ def fworker(fireworker_file=None, fworker_name="base"):
         None
 
     """
-    config_fw_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
-                                  "fworker", fworker_name + "_fworker.yaml")
 
     if fireworker_file:
         fireworker = FWorker.from_file(fireworker_file)
@@ -74,6 +79,16 @@ def fworker(fireworker_file=None, fworker_name="base"):
         vasp_cmd = input("Please provide the full vasp command: ")
         fireworker = FWorker(name=name, category=["none", "1nodes"],
                              env={"vasp_cmd": vasp_cmd})
+
+    try:
+        os.makedirs(
+            os.path.join(os.path.expanduser("~"), ".pybat_config", "fworker")
+        )
+    except FileExistsError:
+        pass
+
+    config_fw_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
+                                  "fworker", fworker_name + "_fworker.yaml")
 
     fireworker.to_file(config_fw_file)
 
@@ -88,10 +103,30 @@ def queue(qadapter_file, fworker_name="base"):
         None
 
     """
+
+    try:
+        os.makedirs(
+            os.path.join(os.path.expanduser("~"), ".pybat_config", "fworker")
+        )
+    except FileExistsError:
+        pass
+
     config_q_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
                                  "fworker", fworker_name + "_qadapter.yaml")
 
-    CommonAdapter.from_file(qadapter_file).to_file(config_q_file)
+    queue_adapter = CommonAdapter.from_file(qadapter_file)
+
+    template_file = os.path.join(
+        os.path.expanduser("~"), ".pybat_config", "fworker",
+        fworker_name + "_job_template.sh"
+    )
+    if not os.path.exists(template_file):
+        warnings.warn("No corresponding template file found. Don't forget to "
+                      "use pybat config jobscript to add the template file of "
+                      "the '" + fworker_name + "' fireworker.")
+
+    queue_adapter.template_file = template_file
+    queue_adapter.to_file(config_q_file)
 
 
 def jobscript(template_file, fworker_name="base"):
@@ -108,6 +143,13 @@ def jobscript(template_file, fworker_name="base"):
     Returns:
 
     """
+
+    try:
+        os.makedirs(
+            os.path.join(os.path.expanduser("~"), ".pybat_config", "fworker")
+        )
+    except FileExistsError:
+        pass
 
     config_template_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
                                         "fworker", fworker_name + "_job_template.sh")
