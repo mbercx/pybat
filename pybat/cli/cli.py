@@ -5,9 +5,6 @@
 import os
 
 import click
-from fireworks import LaunchPad
-from pymongo.errors import ServerSelectionTimeoutError
-from ruamel.yaml import YAML
 
 from pybat.core import Cathode, LiRichCathode
 
@@ -22,39 +19,6 @@ __version__ = "pre-alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
-
-
-# Load the workflow configuration
-CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
-
-if os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'r') as configfile:
-        yaml = YAML()
-        yaml.default_flow_style = False
-        CONFIG = yaml.load(configfile.read())
-
-        try:
-            LAUNCHPAD = LaunchPad(
-                host=CONFIG["SERVER"].get("host", ""),
-                port=int(CONFIG["SERVER"].get("port", 0)),
-                name=CONFIG["SERVER"].get("name", ""),
-                username=CONFIG["SERVER"].get("username", ""),
-                password=CONFIG["SERVER"].get("password", ""),
-                ssl=CONFIG["SERVER"].get("ssl", False),
-                authsource=CONFIG["SERVER"].get("authsource", None)
-            )
-        except ServerSelectionTimeoutError:
-            raise TimeoutError("Could not connect to server. Please make "
-                               "sure the details of the server are correctly "
-                               "set up.")
-
-else:
-    raise FileNotFoundError("No configuration file found in user's home "
-                            "directory. Please use pybat config  "
-                            "in order to set up the configuration for "
-                            "the workflows.")
-
-
 
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -595,19 +559,33 @@ def scf(structure_file, functional, directory, write_chgcar, in_custodian, numbe
     """
     Set up an SCF calculation workflow.
     """
-    from pybat.workflow.workflows import scf_workflow
+    from pybat.workflow.workflows import get_wf_static
 
+    # Process the input options
     if number_nodes == 0:
         number_nodes = None
+    functional = string_to_functional(functional)
+
+    # Set up the calculation directory
+    if directory == "":
+        directory = os.path.join(os.getcwd(), functional[0])
+        if functional[0] == "pbeu":
+            directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                       in functional[1]["LDAUU"].keys())
+        directory += "_scf"
+    else:
+        directory = os.path.abspath(directory)
 
     cat = Cathode.from_file(structure_file)
 
-    scf_workflow(structure=cat,
-                 functional=string_to_functional(functional),
-                 directory=directory,
-                 write_chgcar=write_chgcar,
-                 in_custodian=in_custodian,
-                 number_nodes=number_nodes)
+    LAUNCHPAD.add_wf(
+        get_wf_static(structure=cat,
+                      functional=functional,
+                      directory=directory,
+                      write_chgcar=write_chgcar,
+                      in_custodian=in_custodian,
+                      number_nodes=number_nodes)
+    )
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -665,14 +643,14 @@ def relax(structure_file, functional, directory, is_metal, in_custodian, number_
 @click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
 @click.option("--directory", "-d", default="",
               help="Directory in which to set up the configuration workflow.")
-@click.option("--ignore_existing", "-X", is_flag=True,
+@click.option("--include_existing", "-X", is_flag=True,
               help="Ignore the existing configurations when generating new ones, "
                    "i.e. do not generate and calculate the energy for those "
                    "configurations again.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 def configuration(structure_file, functional, sub_sites, element_list, sizes,
-                  directory, ignore_existing, conc_restrict, max_conf, in_custodian,
+                  directory, include_existing, conc_restrict, max_conf, in_custodian,
                   number_nodes):
     """
     Set up a workflow for a set of configurations.
@@ -712,7 +690,7 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
                            max_configurations=max_conf,
                            functional=string_to_functional(functional),
                            directory=directory,
-                           ignore_existing=ignore_existing,
+                           include_existing=include_existing,
                            in_custodian=in_custodian,
                            number_nodes=number_nodes)
 

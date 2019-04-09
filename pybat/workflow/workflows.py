@@ -58,7 +58,6 @@ else:
                             "in order to set up the configuration for "
                             "the workflows.")
 
-
 # TODO Extend configuration and make the whole configuration setup more user friendly
 # Currently the user is not guided to the workflow setup when attempting to use
 # pybat workflows, this should change and be tested. Moreover, careful additions should
@@ -71,11 +70,10 @@ else:
 # It's really getting time to do this. Think about what unit tests you need and make a
 # test suite.
 
-def scf_workflow(structure, functional=("pbe", {}), directory="",
-                 write_chgcar=False, in_custodian=False, number_nodes=None):
+def get_wf_static(structure, directory, functional=("pbe", {}),
+                  write_chgcar=False, in_custodian=False, number_nodes=None):
     """
-    Set up a self consistent field calculation (SCF) workflow and add it to the
-    launchpad of the mongoDB server defined in the config file.
+    Set up a static workflow.
 
     Args:
         structure (pymatgen.Structure): Structure for which to set up the SCF workflow.
@@ -93,19 +91,9 @@ def scf_workflow(structure, functional=("pbe", {}), directory="",
             it is picked up by the right Fireworker.
 
     Returns:
-        None
+        fireworks.Workflow
 
     """
-
-    # Set up the calculation directory
-    if directory == "":
-        directory = os.path.join(os.getcwd(), functional[0])
-        if functional[0] == "pbeu":
-            directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
-                                       in functional[1]["LDAUU"].keys())
-        directory += "_scf"
-    else:
-        directory = os.path.abspath(directory)
 
     # Set up the SCF Firework
     scf_firework = ScfFirework(
@@ -118,11 +106,8 @@ def scf_workflow(structure, functional=("pbe", {}), directory="",
     workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
     workflow_name += str(functional)
 
-    # Create the workflow
-    workflow = Workflow(fireworks=[scf_firework, ],
-                        name=workflow_name)
-
-    LAUNCHPAD.add_wf(workflow)
+    return Workflow(fireworks=[scf_firework, ],
+                    name=workflow_name)
 
 
 def relax_workflow(structure, functional=("pbe", {}), directory="",
