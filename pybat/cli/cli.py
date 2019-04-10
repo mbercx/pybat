@@ -109,7 +109,7 @@ def main():
               help="Number of nodes to request for the job. This will be added to the "
                    "category of the fireworker, so it will pick up Fireworks with the "
                    "same category.")
-@click.option("--number_jobs", "-J", default=1,
+@click.option("--number_jobs", "-J", default=0,
               help="")
 def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
     """
@@ -122,9 +122,13 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
     from pybat.cli.commands.config import load_config
 
     fireworker = load_config("fworker", fworker_name)
+    qadapter = load_config("qadapter", fworker_name)
+
     if number_nodes != 0:
         fireworker.category = str(number_nodes) + "nodes"
-    qadapter = load_config("qadapter", fworker_name)
+    else:
+        number_nodes = 1
+    qadapter["nnodes"] = number_nodes
 
     # launch_rocket_to_queue(
     #     launchpad=load_config("launchpad", lpad_name), fworker=fireworker,
