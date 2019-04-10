@@ -105,7 +105,7 @@ def main():
 @main.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--lpad_name", "-L", default="base")
 @click.option("--fworker_name", "-F", default="base")
-@click.option("--number_nodes", "-n", default=0,
+@click.option("--number_nodes", "-n", default=1,
               help="Number of nodes to request for the job. This will be added to the "
                    "category of the fireworker, so it will pick up Fireworks with the "
                    "same category.")
@@ -121,20 +121,20 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
     from fireworks.queue.queue_launcher import rapidfire
     from pybat.cli.commands.config import load_config
 
-    fireworker = load_config("fworker", fworker_name)
     qadapter = load_config("qadapter", fworker_name)
-
-    if number_nodes != 0:
-        fireworker.category.append(str(number_nodes) + "nodes")
-    else:
-        number_nodes = 1
     qadapter["nnodes"] = number_nodes
+    qadapter["launchpad_file"] = os.path.join(
+        os.path.expanduser("~"), ".pybat_config", "launchpad",
+        lpad_name + "_launchpad.yaml"
+    )
+    qadapter["fireworker_file"] = os.path.join(
+        os.path.expanduser("~"), ".pybat_config", "fworker",
+        fworker_name + "_fworker.yaml"
+    )
 
-    print(fireworker)
-
-    rapidfire(launchpad=load_config("launchpad", lpad_name), fworker=fireworker,
-              qadapter=qadapter, launch_dir='.', nlaunches=number_jobs,
-              njobs_queue=0, njobs_block=500, sleep_time=1, reserve=False, fill_mode=True)
+    rapidfire(launchpad=load_config("launchpad", lpad_name), qadapter=qadapter,
+              launch_dir='.', nlaunches=number_jobs, njobs_queue=0, njobs_block=500,
+              sleep_time=1, reserve=False, fill_mode=True)
 
 
 # TODO Add checks for U-value input
