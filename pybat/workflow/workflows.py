@@ -261,7 +261,7 @@ def get_fw_migration(structure, migration_indices=(0, 0),
         vasprun = VaspTask(directory=os.path.join(migration_dir, "final"))
 
     # Add number of nodes to spec, or "none"
-    firework_spec = {"_launch_dir": os.getcwd()}
+    firework_spec = {}
     if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:
@@ -326,7 +326,7 @@ def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     )
 
     # Add number of nodes to spec, or "none"
-    firework_spec = {"_launch_dir": os.getcwd()}
+    firework_spec = {}
     if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:
@@ -407,7 +407,7 @@ def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
     )
 
     # Add number of nodes to spec, or "none"
-    firework_spec = {"_launch_dir": os.getcwd()}
+    firework_spec = {}
     if number_nodes is None:
         firework_spec.update({"_category": "none"})
     else:

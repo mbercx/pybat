@@ -66,7 +66,7 @@ class PybatStaticFW(Firework):
             vasprun = VaspTask(directory=directory)
 
         # Add number of nodes to spec, or "none"
-        firework_spec = {"_launch_dir": os.getcwd()}
+        firework_spec = {}
         if number_nodes is None or number_nodes == 0:
             firework_spec.update({"_category": "none"})
         else:
@@ -194,7 +194,7 @@ class NebFirework(Firework):
             vasprun = VaspTask(directory=directory)
 
         # Add number of nodes to spec, or "none"
-        firework_spec = {"_launch_dir": os.getcwd()}
+        firework_spec = {}
         if number_nodes is None or number_nodes == 0:
             firework_spec.update({"_category": "none"})
         else:
