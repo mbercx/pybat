@@ -125,22 +125,19 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
     qadapter = load_config("qadapter", fworker_name)
 
     if number_nodes != 0:
-        fireworker.category = str(number_nodes) + "nodes"
+        fireworker.category.append(str(number_nodes) + "nodes")
     else:
         number_nodes = 1
     qadapter["nnodes"] = number_nodes
 
-    # launch_rocket_to_queue(
-    #     launchpad=load_config("launchpad", lpad_name), fworker=fireworker,
-    #     qadapter=qadapter, launcher_dir='.', create_launcher_dir=False, fill_mode=True
-    # )
+    print(fireworker)
 
     rapidfire(launchpad=load_config("launchpad", lpad_name), fworker=fireworker,
               qadapter=qadapter, launch_dir='.', nlaunches=number_jobs,
               njobs_queue=0, njobs_block=500, sleep_time=1, reserve=False, fill_mode=True)
 
-    # TODO Add checks for U-value input
 
+# TODO Add checks for U-value input
 
 # region * Config
 
