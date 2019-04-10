@@ -5,10 +5,8 @@
 import os
 
 import click
-from fireworks import LaunchPad
-from pymongo.errors import ServerSelectionTimeoutError
-from ruamel.yaml import YAML
 
+from pybat.cli.commands.config import load_config
 from pybat.core import Cathode
 from pybat.core import LiRichCathode
 
@@ -23,36 +21,6 @@ __version__ = "pre-alpha"
 __maintainer__ = "Marnik Bercx"
 __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
-
-# Load the workflow configuration
-CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".pybat_wf_config.yaml")
-
-if os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'r') as configfile:
-        yaml = YAML()
-        yaml.default_flow_style = False
-        CONFIG = yaml.load(configfile.read())
-
-        try:
-            LAUNCHPAD = LaunchPad(
-                host=CONFIG["SERVER"].get("host", ""),
-                port=int(CONFIG["SERVER"].get("port", 0)),
-                name=CONFIG["SERVER"].get("name", ""),
-                username=CONFIG["SERVER"].get("username", ""),
-                password=CONFIG["SERVER"].get("password", ""),
-                ssl=CONFIG["SERVER"].get("ssl", False),
-                authsource=CONFIG["SERVER"].get("authsource", None)
-            )
-        except ServerSelectionTimeoutError:
-            raise TimeoutError("Could not connect to server. Please make "
-                               "sure the details of the server are correctly "
-                               "set up.")
-
-else:
-    raise FileNotFoundError("No configuration file found in user's home "
-                            "directory. Please use pybat config  "
-                            "in order to set up the configuration for "
-                            "the workflows.")
 
 # This is used to make '-h' a shorter way to access the CLI help
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -90,6 +58,30 @@ NUMBER_NODES_HELP = "Number of nodes that should be used for the calculations. I
 
 WRITE_CIF_HELP = "Flag that indicates that the structure(s) should also be written as " \
                  "a .cif file."
+
+
+def _load_launchpad(name="base"):
+    """
+    Load the launchpad from the configuration folder in $HOME/.pybat_config/launchpad.
+
+    Args:
+        name (str):
+
+    Returns:
+
+    """
+    if name != "base":
+        try:
+            return load_config("launchpad", name)
+        except FileNotFoundError:
+            raise FileNotFoundError("Could not find requested launchpad in "
+                                    "$HOME/.pybat_config/launchpad.")
+    else:
+        # Try loading the base launchpad
+        try:
+            return load_config("launchpad", name)
+        except FileNotFoundError:
+            raise FileNotFoundError("Could not find a base launchpad.")
 
 
 # endregion
@@ -641,8 +633,11 @@ def workflow():
               help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0,
               help=NUMBER_NODES_HELP)
+@click.option("--lpad_name", "-L", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. defined "
+                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
 def static(structure_file, functional, directory, write_chgcar, in_custodian,
-           number_nodes):
+           number_nodes, lpad_name):
     """
     Set up an static calculation workflow.
     """
@@ -658,7 +653,7 @@ def static(structure_file, functional, directory, write_chgcar, in_custodian,
 
     cat = Cathode.from_file(structure_file)
 
-    LAUNCHPAD.add_wf(
+    _load_launchpad(lpad_name).add_wf(
         get_wf_static(structure=cat,
                       functional=functional,
                       directory=directory,
@@ -675,8 +670,11 @@ def static(structure_file, functional, directory, write_chgcar, in_custodian,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--lpad_name", "-L", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. defined "
+                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
 def optimize(structure_file, functional, directory, is_metal, in_custodian,
-             number_nodes):
+             number_nodes, lpad_name):
     """
     Set up a geometry optimization workflow.
     """
@@ -692,7 +690,7 @@ def optimize(structure_file, functional, directory, is_metal, in_custodian,
     # Set up the calculation directory
     directory = set_up_directory(directory, functional, "optimize")
 
-    LAUNCHPAD.add_wf(
+    _load_launchpad(lpad_name).add_wf(
         get_wf_optimize(structure=cat,
                         functional=functional,
                         directory=directory,
@@ -741,9 +739,12 @@ def optimize(structure_file, functional, directory, is_metal, in_custodian,
                    "for configuration.json files found in the directory tree.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--lpad_name", "-L", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. defined "
+                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
 def configuration(structure_file, functional, sub_sites, element_list, sizes,
                   directory, include_existing, conc_restrict, max_conf, in_custodian,
-                  number_nodes):
+                  number_nodes, lpad_name):
     """
     Set up a workflow for a set of configurations.
 
@@ -795,7 +796,7 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
             "Please provide the possible unit cell sizes, separated by a space: "
         ).split(" ")]
 
-    LAUNCHPAD.add_wf(
+    _load_launchpad(lpad_name).add_wf(
         get_wf_configurations(structure=cat,
                               substitution_sites=substitution_sites,
                               element_list=element_list,
@@ -818,8 +819,11 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--lpad_name", "-L", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. defined "
+                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
 def dimer(structure_file, dimer_indices, distance, functional, is_metal,
-          in_custodian, number_nodes):
+          in_custodian, number_nodes, lpad_name):
     """
     Set up dimer calculation workflows.
     """
@@ -827,7 +831,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 
     cat = LiRichCathode.from_file(structure_file)
 
-    LAUNCHPAD.add_wf(
+    _load_launchpad(lpad_name).add_wf(
         get_wf_dimer(structure=cat,
                      dimer_indices=dimer_indices,
                      distance=distance,
@@ -854,14 +858,17 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
                    "for the migration pathway.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--lpad_name", "-L", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. defined "
+                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
 def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
-        number_nodes):
+        number_nodes, lpad_name):
     """
     Set up dimer calculation workflows.
     """
     from pybat.workflow.workflows import get_wf_neb
 
-    LAUNCHPAD.add_wf(
+    _load_launchpad(lpad_name).add_wf(
         get_wf_neb(directory=directory,
                    nimages=nimages,
                    functional=string_to_functional(functional),
@@ -879,8 +886,11 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--lpad_name", "-L", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. defined "
+                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
 def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
-                 number_nodes):
+                 number_nodes, lpad_name):
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
@@ -894,7 +904,7 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
                                    is_metal=is_metal,
                                    in_custodian=in_custodian,
                                    number_nodes=number_nodes):
-        LAUNCHPAD.add_wf(wf)
+        _load_launchpad(lpad_name).add_wf(wf)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -905,9 +915,11 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--lpad_name", "-L", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. defined "
+                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
 def site_dimers(site_index, structure_file, distance, functional, is_metal,
-                in_custodian,
-                number_nodes):
+                in_custodian, number_nodes, lpad_name):
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
@@ -922,7 +934,7 @@ def site_dimers(site_index, structure_file, distance, functional, is_metal,
                                   is_metal=is_metal,
                                   in_custodian=in_custodian,
                                   number_nodes=number_nodes):
-        LAUNCHPAD.add_wf(wf)
+        _load_launchpad(lpad_name).add_wf(wf)
 
 
 # endregion
