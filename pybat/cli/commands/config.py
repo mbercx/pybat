@@ -154,8 +154,7 @@ def jobscript(template_file, fworker_name="base"):
     config_template_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
                                         "fworker", fworker_name + "_job_template.sh")
 
-    shutil.move(template_file, config_template_file)
-
+    shutil.copy(template_file, config_template_file)
 
 def load_config(config, name="base"):
     """
