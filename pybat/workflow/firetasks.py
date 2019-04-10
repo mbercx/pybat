@@ -318,7 +318,7 @@ class EnergyConfTask(FiretaskBase):
                 configuration["directory"], functional_dir + "_optimize"
             )
             static_dir = os.path.join(
-                configuration["directory"], functional_dir + "static"
+                configuration["directory"], functional_dir + "_static"
             )
 
             # This import needs to happen here because the Fireworks depend on the
