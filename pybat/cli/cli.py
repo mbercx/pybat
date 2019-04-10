@@ -126,7 +126,8 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
 
     rapidfire(launchpad=load_config("launchpad", lpad_name),
               fworker=load_config("fworker", fworker_name), qadapter=qadapter,
-              launch_dir='.', nlaunches=number_jobs, njobs_queue=0, njobs_block=500,
+              launch_dir=os.path.expanduser("~"), nlaunches=number_jobs,
+              njobs_queue=0, njobs_block=500,
               sleep_time=1, reserve=False, fill_mode=True)
 
 
