@@ -77,7 +77,7 @@ def fworker(fireworker_file=None, fworker_name="base"):
     else:
         name = input("Please provide the fireworker name: ")
         vasp_cmd = input("Please provide the full vasp command: ")
-        fireworker = FWorker(name=name, category=["none", "1nodes"],
+        fireworker = FWorker(name=name, category=["none"],
                              env={"vasp_cmd": vasp_cmd})
 
     try:
