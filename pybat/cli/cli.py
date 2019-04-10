@@ -109,7 +109,7 @@ def main():
               help="Number of nodes to request for the job. This will be added to the "
                    "category of the fireworker, so it will pick up Fireworks with the "
                    "same category.")
-@click.option("--number_jobs", "-J", default=0,
+@click.option("--number_jobs", "-J", default=1,
               help="")
 def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
     """
