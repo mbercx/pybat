@@ -17,3 +17,5 @@ wget https://www.dropbox.com/s/ruv8j51z8euy2nb/config.tar.gz
 tar -xvzf config.tar.gz
 rm config.tar.gz
 ```
+
+Once you've made the necessary changes
