@@ -3,3 +3,4 @@ INCAR:
   METAGGA: SCAN
   EDIFF: 1.0e-04
   AMIX: 0.1
+  ADDGRID: True
