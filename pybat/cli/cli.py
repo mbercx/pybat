@@ -168,6 +168,14 @@ def launchpad(launchpad_file, name):
     """
     Configure a Workflows server or launchpad.
 
+    Although the information can be put in manually when using the command without
+    options, it's probably easiest to first set up the launchpad file and then use the
+    '-l' option to configure the launchpad for pybat based on this file.
+
+    Note that specifying a name for the launchpad allows you to differentiate between
+    different database servers when submitting workflows or using 'pybat qlaunch'. If
+    no name is specified, the launchpad will be set up as the base launchpad.
+
     """
     if launchpad_file == "":
         launchpad_file = None
@@ -181,6 +189,10 @@ def launchpad(launchpad_file, name):
 def fworker(fworker_file, name):
     """
     Configure the base settings of a fireworker.
+
+    Although the information can be put in manually when using the command without
+    options, it's probably easiest to first set up the fireworker file and then use the
+    '-l' option to configure the launchpad for pybat based on this file.
 
     """
     if fworker_file == "":

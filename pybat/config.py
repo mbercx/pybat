@@ -77,8 +77,11 @@ def fworker(fireworker_file=None, fworker_name="base"):
     else:
         name = input("Please provide the fireworker name: ")
         vasp_cmd = input("Please provide the full vasp command: ")
-        fireworker = FWorker(name=name, category=["none", "1nodes"],
-                             env={"vasp_cmd": vasp_cmd})
+        fireworker = FWorker(name=name, env={"vasp_cmd": vasp_cmd})
+
+    # Make sure the fireworker has the required node categories.
+    fireworker.category.append("none")
+    fireworker.category.append("1nodes")
 
     try:
         os.makedirs(
