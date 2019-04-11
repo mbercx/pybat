@@ -188,11 +188,14 @@ def launchpad(launchpad_file, name):
 @click.option("-N", "--name", default="base")
 def fworker(fworker_file, name):
     """
-    Configure the base settings of a fireworker.
+    Configure the basic settings of a fireworker.
 
     Although the information can be put in manually when using the command without
     options, it's probably easiest to first set up the fireworker file and then use the
-    '-l' option to configure the launchpad for pybat based on this file.
+    '-f option to configure the launchpad for pybat based on this file.
+
+    Note that specifying a name for the fworker allows you to configure multiple
+    computational resources or settings.
 
     """
     if fworker_file == "":
@@ -219,7 +222,7 @@ def queue(qadapter_file, name):
 @click.option("-N", "--name", default="base")
 def jobscript(template_file, name):
     """
-    Configure the standard queue adapter of a fireworker.
+    Add the job template of a fireworker.
 
     """
     from pybat.config import jobscript

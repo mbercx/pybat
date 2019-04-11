@@ -6,46 +6,19 @@
 #PBS -l walltime=72:00:00
 #PBS -j eo
 
-# IMPORTANT: This template is set up for the leibniz cluster of CalcUA. You will probably have to change quite a bit to make this work on a different machine.
-
 # Set up the python environment
 echo "Sourcing conda setup"
-source $VSC_DATA/miniconda3/etc/profile.d/conda.sh # <----- This should be the path to YOUR conda install
-echo "Loading pmg environment"
-conda activate pmg # <----- In case your conda environment has a different name, change it here
+source $${conda_path}/etc/profile.d/conda.sh
+echo "Loading conda environment"
+conda activate $${python_env}
 
-# Set up the linux environment  <----- This loads the modules for the VSC clusters
-case "$VSC_INSTITUTE_CLUSTER" in
-
-	'leibniz')
-		
-		echo "Assigning LD_BIND_NOW"	
-		export LD_BIND_NOW=1
-		echo "Purging modules"
-		module purge
-		echo "Loading leibniz/2016b"
-		module load leibniz/2016b
-		echo "Loading leibniz/supported"
-		module load leibniz/supported
-		echo "Loading VASP module"
-		module load VASP/5.4.4-intel-2016b
-
-	;;
-
-	'breniac')
-	
-		module purge
-		module load VASP/5.4.4-intel-2016a
-	
-	;;
-
-	*) echo "I don't know how to start a vasp calculation in $VSC_INSTITUTE_CLUSTER."
-esac
+  # Load the modules for running VASP
+  # < put the commands to load the VASP modules here >
 
 # Go to the logdir, so any output is put here
 cd $${logdir}
 
-# This is my workaround for making sure that fireworks with a specified number of nodes only get picked up by jobs that have that number of nodes.
+  # This is a workaround for making sure that fireworks with a specified number of nodes only get picked up by jobs that have that number of nodes.
 echo "Adjusting fworker to number of nodes"
 sed -i s/"[0-9]*nodes"/$${nnodes}nodes/ $${fireworker_file}
 	
