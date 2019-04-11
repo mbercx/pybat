@@ -426,7 +426,7 @@ def optimize(structure_file, functional, calculation_dir, is_metal):
 
     optimize(structure=cat,
              functional=string_to_functional(functional),
-             calculation_dir=calculation_dir,
+             directory=calculation_dir,
              is_metal=is_metal)
 
 
