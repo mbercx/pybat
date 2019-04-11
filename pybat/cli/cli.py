@@ -3,6 +3,7 @@
 # Distributed under the terms of the MIT License
 
 import os
+import warnings
 
 import click
 from fireworks import LaunchPad
@@ -149,6 +150,12 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
 def config():
     """
     Configure the Workflows setup.
+
+    In order to submit and run workflows, you need to configure your fireworker and
+    launchpad. Examples of configuration files and more information can be found in the
+    pybat/examples/config folder:
+
+    https://github.com/mbercx/pybat/tree/master/pybat/examples/config
 
     """
     pass
@@ -627,7 +634,11 @@ def workflow():
     """
     Scripts for setting up workflows and submitting them to the server.
     """
-    pass
+    if not os.path.exists(os.path.join(os.path.expanduser("~"), ".pybat_config")):
+        warnings.warn("IMPORTANT: No .pybat_config directory was found in the home "
+                      "directory. In order to submit workflows, you need to make sure "
+                      "pybat is properly configured. use 'pybat config -h' for more "
+                      "information. \n")
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
