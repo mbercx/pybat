@@ -1,3 +1,4 @@
 .idea/
 pybat.egg-info/
 *pycache*
+*.ipynb_*
