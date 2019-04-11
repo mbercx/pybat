@@ -5,8 +5,9 @@
 import os
 
 import click
+from fireworks import LaunchPad
 
-from pybat.cli.commands.config import load_config
+from pybat.config import load_config
 from pybat.core import Cathode
 from pybat.core import LiRichCathode
 
@@ -74,14 +75,16 @@ def _load_launchpad(name="base"):
         try:
             return load_config("launchpad", name)
         except FileNotFoundError:
-            raise FileNotFoundError("Could not find requested launchpad in "
-                                    "$HOME/.pybat_config/launchpad.")
+            raise FileNotFoundError(
+                "Could not find requested launchpad in $HOME/.pybat_config/launchpad. "
+                "Use 'pybat config launchpad' to set up new launchpads.")
     else:
         # Try loading the base launchpad
         try:
             return load_config("launchpad", name)
         except FileNotFoundError:
-            raise FileNotFoundError("Could not find a base launchpad.")
+            raise FileNotFoundError("Could not find a base launchpad. Use 'pybat "
+                                    "config launchpad' to set up new launchpads.")
 
 
 # endregion
@@ -95,8 +98,8 @@ def main():
 
 
 @main.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--lpad_name", "-L", default="base")
-@click.option("--fworker_name", "-F", default="base")
+@click.option("--lpad_name", "-l", default="base")
+@click.option("--fworker_name", "-f", default="base")
 @click.option("--number_nodes", "-n", default=1,
               help="Number of nodes to request for the job. This will be added to the "
                    "category of the fireworker, so it will pick up Fireworks with the "
@@ -111,9 +114,16 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
 
     """
     from fireworks.queue.queue_launcher import rapidfire
-    from pybat.cli.commands.config import load_config
+    from pybat.config import load_config
 
-    qadapter = load_config("qadapter", fworker_name)
+    try:
+        qadapter = load_config("qadapter", fworker_name)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            "Could not find the qadapter of the fireworker in "
+            "$HOME/.pybat_config/fworker. Use 'pybat config fworker' to set up new "
+            "fireworkers."
+        )
     qadapter["nnodes"] = number_nodes
     qadapter["launchpad_file"] = os.path.join(
         os.path.expanduser("~"), ".pybat_config", "launchpad",
@@ -154,12 +164,12 @@ def launchpad(launchpad_file, name):
     """
     if launchpad_file == "":
         launchpad_file = None
-    from pybat.cli.commands.config import launchpad
+    from pybat.config import launchpad
     launchpad(launchpad_file=launchpad_file, database=name)
 
 
 @config.command(context_settings=CONTEXT_SETTINGS)
-@click.option("-F", "--fworker_file", default="")
+@click.option("-f", "--fworker_file", default="")
 @click.option("-N", "--name", default="base")
 def fworker(fworker_file, name):
     """
@@ -168,7 +178,7 @@ def fworker(fworker_file, name):
     """
     if fworker_file == "":
         fworker_file = None
-    from pybat.cli.commands.config import fworker
+    from pybat.config import fworker
     fworker(fireworker_file=fworker_file, fworker_name=name)
 
 
@@ -180,7 +190,7 @@ def queue(qadapter_file, name):
     Configure the standard queue adapter of a fireworker.
 
     """
-    from pybat.cli.commands.config import queue
+    from pybat.config import queue
 
     queue(qadapter_file=qadapter_file, fworker_name=name)
 
@@ -193,7 +203,7 @@ def jobscript(template_file, name):
     Configure the standard queue adapter of a fireworker.
 
     """
-    from pybat.cli.commands.config import jobscript
+    from pybat.config import jobscript
 
     jobscript(template_file=template_file, fworker_name=name)
 
@@ -383,7 +393,7 @@ def static(structure_file, functional, calculation_dir, write_chgcar):
 
     static(structure=cat,
            functional=string_to_functional(functional),
-           calculation_dir=calculation_dir,
+           directory=calculation_dir,
            write_chgcar=write_chgcar)
 
 
@@ -417,7 +427,7 @@ def optimize(structure_file, functional, calculation_dir, is_metal):
 
     optimize(structure=cat,
              functional=string_to_functional(functional),
-             calculation_dir=calculation_dir,
+             directory=calculation_dir,
              is_metal=is_metal)
 
 
@@ -634,11 +644,14 @@ def workflow():
               help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0,
               help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
-              help="Name of the launchpad to which submit the workflow, i.e. defined "
-                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
+                   "configure a new launchpad, use 'pybat config launchpad'.")
 def static(structure_file, functional, directory, write_chgcar, in_custodian,
-           number_nodes, lpad_name):
+           number_nodes, launchpad_file, lpad_name):
     """
     Set up an static calculation workflow.
     """
@@ -654,7 +667,12 @@ def static(structure_file, functional, directory, write_chgcar, in_custodian,
 
     cat = Cathode.from_file(structure_file)
 
-    _load_launchpad(lpad_name).add_wf(
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
+
+    lpad.add_wf(
         get_wf_static(structure=cat,
                       functional=functional,
                       directory=directory,
@@ -671,11 +689,14 @@ def static(structure_file, functional, directory, write_chgcar, in_custodian,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
-              help="Name of the launchpad to which submit the workflow, i.e. defined "
-                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
+                   "configure a new launchpad, use 'pybat config launchpad'.")
 def optimize(structure_file, functional, directory, is_metal, in_custodian,
-             number_nodes, lpad_name):
+             number_nodes, launchpad_file, lpad_name):
     """
     Set up a geometry optimization workflow.
     """
@@ -691,7 +712,12 @@ def optimize(structure_file, functional, directory, is_metal, in_custodian,
     # Set up the calculation directory
     directory = set_up_directory(directory, functional, "optimize")
 
-    _load_launchpad(lpad_name).add_wf(
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
+
+    lpad.add_wf(
         get_wf_optimize(structure=cat,
                         functional=functional,
                         directory=directory,
@@ -740,12 +766,15 @@ def optimize(structure_file, functional, directory, is_metal, in_custodian,
                    "for configuration.json files found in the directory tree.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
-              help="Name of the launchpad to which submit the workflow, i.e. defined "
-                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
+                   "configure a new launchpad, use 'pybat config launchpad'.")
 def configuration(structure_file, functional, sub_sites, element_list, sizes,
                   directory, include_existing, conc_restrict, max_conf, in_custodian,
-                  number_nodes, lpad_name):
+                  number_nodes, launchpad_file, lpad_name):
     """
     Set up a workflow for a set of configurations.
 
@@ -797,7 +826,12 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
             "Please provide the possible unit cell sizes, separated by a space: "
         ).split(" ")]
 
-    _load_launchpad(lpad_name).add_wf(
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
+
+    lpad.add_wf(
         get_wf_configurations(structure=cat,
                               substitution_sites=substitution_sites,
                               element_list=element_list,
@@ -820,11 +854,14 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
-              help="Name of the launchpad to which submit the workflow, i.e. defined "
-                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
+                   "configure a new launchpad, use 'pybat config launchpad'.")
 def dimer(structure_file, dimer_indices, distance, functional, is_metal,
-          in_custodian, number_nodes, lpad_name):
+          in_custodian, number_nodes, launchpad_file, lpad_name):
     """
     Set up dimer calculation workflows.
     """
@@ -832,7 +869,12 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 
     cat = LiRichCathode.from_file(structure_file)
 
-    _load_launchpad(lpad_name).add_wf(
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
+
+    lpad.add_wf(
         get_wf_dimer(structure=cat,
                      dimer_indices=dimer_indices,
                      distance=distance,
@@ -859,17 +901,25 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
                    "for the migration pathway.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
-              help="Name of the launchpad to which submit the workflow, i.e. defined "
-                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
+                   "configure a new launchpad, use 'pybat config launchpad'.")
 def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
-        number_nodes, lpad_name):
+        number_nodes, launchpad_file, lpad_name):
     """
     Set up dimer calculation workflows.
     """
     from pybat.workflow.workflows import get_wf_neb
 
-    _load_launchpad(lpad_name).add_wf(
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
+
+    lpad.add_wf(
         get_wf_neb(directory=directory,
                    nimages=nimages,
                    functional=string_to_functional(functional),
@@ -887,11 +937,14 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
-              help="Name of the launchpad to which submit the workflow, i.e. defined "
-                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
+                   "configure a new launchpad, use 'pybat config launchpad'.")
 def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
-                 number_nodes, lpad_name):
+                 number_nodes, launchpad_file, lpad_name):
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
@@ -899,13 +952,18 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
 
     cat = LiRichCathode.from_file(structure_file)
 
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
+
     for wf in get_wfs_noneq_dimers(structure=cat,
                                    distance=distance,
                                    functional=string_to_functional(functional),
                                    is_metal=is_metal,
                                    in_custodian=in_custodian,
                                    number_nodes=number_nodes):
-        _load_launchpad(lpad_name).add_wf(wf)
+        lpad.add_wf(wf)
 
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
@@ -916,17 +974,25 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
-              help="Name of the launchpad to which submit the workflow, i.e. defined "
-                   "by the $HOME/.pybat_config/<name>_launchpad.yaml file.")
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
+                   "configure a new launchpad, use 'pybat config launchpad'.")
 def site_dimers(site_index, structure_file, distance, functional, is_metal,
-                in_custodian, number_nodes, lpad_name):
+                in_custodian, number_nodes, launchpad_file, lpad_name):
     """
     Set up dimer calculations for all nonequivalent dimers in a structure.
     """
     from pybat.workflow.workflows import get_wfs_site_dimers
 
     cat = LiRichCathode.from_file(structure_file)
+
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
 
     for wf in get_wfs_site_dimers(structure=cat,
                                   site_index=site_index,
@@ -935,7 +1001,7 @@ def site_dimers(site_index, structure_file, distance, functional, is_metal,
                                   is_metal=is_metal,
                                   in_custodian=in_custodian,
                                   number_nodes=number_nodes):
-        _load_launchpad(lpad_name).add_wf(wf)
+        lpad.add_wf(wf)
 
 
 # endregion

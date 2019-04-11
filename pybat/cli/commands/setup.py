@@ -38,22 +38,43 @@ def _load_yaml_config(filename):
     return config
 
 
-def static(structure, functional=("pbe", {}), calculation_dir="",
-           write_chgcar=False):
+def _load_functional(functional):
+    # Set up the functional
+    if functional[0] != "pbe":
+        functional_config = _load_yaml_config(functional[0] + "Set")
+        functional_config["INCAR"].update(functional[1])
+        return functional_config["INCAR"]
+
+
+def _set_up_directory(directory, functional, calculation):
+    # Set up the calculation directory
+    if directory == "":
+        directory = os.path.join(os.getcwd(), functional[0])
+        if functional[0] == "pbeu":
+            directory += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
+                                       in functional[1]["LDAUU"].keys())
+        directory += "_" + calculation
+    else:
+        directory = os.path.abspath(directory)
+
+    return directory
+
+
+def static(structure, directory="", functional=("pbe", {}), write_chgcar=False):
     """
-    Set up a standard static calculation. Always uses the tetrahedron method to
-    calculate accurate total energies.
+    Set up a standard static calculation using the tetrahedron method to
+    obtain accurate total energies.
 
     Args:
         structure: pymatgen.Structure OR path to structure file for which to set up
             the static calculation.
+        directory (str): Path to the directory in which to set up the
+            static calculation.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
-        calculation_dir (str): Path to the directory in which to set up the
-            VASP calculation.
-        write_chgcar (bool): Write out the charge
+        write_chgcar (bool): Write out the charge density for Bader charge analysis.
 
     Returns:
         str: Path to the directory in which the calculation is set up.
@@ -63,26 +84,28 @@ def static(structure, functional=("pbe", {}), calculation_dir="",
     if isinstance(structure, str):
         structure = Cathode.from_file(structure)
 
+    # If the structure is a cathode object
+    if isinstance(structure, Cathode):
+        structure.to("json", os.path.join(directory, "initial_cathode.json"))
+        structure = structure.as_ordered_structure()
+
+    # Set up the calculation directory
+    directory = _set_up_directory(directory, functional, "static")
+    try:
+        os.makedirs(directory)
+    except FileExistsError:
+        pass
+
     # Set up the calculation
     user_incar_settings = {}
 
     # Set up the functional
-    if functional[0] != "pbe":
-        functional_config = _load_yaml_config(functional[0] + "Set")
-        functional_config["INCAR"].update(functional[1])
-        user_incar_settings.update(functional_config["INCAR"])
+    user_incar_settings.update(_load_functional(functional))
 
-    # Set up the calculation directory
-    if calculation_dir == "":
-        calculation_dir = os.path.join(os.getcwd(), functional[0])
-        if functional[0] == "pbeu":
-            calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
-                                             in functional[1]["LDAUU"].keys())
-        calculation_dir += "_static"
-    try:
-        os.makedirs(calculation_dir)
-    except FileExistsError:
-        pass
+    # Check if a magnetic moment was not provided for the sites. If not, perform a
+    # non-spin polarized calculation
+    if "magmom" not in structure.site_properties.keys():
+        user_incar_settings.update({"ISPIN": 1})
 
     # Set charge density to be written if requested
     if write_chgcar:
@@ -92,28 +115,18 @@ def static(structure, functional=("pbe", {}), calculation_dir="",
         if functional[0] == "hse":
             user_incar_settings.update({"PRECFOCK": "Accurate"})
 
-    # If the structure is a cathode object
-    if isinstance(structure, Cathode):
-        structure.to("json", os.path.join(calculation_dir, "initial_cathode.json"))
-        structure = structure.as_ordered_structure()
-
-    # Check if a magnetic moment was not provided for the sites. If not, make
-    # sure it is zero for the calculations.
-    if "magmom" not in structure.site_properties.keys():
-        structure.add_site_property("magmom", [0] * len(structure.sites))
-
     # Set up the BulkSCFSet
     static_calculation = BulkSCFSet(structure=structure,
                                     user_incar_settings=user_incar_settings,
                                     potcar_functional=DFT_FUNCTIONAL)
 
     # Write the input files to the SCF calculation directory
-    static_calculation.write_input(calculation_dir)
+    static_calculation.write_input(directory)
 
-    return calculation_dir
+    return directory
 
 
-def optimize(structure, functional=("pbe", {}), calculation_dir="",
+def optimize(structure, directory="", functional=("pbe", {}),
              is_metal=False):
     """
     Set up a standard geometry optimization calculation of a Cathode
@@ -122,12 +135,12 @@ def optimize(structure, functional=("pbe", {}), calculation_dir="",
     Args:
         structure: pymatgen.Structure OR path to structure file for which to set up the
             geometry optimization calculation.
+        directory (str): Path to the directory in which to set up the
+            geometry optimization.
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
             to specify the various functional tags.
-        calculation_dir (str): Path to the directory in which to set up the
-            VASP calculation.
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV.
@@ -140,35 +153,28 @@ def optimize(structure, functional=("pbe", {}), calculation_dir="",
     if isinstance(structure, str):
         structure = Cathode.from_file(structure)
 
-    user_incar_settings = {}
-
-    # Set up the functional
-    if functional[0] != "pbe":
-        functional_config = _load_yaml_config(functional[0] + "Set")
-        functional_config["INCAR"].update(functional[1])
-        user_incar_settings.update(functional_config["INCAR"])
+    # If the structure is a cathode object
+    if isinstance(structure, Cathode):
+        structure.to("json", os.path.join(directory, "initial_cathode.json"))
+        structure = structure.as_ordered_structure()
 
     # Set up the calculation directory
-    if calculation_dir == "":
-        calculation_dir = os.path.join(os.getcwd(), functional[0])
-        if functional[0] == "pbeu":
-            calculation_dir += "_" + "".join(k + str(functional[1]["LDAUU"][k]) for k
-                                             in functional[1]["LDAUU"].keys())
-        calculation_dir += "_optimize"
+    directory = _set_up_directory(directory, functional, "optimize")
     try:
-        os.makedirs(calculation_dir)
+        os.makedirs(directory)
     except FileExistsError:
         pass
 
-    # If the structure is a cathode object
-    if isinstance(structure, Cathode):
-        structure.to("json", os.path.join(calculation_dir, "initial_cathode.json"))
-        structure = structure.as_ordered_structure()
+    # Set up the calculation
+    user_incar_settings = {}
 
-    # Check if a magnetic moment was not provided for the sites. If not, make
-    # sure it is zero for the calculations._
+    # Set up the functional
+    user_incar_settings.update(_load_functional(functional))
+
+    # Check if a magnetic moment was not provided for the sites. If not, perform a
+    # non-spin polarized calculation
     if "magmom" not in structure.site_properties.keys():
-        structure.add_site_property("magmom", [0] * len(structure.sites))
+        user_incar_settings.update({"ISPIN": 1})
 
     # For metals, use Methfessel Paxton smearing
     if is_metal:
@@ -180,9 +186,9 @@ def optimize(structure, functional=("pbe", {}), calculation_dir="",
                                     potcar_functional=DFT_FUNCTIONAL)
 
     # Write the input files to the geometry optimization directory
-    geo_optimization.write_input(calculation_dir)
+    geo_optimization.write_input(directory)
 
-    return calculation_dir
+    return directory
 
 
 def transition(directory, functional=("pbe", {}), is_metal=False,
