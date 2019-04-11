@@ -126,11 +126,10 @@ def get_wf_optimize(structure, directory, functional=("pbe", {}),
 
 
 def get_wf_configurations(structure, directory, substitution_sites=None,
-                          element_list=None,
-                          sizes=None, concentration_restrictions=None,
-                          max_configurations=None, functional=("pbe", {}),
-                          include_existing=True, in_custodian=False,
-                          number_nodes=None):
+                          element_list=None, sizes=None, concentration_restrictions=None,
+                          max_configurations=None, configuration_list=None,
+                          include_existing=True, functional=("pbe", {}),
+                          in_custodian=False, number_nodes=None):
     """
     Set up a workflow for a set of atomic configurations, which includes a geometric
     optimization as well as a static calculation based on the final geometry.
@@ -182,7 +181,8 @@ def get_wf_configurations(structure, directory, substitution_sites=None,
         sizes=list(sizes),
         concentration_restrictions=concentration_restrictions,
         max_configurations=max_configurations,
-        include_existing=include_existing
+        include_existing=include_existing,
+        configuration_list=configuration_list
     )
 
     energy_task = EnergyConfTask(

@@ -213,7 +213,7 @@ class ConfigurationTask(FiretaskBase):
     required_params = ["structure", "directory", "substitution_sites", "element_list",
                        "sizes"]
     optional_params = ["concentration_restrictions", "max_configurations",
-                       "include_existing"]
+                       "include_existing", "configuration_list"]
     _fw_name = "{{pybat.workflow.firetasks.ConfigurationTask}}"
 
     def run_task(self, fw_spec):
@@ -231,13 +231,16 @@ class ConfigurationTask(FiretaskBase):
         else:
             max_conf_to_generate = None
 
-        configurations = self["structure"].get_cation_configurations(
-            substitution_sites=self["substitution_sites"],
-            cation_list=self["element_list"],
-            sizes=self["sizes"],
-            concentration_restrictions=self.get("configuration_restrictions", None),
-            max_configurations=max_conf_to_generate
-        )
+        if self.get("configuration_list", None):
+            configurations = self["structure"].get_cation_configurations(
+                substitution_sites=self["substitution_sites"],
+                cation_list=self["element_list"],
+                sizes=self["sizes"],
+                concentration_restrictions=self.get("configuration_restrictions", None),
+                max_configurations=max_conf_to_generate
+            )
+        else:
+            configurations = self.get("configuration_list", None)
 
         configuration_dict = {}
         conf_number = 0
