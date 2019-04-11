@@ -1,8 +1,8 @@
 # Configuring pybat for workflows via fireworks
 
-In this directory you can find some example configuration files for the pybat workflow setup. These files correspond to the typical [Fireworks](https://materialsproject.github.io/fireworks/index.html) YAML files that describe both the fireworker and the launchpad. Here's an overview:
+In this directory you can find some example configuration files for the pybat workflow setup. These files correspond to the typical [Fireworks](https://materialsproject.github.io/fireworks/index.html) YAML files that describe both the fireworker and the launchpad, as well as some examples of jobscript templates for running Fireworks on a queueing system. Here's a brief overview:
 
-1. `fworker/example_fworker.yaml`: This file configures the fireworker, i.e. the cluster that performs the calculations. Important here is that pybat uses the fireworker category to make sure that Fireworks that require a specific amount of nodes are only picked up by the cores job. Also: the `pybat.workflow.firetasks.VaspTask` uses the fireworker `env` to know the VASP command via `vasp_cmd`.
+1. `fworker/example_fworker.yaml`: This file configures the fireworker, i.e. the cluster that performs the calculations. Important here is that pybat uses the fireworker `category` to make sure that Fireworks that require a specific amount of nodes are only picked up by a job running on that number of nodes. Also, the `pybat.workflow.firetasks.VaspTask` uses the fireworker `env` to know the VASP command via `vasp_cmd`.
 
 2. `fworker/example_job_template.yaml`: This is an example job template for the `leibniz` cluster of CalcUA, the organisation that manages the clusters of the university of Antwerp. It's mainly here so our students can copy it and adjust. Important here is that the jobscript uses sed to adjust the number of the fireworker, nodes based on the number of nodes of the job.
 
