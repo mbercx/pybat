@@ -8,12 +8,12 @@
 
 # Set up the python environment
 echo "Sourcing conda setup"
-source $${conda_path}/etc/profile.d/conda.sh
+source <conda_path>/etc/profile.d/conda.sh
 echo "Loading conda environment"
-conda activate $${python_env}
+conda activate <python_env>
 
-  # Load the modules for running VASP
-  # < put the commands to load the VASP modules here >
+# Load the modules for running VASP
+# < put the commands to load the VASP modules here >
 
 # Go to the logdir, so any output is put here
 cd $${logdir}

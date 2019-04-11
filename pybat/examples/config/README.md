@@ -18,6 +18,6 @@ tar -xvzf config.tar.gz
 rm config.tar.gz
 ```
 
-Once you've made the necessary changes, use `pybat config` to configure pybat based on the configuration files. Be sure to check the help of each configure command with `-h` before using them.
+Once you've made the necessary changes, use `pybat config` to configure pybat based on the configuration files. Be sure to check the help of each `config` subcommand with `-h` before using them.
 
 
