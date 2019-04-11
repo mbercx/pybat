@@ -3,6 +3,7 @@
 # Distributed under the terms of the MIT License
 
 import os
+import warnings
 
 import numpy as np
 from monty.serialization import loadfn
@@ -390,10 +391,21 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
         images = images_1[:-1] + images_2
 
     else:
-        # Linearly interpolate the initial and final structures
-        images = initial_structure.interpolate(end_structure=final_structure,
-                                               nimages=nimages + 1,
-                                               interpolate_lattices=True)
+        try:
+            # Linearly interpolate the initial and final structures
+            images = initial_structure.interpolate(end_structure=final_structure,
+                                                   nimages=nimages + 1,
+                                                   interpolate_lattices=True)
+        except ValueError:
+            warnings.warn("Found a ValueError while interpolating the initial and final "
+                          "neb structures. Attempting to sort the structures and "
+                          "interpolating again. Make sure to check if the transition is "
+                          "correct.")
+            images = initial_structure.get_sorted_structure().interpolate(
+                end_structure=final_structure.get_sorted_structure(),
+                nimages=nimages + 1,
+                interpolate_lattices=True
+            )
 
     # TODO Add functionality for NEB calculations with changing lattices
 
