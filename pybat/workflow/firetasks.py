@@ -231,7 +231,7 @@ class ConfigurationTask(FiretaskBase):
         else:
             max_conf_to_generate = None
 
-        if self.get("configuration_list", None):
+        if not self.get("configuration_list", None):
             configurations = self["structure"].get_cation_configurations(
                 substitution_sites=self["substitution_sites"],
                 cation_list=self["element_list"],
