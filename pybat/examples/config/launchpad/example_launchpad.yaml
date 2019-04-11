@@ -1,0 +1,10 @@
+# Example launchpad for connecting to the mongoDB server
+# -> Be sure to fill in the details, e.g. <host> etc...
+host: <host>
+logdir: null
+name: <name>
+username: <username>
+password: <password>
+port: 27017
+ssl: true
+authsource: admin

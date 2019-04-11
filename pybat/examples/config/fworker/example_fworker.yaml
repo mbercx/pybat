@@ -1,0 +1,9 @@
+# Example fireworker for the leibniz cluster of CalcUA. 
+# -> Change name and vasp_cmd for other clusters!
+category:
+- none
+- 1nodes
+env:
+  vasp_cmd: mpirun -genv LD_BIND_NOW=1 vasp_std >> out 2>&1
+name: leibniz
+query: '{}'
