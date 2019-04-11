@@ -6,7 +6,7 @@ import os
 
 import click
 
-from pybat.cli.commands.config import load_config
+from pybat.config import load_config
 from pybat.core import Cathode
 from pybat.core import LiRichCathode
 
@@ -74,14 +74,16 @@ def _load_launchpad(name="base"):
         try:
             return load_config("launchpad", name)
         except FileNotFoundError:
-            raise FileNotFoundError("Could not find requested launchpad in "
-                                    "$HOME/.pybat_config/launchpad.")
+            raise FileNotFoundError(
+                "Could not find requested launchpad in $HOME/.pybat_config/launchpad. "
+                "Use 'pybat config launchpad' to set up new launchpads.")
     else:
         # Try loading the base launchpad
         try:
             return load_config("launchpad", name)
         except FileNotFoundError:
-            raise FileNotFoundError("Could not find a base launchpad.")
+            raise FileNotFoundError("Could not find a base launchpad. Use 'pybat "
+                                    "config launchpad' to set up new launchpads.")
 
 
 # endregion
@@ -111,9 +113,16 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
 
     """
     from fireworks.queue.queue_launcher import rapidfire
-    from pybat.cli.commands.config import load_config
+    from pybat.config import load_config
 
-    qadapter = load_config("qadapter", fworker_name)
+    try:
+        qadapter = load_config("qadapter", fworker_name)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            "Could not find the qadapter of the fireworker in "
+            "$HOME/.pybat_config/fworker. Use 'pybat config fworker' to set up new "
+            "fireworkers."
+        )
     qadapter["nnodes"] = number_nodes
     qadapter["launchpad_file"] = os.path.join(
         os.path.expanduser("~"), ".pybat_config", "launchpad",
@@ -154,7 +163,7 @@ def launchpad(launchpad_file, name):
     """
     if launchpad_file == "":
         launchpad_file = None
-    from pybat.cli.commands.config import launchpad
+    from pybat.config import launchpad
     launchpad(launchpad_file=launchpad_file, database=name)
 
 
@@ -168,7 +177,7 @@ def fworker(fworker_file, name):
     """
     if fworker_file == "":
         fworker_file = None
-    from pybat.cli.commands.config import fworker
+    from pybat.config import fworker
     fworker(fireworker_file=fworker_file, fworker_name=name)
 
 
@@ -180,7 +189,7 @@ def queue(qadapter_file, name):
     Configure the standard queue adapter of a fireworker.
 
     """
-    from pybat.cli.commands.config import queue
+    from pybat.config import queue
 
     queue(qadapter_file=qadapter_file, fworker_name=name)
 
@@ -193,7 +202,7 @@ def jobscript(template_file, name):
     Configure the standard queue adapter of a fireworker.
 
     """
-    from pybat.cli.commands.config import jobscript
+    from pybat.config import jobscript
 
     jobscript(template_file=template_file, fworker_name=name)
 
@@ -383,7 +392,7 @@ def static(structure_file, functional, calculation_dir, write_chgcar):
 
     static(structure=cat,
            functional=string_to_functional(functional),
-           calculation_dir=calculation_dir,
+           directory=calculation_dir,
            write_chgcar=write_chgcar)
 
 
