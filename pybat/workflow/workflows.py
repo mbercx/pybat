@@ -27,12 +27,6 @@ __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
 
 
-# TODO Extend configuration and make the whole configuration setup more user friendly
-# Currently the user is not guided to the workflow setup when attempting to use
-# pybat workflows, this should change and be tested. Moreover, careful additions should
-# be made to make sure all user-specific configuration elements are easily configured
-# and implemented in the code.
-
 # TODO Fix the CustodianTask
 
 # TODO Add UnitTests!
