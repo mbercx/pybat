@@ -85,8 +85,12 @@ def fworker(fireworker_file=None, fworker_name="base"):
         fireworker = FWorker(name=name, env={"vasp_cmd": vasp_cmd})
 
     # Make sure the fireworker has the required node categories.
-    fireworker.category.append("none")
-    fireworker.category.append("1nodes")
+    if fireworker.category:
+        print("\nNote: Pybat will overwrite the category in the fireworker file to make "
+              "sure that the jobs submitted on this fireworker only pick up the "
+              "Fireworks with the correct category setting, i.e. corresponding to a "
+              "number of nodes.\n")
+    fireworker.category = ["none", "1nodes"]
 
     try:
         os.makedirs(
@@ -99,6 +103,7 @@ def fworker(fireworker_file=None, fworker_name="base"):
                                   "fworker", fworker_name + "_fworker.yaml")
 
     fireworker.to_file(config_fw_file)
+    print("Fireworker file written to " + config_fw_file + "\n")
 
 
 def qadapter(qadapter_file=None, fworker_name="base"):
@@ -173,7 +178,7 @@ def jobscript(template_file, fworker_name="base"):
                                         "fworker", fworker_name + "_job_template.sh")
 
     shutil.copy(template_file, config_template_file)
-    print("Copied job template to " + config_template_file)
+    print("\nCopied job template to " + config_template_file + "\n")
 
 
 def load_config(config, name="base"):
