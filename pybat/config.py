@@ -204,9 +204,9 @@ def check():
         for lpad_file in lpads:
             name = lpad_file.split("_")[0]
             lpad = load_config("launchpad", name)
-            print(name + ": (host) " + lpad.host)
-            print(len(name) * " " + "  (name) " + lpad.name)
-            print(len(name) * " " + "  (user) " + lpad.username)
+            print(name + ": (host)     " + lpad.host)
+            print(len(name) * " " + "  (database) " + lpad.name)
+            print(len(name) * " " + "  (user)     " + lpad.username)
 
     if not os.path.exists(os.path.join(config_dir, "fworker")):
         print("\nNo fworker directory found. Use 'pybat config fworker' to set up a "
