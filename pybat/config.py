@@ -186,6 +186,54 @@ def jobscript(template_file, fworker_name="base"):
     print("\nCopied job template to " + config_template_file + "\n")
 
 
+def check():
+    config_dir = os.path.join(os.path.expanduser("~"), ".pybat_config")
+
+    if not os.path.exists(config_dir):
+        print("No configuration directory found! Use 'pybat config' to set up the "
+              "pybat configuration.")
+        return
+
+    if not os.path.exists(os.path.join(config_dir, "launchpad")):
+        print("No launchpad directory found. Use 'pybat config launchpad' to set up a "
+              "launchpad configuration.")
+    else:
+        print("\nConfig launchpads" + "\n-----------------")
+        lpads = os.listdir(os.path.join(config_dir, "launchpad"))
+
+        for lpad_file in lpads:
+            name = lpad_file.split("_")[0]
+            lpad = load_config("launchpad", name)
+            print(name + ": (host) " + lpad.host)
+            print(len(name) * " " + "  (name) " + lpad.name)
+            print(len(name) * " " + "  (user) " + lpad.username)
+
+    if not os.path.exists(os.path.join(config_dir, "fworker")):
+        print("No fworker directory found. Use 'pybat config fworker' to set up a "
+              "fworker configuration.")
+    else:
+        print("\nConfig fireworkers" + "\n------------------")
+        fworker_files = [f.split("_") for f
+                         in os.listdir(os.path.join(config_dir, "fworker"))]
+        fworker_dict = {}
+
+        for file in fworker_files:
+            if file[0] not in fworker_dict.keys():
+                fworker_dict[file[0]] = []
+            fworker_dict[file[0]].append("_".join(file[1:]))
+
+        for f, l in fworker_dict.items():
+            print(f + ": " + l[0])
+            for i in l[1:]:
+                print(len(f) * " " + "  " + i)
+        print()
+
+
+
+
+
+
+
 def load_config(config, name="base"):
     """
 

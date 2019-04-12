@@ -228,6 +228,11 @@ def jobscript(template_file, name):
     jobscript(template_file=template_file, fworker_name=name)
 
 
+@config.command(context_settings=CONTEXT_SETTINGS)
+def check():
+    from pybat.config import check
+    check()
+
 # endregion
 
 # region * Define
