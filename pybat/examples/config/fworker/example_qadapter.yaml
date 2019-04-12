@@ -8,4 +8,4 @@ nnodes: null
 launchpad_file: null
 fireworker_file: null
 logdir: <logdir>
-rocket_launch: rapidfire --nlaunches infinite --max_loops 30 --sleep 10 --timeout 216000
+rocket_launch: rapidfire --nlaunches infinite --max_loops 30 --sleep 10
