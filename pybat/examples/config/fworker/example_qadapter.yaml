@@ -5,6 +5,7 @@ _fw_name: CommonAdapter
 _fw_q_type: PBS
 _fw_template_file: null
 nnodes: null
+walltime: null
 launchpad_file: null
 fireworker_file: null
 logdir: <logdir>

@@ -3,7 +3,7 @@
 #PBS -N pybat_$${nnodes}nodes
 #PBS -q batch
 #PBS -L tasks=$${nnodes}:lprocs=28
-#PBS -l walltime=72:00:00
+#PBS -l walltime=$${walltime}
 #PBS -j eo
 
 # Set up the python environment

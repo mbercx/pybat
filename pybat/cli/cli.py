@@ -105,9 +105,11 @@ def main():
               help="Number of nodes to request for the job. This will be added to the "
                    "category of the fireworker, so it will pick up Fireworks with the "
                    "same category.")
+@click.option("--walltime", "-t", default=72,
+              help="Walltime of the job, expressed in hours.")
 @click.option("--number_jobs", "-J", default=1,
               help="")
-def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
+def qlaunch(lpad_name, fworker_name, number_nodes, walltime, number_jobs):
     """
     Launch jobs to the queue that will accept Fireworks.
 
@@ -126,6 +128,7 @@ def qlaunch(lpad_name, fworker_name, number_nodes, number_jobs):
             "fireworkers."
         )
     qadapter["nnodes"] = number_nodes
+    qadapter["walltime"] = walltime
     qadapter["launchpad_file"] = os.path.join(
         os.path.expanduser("~"), ".pybat_config", "launchpad",
         lpad_name + "_launchpad.yaml"
