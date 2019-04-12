@@ -187,6 +187,10 @@ def jobscript(template_file, fworker_name="base"):
 
 
 def check():
+    """
+    Check the pybat configuration files.
+
+    """
     config_dir = os.path.join(os.path.expanduser("~"), ".pybat_config")
 
     if not os.path.exists(config_dir):
