@@ -30,6 +30,7 @@ def launchpad(launchpad_file=None, database="base"):
     Args:
         launchpad_file (str): my_launchpad.yaml file from which to load the mongoDB database
             details.
+        database (str): Name to give to the database in the pybat configuration.
 
     Returns:
         None
@@ -72,6 +73,10 @@ def fworker(fireworker_file=None, fworker_name="base"):
     """
     Script to set up the configuration of the fireworker.
 
+    Args:
+        fireworker_file (str): fworker.yaml file from which to configure the fireworker.
+        fworker_name (str): Which fworker configuration of pybat to add the fireworker to.
+
     Returns:
         None
 
@@ -111,6 +116,13 @@ def qadapter(qadapter_file=None, fworker_name="base"):
     Script to set up the configuration of the queueing system. Note that we store the
     queue_adapter in the same configuration directory as the Fireworker, i.e. fworker.
     This is in the assumption that each worker has one preferred queueing system.
+
+    Args:
+        qadapter_file (str): my_qadapter_file.yaml from which to configure the queue
+            adapter.
+        fworker_name (str): Which fworker configuration of pybat to add the queue
+            adapter to. Note that there has to be a corresponding job_template.sh file
+            for the queue adapter to adjust before submitting it to the fireworker queue.
 
     Returns:
         None
@@ -165,10 +177,14 @@ def jobscript(template_file, fworker_name="base"):
     fireworker is sufficient.
 
     Args:
-        template_file:
-        fworker_name:
+        template_file (str): job_template.sh file to be tied to the fworker
+            configuration.
+        fworker_name (str): Which fworker configuration of pybat to add the job template
+            to. Note that the corresponding queue adapter must contain the variables
+            which are present in the job template as $${variable}.
 
     Returns:
+        None
 
     """
 
