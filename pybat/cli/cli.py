@@ -128,7 +128,7 @@ def qlaunch(lpad_name, fworker_name, number_nodes, walltime, number_jobs):
             "fireworkers."
         )
     qadapter["nnodes"] = number_nodes
-    qadapter["walltime"] = walltime + "00:00:"
+    qadapter["walltime"] = str(walltime) + "00:00"
     qadapter["launchpad_file"] = os.path.join(
         os.path.expanduser("~"), ".pybat_config", "launchpad",
         lpad_name + "_launchpad.yaml"
