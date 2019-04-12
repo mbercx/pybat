@@ -177,9 +177,8 @@ def launchpad(launchpad_file, name):
     no name is specified, the launchpad will be set up as the base launchpad.
 
     """
-    if launchpad_file == "":
-        launchpad_file = None
     from pybat.config import launchpad
+
     launchpad(launchpad_file=launchpad_file, database=name)
 
 
@@ -198,14 +197,13 @@ def fworker(fworker_file, name):
     computational resources or settings.
 
     """
-    if fworker_file == "":
-        fworker_file = None
     from pybat.config import fworker
+
     fworker(fireworker_file=fworker_file, fworker_name=name)
 
 
 @config.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("qadapter_file", nargs=1)
+@click.option("-q", "--qadapter_file", default="")
 @click.option("-N", "--name", default="base")
 def qadapter(qadapter_file, name):
     """
