@@ -207,14 +207,14 @@ def fworker(fworker_file, name):
 @config.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("qadapter_file", nargs=1)
 @click.option("-N", "--name", default="base")
-def queue(qadapter_file, name):
+def qadapter(qadapter_file, name):
     """
     Configure the standard queue adapter of a fireworker.
 
     """
-    from pybat.config import queue
+    from pybat.config import qadapter
 
-    queue(qadapter_file=qadapter_file, fworker_name=name)
+    qadapter(qadapter_file=qadapter_file, fworker_name=name)
 
 
 @config.command(context_settings=CONTEXT_SETTINGS)

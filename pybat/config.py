@@ -49,7 +49,14 @@ def launchpad(launchpad_file=None, database="base"):
             host=host, port=port, name=name, username=username, password=password,
             ssl=True, authsource="admin"
         )
-        # TODO Add server checks
+
+    # Test the launchpad
+    try:
+        print("\nAttempting connection to mongoDB database...")
+        _ = lpad.get_fw_ids()
+        print("Connection successful!\n")
+    except:
+        raise ValueError("Could not connect to ")
 
     config_lpad_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
                                     "launchpad", database + "_launchpad.yaml")
@@ -61,6 +68,7 @@ def launchpad(launchpad_file=None, database="base"):
         pass
 
     lpad.to_file(config_lpad_file)
+    print("Launchpad file written to " + config_lpad_file + "\n")
 
 
 def fworker(fireworker_file=None, fworker_name="base"):
@@ -96,7 +104,7 @@ def fworker(fireworker_file=None, fworker_name="base"):
     fireworker.to_file(config_fw_file)
 
 
-def queue(qadapter_file, fworker_name="base"):
+def qadapter(qadapter_file=None, fworker_name="base"):
     """
     Script to set up the configuration of the queueing system. Note that we store the
     queue_adapter in the same configuration directory as the Fireworker, i.e. fworker.
@@ -106,6 +114,17 @@ def queue(qadapter_file, fworker_name="base"):
         None
 
     """
+    if qadapter_file:
+        queue_adapter = CommonAdapter.from_file(qadapter_file)
+    else:
+        logdir = input("Please provide the directory where the log should be stored:")
+        if not os.path.exists(logdir):
+            os.makedirs(logdir)
+        queue_adapter = CommonAdapter.from_file(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "examples", "config",
+            "fworker", "example_qadapter.yaml"
+        ))
+        print("\nNote: 'rocket_launch' has been set to an infinite rapidfire mode.")
 
     try:
         os.makedirs(
@@ -116,8 +135,6 @@ def queue(qadapter_file, fworker_name="base"):
 
     config_q_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
                                  "fworker", fworker_name + "_qadapter.yaml")
-
-    queue_adapter = CommonAdapter.from_file(qadapter_file)
 
     template_file = os.path.join(
         os.path.expanduser("~"), ".pybat_config", "fworker",
@@ -130,6 +147,7 @@ def queue(qadapter_file, fworker_name="base"):
 
     queue_adapter.template_file = template_file
     queue_adapter.to_file(config_q_file)
+    print("Queue adapter file written to " + config_q_file)
 
 
 def jobscript(template_file, fworker_name="base"):
@@ -158,6 +176,8 @@ def jobscript(template_file, fworker_name="base"):
                                         "fworker", fworker_name + "_job_template.sh")
 
     shutil.copy(template_file, config_template_file)
+    print("Copied job template to " + config_template_file)
+
 
 def load_config(config, name="base"):
     """
@@ -169,18 +189,26 @@ def load_config(config, name="base"):
     Returns:
 
     """
-    if config == "launchpad":
-        return LaunchPad.from_file(
-            os.path.join(os.path.expanduser("~"), ".pybat_config",
-                         "launchpad", name + "_launchpad.yaml")
-        )
-    if config == "fworker":
-        return FWorker.from_file(
-            os.path.join(os.path.expanduser("~"), ".pybat_config",
-                         "fworker", name + "_fworker.yaml")
-        )
-    if config == "qadapter":
-        return CommonAdapter.from_file(
-            os.path.join(os.path.expanduser("~"), ".pybat_config",
-                         "fworker", name + "_qadapter.yaml")
+    try:
+        if config == "launchpad":
+            return LaunchPad.from_file(
+                os.path.join(os.path.expanduser("~"), ".pybat_config",
+                             "launchpad", name + "_launchpad.yaml")
+            )
+        if config == "fworker":
+            return FWorker.from_file(
+                os.path.join(os.path.expanduser("~"), ".pybat_config",
+                             "fworker", name + "_fworker.yaml")
+            )
+        if config == "qadapter":
+            return CommonAdapter.from_file(
+                os.path.join(os.path.expanduser("~"), ".pybat_config",
+                             "fworker", name + "_qadapter.yaml")
+            )
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            "Did not find the corresponding configuration file in " \
+            + os.path.join(os.path.expanduser("~"), ".pybat_config") \
+            + ". Use 'pybat config " + config + "' to set up the " + name + \
+            " configuration for the " + config + "."
         )
