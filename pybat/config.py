@@ -51,12 +51,9 @@ def launchpad(launchpad_file=None, database="base"):
         )
 
     # Test the launchpad
-    try:
-        print("\nAttempting connection to mongoDB database...")
-        _ = lpad.get_fw_ids()
-        print("Connection successful!\n")
-    except:
-        raise ValueError("Could not connect to ")
+    print("\nAttempting connection to mongoDB database...")
+    _ = lpad.get_fw_ids()
+    print("Connection successful!\n")
 
     config_lpad_file = os.path.join(os.path.expanduser("~"), ".pybat_config",
                                     "launchpad", database + "_launchpad.yaml")
