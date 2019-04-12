@@ -141,6 +141,7 @@ def qadapter(qadapter_file=None, fworker_name="base"):
             os.path.dirname(os.path.abspath(__file__)), "examples", "config",
             "fworker", "example_qadapter.yaml"
         ))
+        queue_adapter["logdir"] = logdir
         print("\nNote: 'rocket_launch' has been set to an infinite rapidfire mode.")
 
     try:
