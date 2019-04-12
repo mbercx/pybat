@@ -224,10 +224,10 @@ def check():
 
         for f, l in fworker_dict.items():
             needed_files = ["fworker.yaml", "qadapter.yaml", "job_template.sh"]
-            t = [i if i in needed_files else "NONE" for i in needed_files]
-            print(f + ": " + t[0])
-            for el in t[1:]:
-                print(len(f) * " " + "  " + el)
+            t = [i if i in l else "NONE" for i in needed_files]
+            print(f + ": (fireworker) " + t[0])
+            print(len(f) * " " + "  (qadapter)   " + t[1])
+            print(len(f) * " " + "  (jobscript)  " + t[2])
         print()
 
 
