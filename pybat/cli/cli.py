@@ -672,8 +672,8 @@ def workflow():
               help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
-                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
-                   "configure a new launchpad, use 'pybat config launchpad'.")
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
 def static(structure_file, functional, directory, write_chgcar, in_custodian,
            number_nodes, launchpad_file, lpad_name):
     """
@@ -717,8 +717,8 @@ def static(structure_file, functional, directory, write_chgcar, in_custodian,
               help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
-                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
-                   "configure a new launchpad, use 'pybat config launchpad'.")
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
 def optimize(structure_file, functional, directory, is_metal, in_custodian,
              number_nodes, launchpad_file, lpad_name):
     """
@@ -794,8 +794,8 @@ def optimize(structure_file, functional, directory, is_metal, in_custodian,
               help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
-                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
-                   "configure a new launchpad, use 'pybat config launchpad'.")
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
 def configuration(structure_file, functional, sub_sites, element_list, sizes,
                   directory, include_existing, conc_restrict, max_conf, in_custodian,
                   number_nodes, launchpad_file, lpad_name):
@@ -882,8 +882,8 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
               help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
-                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
-                   "configure a new launchpad, use 'pybat config launchpad'.")
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
 def dimer(structure_file, dimer_indices, distance, functional, is_metal,
           in_custodian, number_nodes, launchpad_file, lpad_name):
     """
@@ -929,8 +929,8 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
               help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
-                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
-                   "configure a new launchpad, use 'pybat config launchpad'.")
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
 def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
         number_nodes, launchpad_file, lpad_name):
     """
@@ -965,8 +965,8 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
               help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
-                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
-                   "configure a new launchpad, use 'pybat config launchpad'.")
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
 def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
                  number_nodes, launchpad_file, lpad_name):
     """
@@ -1002,8 +1002,8 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
               help="Path to the launchpad file which contains the database information")
 @click.option("--lpad_name", "-L", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
-                   "in the $HOME/.pybat_config/<name>_launchpad.yaml file. In order to "
-                   "configure a new launchpad, use 'pybat config launchpad'.")
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
 def site_dimers(site_index, structure_file, distance, functional, is_metal,
                 in_custodian, number_nodes, launchpad_file, lpad_name):
     """
