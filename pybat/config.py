@@ -160,7 +160,7 @@ def qadapter(qadapter_file=None, fworker_name="base"):
     if not os.path.exists(template_file):
         print()
         warn_message = "No corresponding template file found! Don't forget to use " \
-                       "pybat config jobscript to add the template file of the '" \
+                       "'pybat config jobscript' to add the template file of the '" \
                        + fworker_name + "' fireworker."
         warnings.warn(warn_message)
 
