@@ -119,7 +119,10 @@ def qadapter(qadapter_file=None, fworker_name="base"):
     if qadapter_file:
         queue_adapter = CommonAdapter.from_file(qadapter_file)
     else:
-        logdir = input("Please provide the directory where the log should be stored:")
+        logdir = input("Please provide the path to the directory where the log "
+                       "should be stored. \n"
+                       "(Note: if the directory does not exist, it will be created): ")
+        logdir = os.path.abspath(logdir)
         if not os.path.exists(logdir):
             os.makedirs(logdir)
         queue_adapter = CommonAdapter.from_file(os.path.join(
@@ -143,13 +146,15 @@ def qadapter(qadapter_file=None, fworker_name="base"):
         fworker_name + "_job_template.sh"
     )
     if not os.path.exists(template_file):
-        warnings.warn("No corresponding template file found. Don't forget to "
-                      "use pybat config jobscript to add the template file of "
-                      "the '" + fworker_name + "' fireworker.")
+        print()
+        warn_message = "No corresponding template file found! Don't forget to use " \
+                       "pybat config jobscript to add the template file of the '" \
+                       + fworker_name + "' fireworker."
+        warnings.warn(warn_message)
 
     queue_adapter.template_file = template_file
     queue_adapter.to_file(config_q_file)
-    print("Queue adapter file written to " + config_q_file)
+    print("\nQueue adapter file written to " + config_q_file)
 
 
 def jobscript(template_file, fworker_name="base"):
