@@ -190,12 +190,12 @@ def check():
     config_dir = os.path.join(os.path.expanduser("~"), ".pybat_config")
 
     if not os.path.exists(config_dir):
-        print("No configuration directory found! Use 'pybat config' to set up the "
+        print("\nNo configuration directory found! Use 'pybat config' to set up the "
               "pybat configuration.")
         return
 
     if not os.path.exists(os.path.join(config_dir, "launchpad")):
-        print("No launchpad directory found. Use 'pybat config launchpad' to set up a "
+        print("\nNo launchpad directory found. Use 'pybat config launchpad' to set up a "
               "launchpad configuration.")
     else:
         print("\nConfig launchpads" + "\n-----------------")
@@ -209,7 +209,7 @@ def check():
             print(len(name) * " " + "  (user) " + lpad.username)
 
     if not os.path.exists(os.path.join(config_dir, "fworker")):
-        print("No fworker directory found. Use 'pybat config fworker' to set up a "
+        print("\nNo fworker directory found. Use 'pybat config fworker' to set up a "
               "fworker configuration.")
     else:
         print("\nConfig fireworkers" + "\n------------------")
@@ -223,9 +223,11 @@ def check():
             fworker_dict[file[0]].append("_".join(file[1:]))
 
         for f, l in fworker_dict.items():
-            print(f + ": " + l[0])
-            for i in l[1:]:
-                print(len(f) * " " + "  " + i)
+            needed_files = ["fworker.yaml", "qadapter.yaml", "job_template.sh"]
+            t = [i if i in needed_files else "NONE" for i in needed_files]
+            print(f + ": " + t[0])
+            for el in t[1:]:
+                print(len(f) * " " + "  " + el)
         print()
 
 
