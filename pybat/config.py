@@ -202,7 +202,7 @@ def check():
         lpads = os.listdir(os.path.join(config_dir, "launchpad"))
 
         for lpad_file in lpads:
-            name = lpad_file.split("_")[0]
+            name = str(lpad_file.split("_")[0])
             lpad = load_config("launchpad", name)
             print(name + ": (host)     " + lpad.host)
             print(len(name) * " " + "  (database) " + lpad.name)
@@ -225,15 +225,10 @@ def check():
         for f, l in fworker_dict.items():
             needed_files = ["fworker.yaml", "qadapter.yaml", "job_template.sh"]
             t = [i if i in l else "NONE" for i in needed_files]
-            print(f + ": (fireworker) " + t[0])
+            print(str(f) + ": (fireworker) " + t[0])
             print(len(f) * " " + "  (qadapter)   " + t[1])
             print(len(f) * " " + "  (jobscript)  " + t[2])
         print()
-
-
-
-
-
 
 
 def load_config(config, name="base"):
@@ -264,8 +259,8 @@ def load_config(config, name="base"):
             )
     except FileNotFoundError:
         raise FileNotFoundError(
-            "Did not find the corresponding configuration file in " \
-            + os.path.join(os.path.expanduser("~"), ".pybat_config") \
-            + ". Use 'pybat config " + config + "' to set up the " + name + \
+            "Did not find the corresponding configuration file in "
+            + os.path.join(os.path.expanduser("~"), ".pybat_config")
+            + ". Use 'pybat config " + config + "' to set up the " + name +
             " configuration for the " + config + "."
         )
