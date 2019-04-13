@@ -274,7 +274,7 @@ def migration(structure_file, migration_indices, write_cif):
 @click.option("-i", "--dimer_indices", default=(0, 0))
 @click.option("-d", "--distance", default=float(0))
 @click.option("-r", "--remove_cations", is_flag=True)
-@click.option("--write_cif", "-w", is_flag=True,
+@click.option("-w", "--write_cif", is_flag=True,
               help=WRITE_CIF_HELP)
 def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
     """
