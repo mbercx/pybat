@@ -397,9 +397,10 @@ class Cathode(Structure):
         if ignore_magmom:
             magmom = [site.properties["magmom"] for site in self.sites
                       if site.species != Composition()]
-            new_cathode.add_site_property("magmom", magmom)
         else:
             magmom = [site["tot"] for site in out.magnetization]
+
+        if len(out.magnetization) != 0:
             new_cathode.add_site_property("magmom", magmom)
 
         # Update the lattice
