@@ -37,11 +37,14 @@ class VaspTask(FiretaskBase):
 
     def run_task(self, fw_spec):
         os.chdir(self["directory"])
-        f_std = self.get("stdout_file", os.path.join(self["directory"], "out"))
-        f_err = self.get("stderr_file", os.path.join(self["directory"], "out"))
+        stdout_file = self.get("stdout_file", os.path.join(self["directory"], "out"))
+        stderr_file = self.get("stderr_file", os.path.join(self["directory"], "out"))
         vasp_cmd = fw_spec["_fw_env"]["vasp_cmd"].split(" ")
 
-        subprocess.Popen(vasp_cmd, stdout=f_std, stderr=f_err, shell=True)
+        with open(stdout_file, 'w') as f_std, \
+                open(stderr_file, "w", buffering=1) as f_err:
+            # use line buffering for stderr
+            subprocess.Popen(vasp_cmd, stdout=f_std, stderr=f_err)
         # subprocess.run(fw_spec["_fw_env"]["vasp_cmd"], shell=True)
 
 
