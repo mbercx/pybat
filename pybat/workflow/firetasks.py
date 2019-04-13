@@ -44,7 +44,9 @@ class VaspTask(FiretaskBase):
         with open(stdout_file, 'w') as f_std, \
                 open(stderr_file, "w", buffering=1) as f_err:
             # use line buffering for stderr
-            subprocess.Popen(vasp_cmd, stdout=f_std, stderr=f_err)
+            p = subprocess.Popen(vasp_cmd, stdout=f_std, stderr=f_err)
+            p.wait()
+
         # subprocess.run(fw_spec["_fw_env"]["vasp_cmd"], shell=True)
 
 
