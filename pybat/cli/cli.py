@@ -694,8 +694,6 @@ def static(structure_file, functional, directory, write_chgcar, in_custodian,
         number_nodes = None
     functional = string_to_functional(functional)
 
-    print(functional)
-
     # Set up the calculation directory
     directory = set_up_directory(directory, functional, "static")
 

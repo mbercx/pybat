@@ -17,6 +17,19 @@ conda activate pmg # <----- In case your conda environment has a different name,
 # Set up the linux environment  <----- This loads the modules for the VSC clusters
 case "$VSC_INSTITUTE_CLUSTER" in
 
+  'hopper')
+
+  echo "Assigning LD_BIND_NOW"
+  export LD_BIND_NOW=1
+  echo "Purging modules"
+  module purge
+  echo "Loading hopper/2016b"
+  module load hopper/2016b
+  echo "Loading VASP module"
+  module load VASP/5.4.4-intel-2016b
+
+  ;;
+
 	'leibniz')
 		
 		echo "Assigning LD_BIND_NOW"	
