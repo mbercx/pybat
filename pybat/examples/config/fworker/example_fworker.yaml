@@ -4,6 +4,6 @@ category:
 - none
 - 1nodes
 env:
-  vasp_cmd: mpirun -genv LD_BIND_NOW=1 vasp_std >> out 2>&1
+  vasp_cmd: mpirun -genv LD_BIND_NOW=1 vasp_std
 name: leibniz
 query: '{}'
