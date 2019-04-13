@@ -80,6 +80,13 @@ def static(structure, directory="", functional=("pbe", {}), write_chgcar=False):
         str: Path to the directory in which the calculation is set up.
 
     """
+    # Set up the calculation directory
+    directory = _set_up_directory(directory, functional, "static")
+    try:
+        os.makedirs(directory)
+    except FileExistsError:
+        pass
+
     # In case the structure is given as a string, load it from the specified path
     if isinstance(structure, str):
         structure = Cathode.from_file(structure)
@@ -88,13 +95,6 @@ def static(structure, directory="", functional=("pbe", {}), write_chgcar=False):
     if isinstance(structure, Cathode):
         structure.to("json", os.path.join(directory, "initial_cathode.json"))
         structure = structure.as_ordered_structure()
-
-    # Set up the calculation directory
-    directory = _set_up_directory(directory, functional, "static")
-    try:
-        os.makedirs(directory)
-    except FileExistsError:
-        pass
 
     # Set up the calculation
     user_incar_settings = {}
@@ -149,6 +149,13 @@ def optimize(structure, directory="", functional=("pbe", {}),
         str: Path to the directory in which the calculation is set up.
 
     """
+    # Set up the calculation directory
+    directory = _set_up_directory(directory, functional, "optimize")
+    try:
+        os.makedirs(directory)
+    except FileExistsError:
+        pass
+
     # In case the structure is given as a string, load it from the specified path
     if isinstance(structure, str):
         structure = Cathode.from_file(structure)
@@ -157,13 +164,6 @@ def optimize(structure, directory="", functional=("pbe", {}),
     if isinstance(structure, Cathode):
         structure.to("json", os.path.join(directory, "initial_cathode.json"))
         structure = structure.as_ordered_structure()
-
-    # Set up the calculation directory
-    directory = _set_up_directory(directory, functional, "optimize")
-    try:
-        os.makedirs(directory)
-    except FileExistsError:
-        pass
 
     # Set up the calculation
     user_incar_settings = {}
