@@ -56,7 +56,7 @@ class CustodianTask(FiretaskBase):
 
         output = os.path.join(directory, "out")
         # TODO Make the output file more general
-        vasp_cmd = fw_spec["_fw_env"]["vasp_cmd"]
+        vasp_cmd = fw_spec["_fw_env"]["vasp_cmd"].split(" ")
 
         handlers = [VaspErrorHandler(output_filename=output),
                     UnconvergedErrorHandler(output_filename=output)]
