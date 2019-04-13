@@ -44,6 +44,8 @@ def _load_functional(functional):
         functional_config = _load_yaml_config(functional[0] + "Set")
         functional_config["INCAR"].update(functional[1])
         return functional_config["INCAR"]
+    else:
+        return {}
 
 
 def _set_up_directory(directory, functional, calculation):
