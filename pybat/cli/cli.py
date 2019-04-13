@@ -52,7 +52,7 @@ FUNCTIONAL_HELP = "Option for configuring the functional used in the calculation
                   "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
 
 MIGRATION_INDICES_HELP = "Starting and final indices of a migration. Provided with two " \
-                         "integers when using the option, i.e. -I 4 12."
+                         "integers when using the option, i.e. -i 4 12."
 
 NUMBER_NODES_HELP = "Number of nodes that should be used for the calculations. Is " \
                     "required to add the proper `_category` to the Firework generated, " \
@@ -99,15 +99,15 @@ def main():
 
 
 @main.command(context_settings=CONTEXT_SETTINGS)
-@click.option("--lpad_name", "-l", default="base")
-@click.option("--fworker_name", "-f", default="base")
-@click.option("--number_nodes", "-n", default=1,
+@click.option("-l", "--lpad_name", default="base")
+@click.option("-f", "--fworker_name", default="base")
+@click.option("-n", "--number_nodes", default=1,
               help="Number of nodes to request for the job. This will be added to the "
                    "category of the fireworker, so it will pick up Fireworks with the "
                    "same category.")
-@click.option("--walltime", "-t", default=72,
+@click.option("-t", "--walltime", default=72,
               help="Walltime of the job, expressed in hours.")
-@click.option("--number_jobs", "-J", default=1,
+@click.option("-j", "--number_jobs", default=1,
               help="")
 def qlaunch(lpad_name, fworker_name, number_nodes, walltime, number_jobs):
     """
@@ -251,9 +251,9 @@ def define():
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--migration_indices", "-I", default=(0, 0),
+@click.option("-i", "--migration_indices", default=(0, 0),
               help=MIGRATION_INDICES_HELP)
-@click.option("--write_cif", "-w", is_flag=True,
+@click.option("-w", "--write_cif", is_flag=True,
               help=WRITE_CIF_HELP)
 def migration(structure_file, migration_indices, write_cif):
     """
@@ -271,9 +271,9 @@ def migration(structure_file, migration_indices, write_cif):
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
-@click.option("--dimer_indices", "-i", default=(0, 0))
-@click.option("--distance", "-d", default=float(0))
-@click.option("--remove_cations", "-r", is_flag=True)
+@click.option("-i", "--dimer_indices", default=(0, 0))
+@click.option("-d", "--distance", default=float(0))
+@click.option("-r", "--remove_cations", is_flag=True)
 @click.option("--write_cif", "-w", is_flag=True,
               help=WRITE_CIF_HELP)
 def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
@@ -521,7 +521,7 @@ def transition(directory, functional, is_metal, is_migration, optimize_initial):
                    "* 'hse' ~ HSE06\n"
                    "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
               )
-@click.option("--nimages", "-N", default=7,
+@click.option("--nimages", "-I", default=7,
               help="Number of images. Defaults to 7.")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
@@ -678,7 +678,7 @@ def workflow():
               help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
               help="Path to the launchpad file which contains the database information")
-@click.option("--lpad_name", "-L", default="base",
+@click.option("--lpad_name", "-N", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
@@ -723,7 +723,7 @@ def static(structure_file, functional, directory, write_chgcar, in_custodian,
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
               help="Path to the launchpad file which contains the database information")
-@click.option("--lpad_name", "-L", default="base",
+@click.option("--lpad_name", "-N", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
@@ -800,7 +800,7 @@ def optimize(structure_file, functional, directory, is_metal, in_custodian,
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
               help="Path to the launchpad file which contains the database information")
-@click.option("--lpad_name", "-L", default="base",
+@click.option("--lpad_name", "-N", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
@@ -888,7 +888,7 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
               help="Path to the launchpad file which contains the database information")
-@click.option("--lpad_name", "-L", default="base",
+@click.option("--lpad_name", "-N", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
@@ -919,7 +919,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 
 @workflow.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("directory", nargs=1)
-@click.option("--nimages", "-N", default=7, show_default=True,
+@click.option("--nimages", "-I", default=7, show_default=True,
               help="Number of images for the NEB calculation. Defaults to 7.")
 @click.option("--functional", "-f", default="pbe",
               help=FUNCTIONAL_HELP)
@@ -935,7 +935,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
               help="Path to the launchpad file which contains the database information")
-@click.option("--lpad_name", "-L", default="base",
+@click.option("--lpad_name", "-N", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
@@ -971,7 +971,7 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
               help="Path to the launchpad file which contains the database information")
-@click.option("--lpad_name", "-L", default="base",
+@click.option("--lpad_name", "-N", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
@@ -1008,7 +1008,7 @@ def noneq_dimers(structure_file, distance, functional, is_metal, in_custodian,
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
               help="Path to the launchpad file which contains the database information")
-@click.option("--lpad_name", "-L", default="base",
+@click.option("--lpad_name", "-N", default="base",
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
