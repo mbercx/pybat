@@ -32,11 +32,17 @@ class VaspTask(FiretaskBase):
 
     """
     required_params = ["directory"]
+    optional_params = ["stdout_file", "stderr_file"]
     _fw_name = "{{pybat.workflow.firetasks.VaspTask}}"
 
     def run_task(self, fw_spec):
         os.chdir(self["directory"])
-        subprocess.run(fw_spec["_fw_env"]["vasp_cmd"], shell=True)
+        f_std = self.get("stdout_file", os.path.join(self["directory"], "out"))
+        f_err = self.get("stderr_file", os.path.join(self["directory"], "out"))
+        vasp_cmd = fw_spec["_fw_env"]["vasp_cmd"].split(" ")
+
+        subprocess.Popen(vasp_cmd, stdout=f_std, stderr=f_err, shell=True)
+        # subprocess.run(fw_spec["_fw_env"]["vasp_cmd"], shell=True)
 
 
 class CustodianTask(FiretaskBase):
