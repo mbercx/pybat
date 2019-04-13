@@ -407,11 +407,11 @@ def setup():
                    "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
               )
 @click.argument("structure_file", nargs=1)
-@click.option("--calculation_dir", "-d", default="",
+@click.option("--directory", "-d", default="",
               help="The directory in which to set up the calculation. "
                    "Default is FUNCTIONAL_static.")
 @click.option("--write_chgcar", "-C", is_flag=True)
-def static(structure_file, functional, calculation_dir, write_chgcar):
+def static(structure_file, functional, directory, write_chgcar):
     """
     Set up a static calculation for a structure.
     """
@@ -421,7 +421,7 @@ def static(structure_file, functional, calculation_dir, write_chgcar):
 
     static(structure=cat,
            functional=string_to_functional(functional),
-           directory=calculation_dir,
+           directory=directory,
            write_chgcar=write_chgcar)
 
 
@@ -438,14 +438,14 @@ def static(structure_file, functional, calculation_dir, write_chgcar):
                    "* 'hse' ~ HSE06\n"
                    "*\xa0'hse\xa0hfscreen\xa00.3'\xa0~\xa0HSE03\n"
               )
-@click.option("--calculation_dir", "-d", default="",
+@click.option("--directory", "-d", default="",
               help="The directory in which to set up the calculation. "
                    "Default is FUNCTIONAL_.")
 @click.option("--is_metal", "-m", is_flag=True,
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-def optimize(structure_file, functional, calculation_dir, is_metal):
+def optimize(structure_file, functional, directory, is_metal):
     """
     Set up a geometry optimization for a structure.
     """
@@ -455,7 +455,7 @@ def optimize(structure_file, functional, calculation_dir, is_metal):
 
     optimize(structure=cat,
              functional=string_to_functional(functional),
-             directory=calculation_dir,
+             directory=directory,
              is_metal=is_metal)
 
 

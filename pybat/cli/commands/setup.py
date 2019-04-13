@@ -448,7 +448,7 @@ def dos(structure_file, chgcar_file, functional, kpoint_density):
         kpoint_density (float):
 
     Returns:
-        calculation_dir (str): Directory in which the calculation is set up.
+        directory (str): Directory in which the calculation is set up.
 
     """
     raise NotImplementedError

@@ -55,7 +55,7 @@ class PybatStaticFW(Firework):
             func="pybat.cli.commands.setup.static",
             kwargs={"structure": structure,
                     "functional": functional,
-                    "calculation_dir": directory,
+                    "directory": directory,
                     "write_chgcar": write_chgcar}
         )
 
@@ -111,7 +111,7 @@ class PybatOptimizeFW(Firework):
             func="pybat.cli.commands.setup.optimize",
             kwargs={"structure": structure,
                     "functional": functional,
-                    "calculation_dir": directory,
+                    "directory": directory,
                     "is_metal": is_metal}
         )
 
