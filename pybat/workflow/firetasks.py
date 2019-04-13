@@ -56,22 +56,23 @@ class CustodianTask(FiretaskBase):
 
     """
     required_params = ["directory"]
+    optional_params = ["stdout_file", "stderr_file"]
     _fw_name = "{{pybat.workflow.firetasks.CustodianTask}}"
 
     def run_task(self, fw_spec):
         directory = os.path.abspath(self["directory"])
         os.chdir(directory)
 
-        output = os.path.join(directory, "out")
-        # TODO Make the output file more general
+        stdout_file = self.get("stdout_file", os.path.join(self["directory"], "out"))
+        stderr_file = self.get("stderr_file", os.path.join(self["directory"], "out"))
         vasp_cmd = fw_spec["_fw_env"]["vasp_cmd"].split(" ")
 
-        handlers = [VaspErrorHandler(output_filename=output),
-                    UnconvergedErrorHandler(output_filename=output)]
+        handlers = [VaspErrorHandler(output_filename=stdout_file),
+                    UnconvergedErrorHandler(output_filename=stdout_file)]
 
         jobs = [VaspJob(vasp_cmd=vasp_cmd,
-                        output_file=output,
-                        stderr_file=output,
+                        output_file=stdout_file,
+                        stderr_file=stderr_file,
                         auto_npar=False)]
 
         c = Custodian(handlers, jobs, max_errors=10)
