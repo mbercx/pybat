@@ -104,10 +104,10 @@ def static(structure, directory="", functional=("pbe", {}), write_chgcar=False):
     # Set up the functional
     user_incar_settings.update(_load_functional(functional))
 
-    # Check if a magnetic moment was not provided for the sites. If not, perform a
-    # non-spin polarized calculation
-    if "magmom" not in structure.site_properties.keys():
-        user_incar_settings.update({"ISPIN": 1})
+    # Check if a magnetic moment was not provided for the sites. If so, perform a
+    # spin-polarized calculation
+    if "magmom" in structure.site_properties.keys():
+        user_incar_settings.update({"ISPIN": 2, "MAGMOM": True})
 
     # Set charge density to be written if requested
     if write_chgcar:
@@ -173,10 +173,10 @@ def optimize(structure, directory="", functional=("pbe", {}),
     # Set up the functional
     user_incar_settings.update(_load_functional(functional))
 
-    # Check if a magnetic moment was not provided for the sites. If not, perform a
-    # non-spin polarized calculation
-    if "magmom" not in structure.site_properties.keys():
-        user_incar_settings.update({"ISPIN": 1})
+    # Check if a magnetic moment was not provided for the sites. If so, perform a
+    # spin-polarized calculation
+    if "magmom" in structure.site_properties.keys():
+        user_incar_settings.update({"ISPIN": 2, "MAGMOM": True})
 
     # For metals, use Methfessel Paxton smearing
     if is_metal:

@@ -4,13 +4,12 @@ INCAR:
   EDIFF: 1.0e-06
   ENCUT: 500
   ISMEAR: -5
-  ISPIN: 2
+  ISPIN: 1
   LASPH: true
   LCHARG: false
   LORBIT: 11
   LREAL: AUTO
   LWAVE: false
-  MAGMOM: 0
   NELM: 200
   NELMIN: 4
   PREC: Accurate
