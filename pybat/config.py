@@ -205,7 +205,7 @@ def jobscript(template_file, fworker_name="base"):
 
 def check():
     """
-    Check the pybat configuration files.
+    Check the pybat configuration files and print out the configurations present.
 
     """
     config_dir = os.path.join(os.path.expanduser("~"), ".pybat_config")
@@ -254,12 +254,15 @@ def check():
 
 def load_config(config, name="base"):
     """
+    Load a LaunchPad, FWorker of QueueAdapter from the configuration files.
 
     Args:
-        config:
-        name:
+        config (str): Type of configuration file to load. Either "launchpad", "fworker"
+            or "qadapter".
+        name (str): Name of the configuration. Defaults to "base".
 
     Returns:
+        Either a LaunchPad, FWorker or QueuAdapter, depending on the "config" argument.
 
     """
     try:
