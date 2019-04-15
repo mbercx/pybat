@@ -99,7 +99,7 @@ def main():
 
 
 @main.command(context_settings=CONTEXT_SETTINGS)
-@click.option("-l", "--lpad_name", default="base")
+@click.option("-N", "--lpad_name", default="base")
 @click.option("-f", "--fworker_name", default="base")
 @click.option("-n", "--number_nodes", default=1,
               help="Number of nodes to request for the job. This will be added to the "
