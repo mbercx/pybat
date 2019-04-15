@@ -131,8 +131,8 @@ def static(structure, directory="", functional=("pbe", {}), write_chgcar=False):
 def optimize(structure, directory="", functional=("pbe", {}),
              is_metal=False):
     """
-    Set up a standard geometry optimization calculation of a Cathode
-    structure. Optimizes both the atomic positions as well as the unit cell.
+    Set up a standard geometry optimization calculation for a structure. Optimizes
+    both the atomic positions as well as the unit cell (ISIF=3).
 
     Args:
         structure: pymatgen.Structure OR path to structure file for which to set up the
@@ -142,7 +142,7 @@ def optimize(structure, directory="", functional=("pbe", {}),
         functional (tuple): Tuple with the functional choices. The first element
             contains a string that indicates the functional used ("pbe", "hse", ...),
             whereas the second element contains a dictionary that allows the user
-            to specify the various functional tags.
+            to specify the various functional tags. E.g. ("hse", {"LAEXX": 0.2}).
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV.
