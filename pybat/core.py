@@ -1224,6 +1224,7 @@ class DimerNEBAnalysis(NEBAnalysis):
     """
     Subclass of the NEBAnalysis class in order to change the plotting of the
     barriers, as well as allowing for saving the NEB analysis to a json file.
+
     """
 
     def __init__(self, r, energies, forces, structures, spline_options=None,
@@ -1274,27 +1275,26 @@ class DimerNEBAnalysis(NEBAnalysis):
                                       "supported.")
 
     @classmethod
-    def from_dir(cls, root_dir, relaxation_dirs=None, **kwargs):
+    def from_dir(cls, root_dir, dimer_indices=None, **kwargs):
         """
 
         Args:
             root_dir:
-            relaxation_dirs:
-            **kwargs:
 
         Returns:
 
         """
-        if relaxation_dirs is not None:
-            raise NotImplementedError
 
-        indices = tuple(
-            [int(el) for el in
-             os.path.abspath(root_dir).split('/')[-1].split('_')
-             if all([is_number(c) for c in el])]
-        )
+        # Figure out the dimer indices based on the directory
+        if not dimer_indices:
+            dimer_indices = tuple(
+                [int(el) for el in
+                 os.path.abspath(root_dir).split('/')[-1].split('_')
+                 if all([is_number(c) for c in el])]
+            )
 
-        neb = super().from_dir(root_dir, relaxation_dirs, **kwargs)
+        # Use the method of the superclass for the forces and energies
+        neb = super().from_dir(root_dir, relaxation_dirs=("initial", "final"), **kwargs)
 
         # Because the dimer indices are based on the internal indices of the
         # Cathode object, we need to load the cathode json files to
@@ -1302,10 +1302,18 @@ class DimerNEBAnalysis(NEBAnalysis):
         image_dirs = [file for file in os.listdir(root_dir)
                       if len(file) == 2 and os.path.isdir(file)]
 
-        structures = [
-            Cathode.from_file(os.path.join(image_dir, "final_cathode.json"))
-            for image_dir in image_dirs
-        ]
+        # However, the image directories do not contain a Cathode json file, so we'll
+        # use the following workaround: Load the Cathode from the initial geometry,
+        # and use the update_sites method to adjust the geometry to the images
+        initial_cathode = Cathode.from_file(os.path.join(
+            root_dir, "initial", "final_cathode.json"
+        ))
+
+        structures = []
+        for d in image_dirs:
+            s = initial_cathode.copy()
+            s.update_sites(os.path.join(d))
+            structures.append(s)
 
         # Sort the data according to the directory numbers
         structure_data = sorted(
@@ -1319,7 +1327,7 @@ class DimerNEBAnalysis(NEBAnalysis):
             forces=neb.forces,
             structures=[el[1] for el in structure_data],
             spline_options=neb.spline_options,
-            dimer_indices=indices,
+            dimer_indices=dimer_indices,
         )
 
         return dimer_neb
