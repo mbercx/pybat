@@ -36,7 +36,7 @@ def show_path(directory, filename):
     final_structure = Cathode.from_file(
         os.path.join(directory, "final", "final_cathode.json")).as_ordered_structure()
 
-    image_dirs = [d for d in os.listdir(directory) if "0" in d][1:-1]
+    image_dirs = [d for d in os.listdir(directory) if "0" in d and os.path.isdir(d)][1:-1]
     image_structures = [Structure.from_file(os.path.join(directory, idir, "CONTCAR"))
                         for idir in image_dirs]
 
