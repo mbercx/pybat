@@ -150,7 +150,7 @@ class PybatOptimizeFW(Firework):
 
 class NebFirework(Firework):
 
-    def __init__(self, directory, nimages, functional, is_metal=False, is_migration=False,
+    def __init__(self, directory, nimages, functional, is_metal=False,
                  in_custodian=False, number_nodes=None):
         """
         Create a FireWork for performing an NEB calculation.
@@ -167,8 +167,6 @@ class NebFirework(Firework):
             is_metal (bool): Flag that indicates the material being studied is a
                 metal, which changes the smearing from Gaussian to second order
                 Methfessel-Paxton of 0.2 eV.
-            is_migration (bool): Flag that indicates that the transition is a migration
-                of an atom in the structure.
             number_nodes (int): Number of nodes that should be used for the calculations.
                 Is required to add the proper `_category` to the Firework generated, so
                 it is picked up by the right Fireworker.
@@ -183,8 +181,7 @@ class NebFirework(Firework):
             kwargs={"directory": directory,
                     "nimages": nimages,
                     "functional": functional,
-                    "is_metal": is_metal,
-                    "is_migration": is_migration}
+                    "is_metal": is_metal}
         )
 
         # Create the PyTask that runs the calculation

@@ -7,10 +7,8 @@ import warnings
 
 import numpy as np
 from monty.serialization import loadfn
-from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
 from pymatgen.core import Structure
-from pymatgen.io.vasp.outputs import Chgcar, Outcar
-from pymatgen.io.vasp.sets import MPStaticSet
+from pymatgen.io.vasp.outputs import Outcar
 
 from pybat.core import Cathode
 from pybat.sets import BulkSCFSet, BulkRelaxSet, PybatNEBSet
@@ -194,7 +192,7 @@ def optimize(structure, directory="", functional=("pbe", {}),
 
 
 def transition(directory, functional=("pbe", {}), is_metal=False,
-               is_migration=False, optimize_initial=False):
+               optimize_initial=False):
     """
     Set up the geometry optimizations for a transition for a structure, i.e. using
     ISIF = 2. By default, it is assumed that the initial structure is already
@@ -215,8 +213,6 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV.
-        is_migration (bool): Flag that indicates that the transition is a migration
-            of an atom in the structure.
         optimize_initial (bool): Flag that indicates that the initial structure
             should also be optimized.
 
@@ -231,25 +227,16 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
     (initial_cathode, final_cathode) = find_transition_cathodes(
         directory)
 
-    # Check if a magnetic moment was not provided for the sites
-    if "magmom" not in initial_cathode.site_properties.keys():
-        # If not, set it to zero for all sites
-        initial_cathode.add_site_property("magmom",
-                                          [0] * len(initial_cathode.sites))
-
-    if "magmom" not in final_cathode.site_properties.keys():
-        # If not, set it to zero for all sites
-        final_cathode.add_site_property("magmom",
-                                        [0] * len(initial_cathode.sites))
-
     # Set up the calculations
     user_incar_settings = {"ISIF": 2}
 
-    # Functional
-    if functional[0] != "pbe":
-        functional_config = _load_yaml_config(functional[0] + "Set")
-        functional_config["INCAR"].update(functional[1])
-        user_incar_settings.update(functional_config["INCAR"])
+    # Set up the functional
+    user_incar_settings.update(_load_functional(functional))
+
+    # Check if a magnetic moment was not provided for the sites of the initial structure.
+    # If so, perform a spin-polarized calculation
+    if "magmom" not in initial_cathode.site_properties.keys():
+        user_incar_settings.update({"ISPIN": 2, "MAGMOM": True})
 
     # For metals, add some Methfessel Paxton smearing
     if is_metal:
@@ -283,21 +270,8 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
     final_cathode.to("json", os.path.join(directory, "final",
                                           "initial_cathode.json"))
 
-    # If the transition is a migration of an atom in the structure, set up the
-    # calculation for the charge density, used to find a better initial pathway
-    if is_migration:
-        migration_site_index = find_migrating_ion(initial_cathode,
-                                                  final_cathode)
 
-        host_structure = initial_cathode.copy()
-        host_structure.remove_sites([migration_site_index])
-        host_scf = MPStaticSet(host_structure,
-                               potcar_functional=DFT_FUNCTIONAL)
-        host_scf.write_input(os.path.join(directory, "host"))
-
-
-def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
-        is_migration=False):
+def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False):
     """
     Set up the NEB calculation from the initial and final structures.
 
@@ -312,8 +286,6 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV.
-        is_migration (bool): Flag that indicates that the transition is a migration
-            of an atom in the structure.
 
     Returns:
         None
@@ -362,26 +334,8 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
         final_structure = Cathode.from_file(
             os.path.join(final_dir, "final_cathode.json")).as_ordered_structure()
 
-    # In case the transition is a migration
-    if is_migration:
-        # Set up the static potential for the Pathfinder from the host charge
-        # density
-        host_charge_density = Chgcar.from_file(os.path.join(directory, "host"))
-        host_potential = ChgcarPotential(host_charge_density)
-
-        migration_site_index = find_migrating_ion(initial_structure,
-                                                  final_structure)
-
-        neb_path = NEBPathfinder(start_struct=initial_structure,
-                                 end_struct=final_structure,
-                                 relax_sites=migration_site_index,
-                                 v=host_potential)
-
-        images = neb_path.images
-        neb_path.plot_images("neb.vasp")
-
     # In case an "middle image" has been provided via which to interpolate
-    elif os.path.exists(os.path.join(directory, "middle")):
+    if os.path.exists(os.path.join(directory, "middle")):
         print("Found a 'middle' directory in the NEB directory. Interpolating "
               "via middle geometry.")
         # Load the middle image

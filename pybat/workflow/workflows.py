@@ -245,8 +245,7 @@ def get_fw_migration(structure, migration_indices=(0, 0),
     # Set up the transition calculation
     transition(directory=migration_dir,
                functional=functional,
-               is_metal=is_metal,
-               is_migration=False)
+               is_metal=is_metal)
 
     # Create the PyTask that runs the calculation
     if in_custodian:
@@ -274,8 +273,7 @@ def get_fw_migration(structure, migration_indices=(0, 0),
 
 
 def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
-               is_migration=False, in_custodian=False,
-               number_nodes=None):
+               in_custodian=False, number_nodes=None):
     """
     Set up a workflow that calculates the kinetic barrier between two geometries.
 
@@ -293,8 +291,6 @@ def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
         is_metal (bool): Flag that indicates the material being studied is a
             metal, which changes the smearing from Gaussian to second order
             Methfessel-Paxton of 0.2 eV. Defaults to False.
-        is_migration (bool): Flag that indicates that the transition is a migration
-            of an atom in the structure.
         in_custodian (bool): Flag that indicates that the calculations
             should be run within a Custodian. Defaults to False.
         number_nodes (int): Number of nodes that should be used for the calculations.
@@ -314,7 +310,6 @@ def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
         nimages=nimages,
         functional=functional,
         is_metal=is_metal,
-        is_migration=is_migration,
         in_custodian=in_custodian,
         number_nodes=number_nodes
     )
@@ -383,8 +378,7 @@ def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
         func="pybat.cli.commands.setup.transition",
         kwargs={"directory": dimer_dir,
                 "functional": functional,
-                "is_metal": is_metal,
-                "is_migration": False}
+                "is_metal": is_metal}
     )
 
     # Create the PyTask that runs the calculation

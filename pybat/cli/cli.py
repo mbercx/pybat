@@ -480,17 +480,10 @@ def optimize(structure_file, functional, directory, is_metal):
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-@click.option("--is_migration", "-M", is_flag=True,
-              help="Flag to designate the transition as a migration. "
-                   "Activating this flag means that a static calculation will "
-                   "be set up to determine the charge density of the host "
-                   "structure, i.e. without the migrating ion. This charge "
-                   "density can then be used to find a good initial guess "
-                   "for the migration pathway.")
 @click.option("--optimize_initial", "-O", is_flag=True,
               help="Flag to indicate that the initial structure should also be "
                    "optimized.")
-def transition(directory, functional, is_metal, is_migration, optimize_initial):
+def transition(directory, functional, is_metal, optimize_initial):
     """
     Set up a the geometry optimizations for the initial and final state of a
     transition.
@@ -500,7 +493,6 @@ def transition(directory, functional, is_metal, is_migration, optimize_initial):
     transition(directory=directory,
                functional=string_to_functional(functional),
                is_metal=is_metal,
-               is_migration=is_migration,
                optimize_initial=optimize_initial)
 
 
@@ -527,14 +519,7 @@ def transition(directory, functional, is_metal, is_migration, optimize_initial):
               help="Flag to indicate that the structure is metallic. This "
                    "will make the algorithm choose Methfessel-Paxton "
                    "smearing of 0.2 eV.")
-@click.option("--is_migration", "-M", is_flag=True,
-              help="Flag to designate the transition as a migration. "
-                   "Activating this flag means that a static calculation will "
-                   "be set up to determine the charge density of the host "
-                   "structure, i.e. without the migrating ion. This charge "
-                   "density can then be used to find a good initial guess "
-                   "for the migration pathway.")
-def neb(directory, functional, nimages, is_metal, is_migration):
+def neb(directory, functional, nimages, is_metal):
     """
     Set up the Nudged Elastic Band calculation based on the output in the
     initial and final directory.
@@ -547,8 +532,7 @@ def neb(directory, functional, nimages, is_metal, is_migration):
     neb(directory=directory,
         functional=string_to_functional(functional),
         nimages=nimages,
-        is_metal=is_metal,
-        is_migration=is_migration)
+        is_metal=is_metal)
 
 
 # endregion
@@ -924,13 +908,6 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
 @click.option("--functional", "-f", default="pbe",
               help=FUNCTIONAL_HELP)
 @click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
-@click.option("--is_migration", "-M", is_flag=True,
-              help="Flag to designate the transition as a migration. "
-                   "Activating this flag means that a static calculation will "
-                   "be set up to determine the charge density of the host "
-                   "structure, i.e. without the migrating ion. This charge "
-                   "density can then be used to find a good initial guess "
-                   "for the migration pathway.")
 @click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
 @click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
 @click.option("--launchpad_file", "-l", default=None,
@@ -939,7 +916,7 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
-def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
+def neb(directory, nimages, functional, is_metal, in_custodian,
         number_nodes, launchpad_file, lpad_name):
     """
     Set up dimer calculation workflows.
@@ -956,7 +933,6 @@ def neb(directory, nimages, functional, is_metal, is_migration, in_custodian,
                    nimages=nimages,
                    functional=string_to_functional(functional),
                    is_metal=is_metal,
-                   is_migration=is_migration,
                    in_custodian=in_custodian,
                    number_nodes=number_nodes)
     )
