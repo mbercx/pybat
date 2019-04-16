@@ -5,8 +5,8 @@
 import os
 
 from monty.io import zopen
+from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Vasprun
-from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from pybat.core import Cathode
@@ -31,13 +31,17 @@ def show_path(directory, filename):
     Returns:
 
     """
-    # TODO This is quite inefficient, since the NEBAnalysis script also
-    # parses the OUTCAR files. However, this was the fastest solution
-    # implementation wise. Improve when feeling less lazy.
-    neb = NEBAnalysis.from_dir(directory)
+    initial_structure = Structure(os.path.join(directory, "initial", "POSCAR"))
+    final_structure = Structure(os.path.join(directory, "final", "POSCAR"))
 
-    transition_structure = neb.structures[0].copy()
-    for structure in neb.structures[1:]:
+    image_dirs = [d for d in os.listdir(directory) if "0" in d][1:-1]
+    image_structures = [Structure.from_file(os.path.join(directory, idir, "CONTCAR"))
+                        for idir in image_dirs]
+
+    image_structures.append(final_structure)
+
+    transition_structure = initial_structure.copy()
+    for structure in image_structures:
         for site in structure:
             transition_structure.append(site.specie, site.frac_coords)
 
