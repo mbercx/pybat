@@ -31,8 +31,10 @@ def show_path(directory, filename):
     Returns:
 
     """
-    initial_structure = Structure.from_file(os.path.join(directory, "initial", "POSCAR"))
-    final_structure = Structure.from_file(os.path.join(directory, "final", "POSCAR"))
+    initial_structure = Cathode.from_file(
+        os.path.join(directory, "initial", "final_cathode.json")).as_ordered_structure()
+    final_structure = Cathode.from_file(
+        os.path.join(directory, "final", "final_cathode.json")).as_ordered_structure()
 
     image_dirs = [d for d in os.listdir(directory) if "0" in d][1:-1]
     image_structures = [Structure.from_file(os.path.join(directory, idir, "CONTCAR"))
