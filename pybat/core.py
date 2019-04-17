@@ -404,7 +404,7 @@ class Cathode(Structure):
             new_cathode.add_site_property("magmom", magmom)
 
         # Update the lattice
-        self.modify_lattice(new_cathode.lattice)
+        self.lattice = new_cathode.lattice
 
         # Update the coordinates of the occupied sites.
         new_index = 0
@@ -1229,7 +1229,7 @@ class DimerNEBAnalysis(NEBAnalysis):
 
     def __init__(self, r, energies, forces, structures, spline_options=None,
                  dimer_indices=None):
-        super().__init__(
+        super(DimerNEBAnalysis, self).__init__(
             r, energies, forces, structures, spline_options
         )
         self._dimer_indices = tuple(dimer_indices)
@@ -1249,7 +1249,7 @@ class DimerNEBAnalysis(NEBAnalysis):
 
     def as_dict(self):
         """
-        Dict representation of NEBAnalysis.
+        Dict representation of PybatNEBAnalysis.
 
         Returns:
             JSON serializable dict representation.
@@ -1277,11 +1277,34 @@ class DimerNEBAnalysis(NEBAnalysis):
     @classmethod
     def from_dir(cls, root_dir, dimer_indices=None, **kwargs):
         """
+        As the class relies on the from_dir() method of its parent, the directory
+        structure should be similar for the VASP OUTPUT files. Additionally, the
+        script relies on the Cathode class for determining the distances between the
+        correct dimers, so the initial directory set up by the transition script should
+        still be present, containing the final geometry of that Cathode:
+
+
+        initial:
+        - final_cathode.json
+        00:
+        - POSCAR
+        - OUTCAR
+        01, 02, 03, 04, 05:
+        - CONTCAR
+        - OUTCAR
+        06:
+        - POSCAR
+        - OUTCAR
 
         Args:
-            root_dir:
+            root_dir (str): Root directory of the NEB calculation, i.e. the directory
+                that contains the directory structure shown above.
+            dimer_indices (tuple): Indices of the oxygen dimer. In case this is not
+                provided, the script will assume the root dir is something along the
+                lines of: "*/*_X_Y". where X and Y are the dimer indices.
 
         Returns:
+            PybatNEBAnalysis
 
         """
 
@@ -1294,13 +1317,16 @@ class DimerNEBAnalysis(NEBAnalysis):
             )
 
         # Use the method of the superclass for the forces and energies
-        neb = super().from_dir(root_dir, relaxation_dirs=("initial", "final"), **kwargs)
+        neb = super().from_dir(
+            root_dir, relaxation_dirs=("initial", "final"), **kwargs
+        )
 
         # Because the dimer indices are based on the internal indices of the
         # Cathode object, we need to load the cathode json files to
         # determine the distance between the dimers properly.
-        image_dirs = [file for file in os.listdir(root_dir)
-                      if len(file) == 2 and os.path.isdir(file)]
+        image_dirs = [file for file in os.listdir(root_dir) if len(file) == 2 and
+                      os.path.isdir(os.path.join(root_dir, file))]
+        image_dirs.sort()
 
         # However, the image directories do not contain a Cathode json file, so we'll
         # use the following workaround: Load the Cathode from the initial geometry,
@@ -1309,23 +1335,20 @@ class DimerNEBAnalysis(NEBAnalysis):
             root_dir, "initial", "final_cathode.json"
         ))
 
-        structures = []
-        for d in image_dirs:
+        structures = [initial_cathode]
+        for d in image_dirs[1:-1]:
             s = initial_cathode.copy()
-            s.update_sites(os.path.join(d))
+            s.update_sites(os.path.join(root_dir, d))
             structures.append(s)
-
-        # Sort the data according to the directory numbers
-        structure_data = sorted(
-            zip(image_dirs, structures),
-            key=lambda z: int(z[0])
-        )
+        structures.append(Cathode.from_file(os.path.join(
+            root_dir, "final", "final_cathode.json"
+        )))
 
         dimer_neb = DimerNEBAnalysis(
             r=neb.r,
             energies=neb.energies,
             forces=neb.forces,
-            structures=[el[1] for el in structure_data],
+            structures=structures,
             spline_options=neb.spline_options,
             dimer_indices=dimer_indices,
         )
@@ -1393,8 +1416,10 @@ class DimerNEBAnalysis(NEBAnalysis):
                  markersize=10)
 
         plt.xlabel("O-O Distance ($\mathrm{\AA}$)")
-        plt.xticks(self.r[::2], [str(round(d, 2)) for d in
-                                 self.dimer_distances[::2]])
+        max_index = np.argmax(self.energies)
+        plt.xticks(self.r.take([0, max_index, -1]),
+                   [str(round(d, 2)) for d
+                    in self.dimer_distances.take([0, max_index, -1])])
         plt.ylabel("Energy (meV)")
         plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
 
