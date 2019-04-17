@@ -3,10 +3,9 @@
 # Distributed under the terms of the MIT License
 
 import os
+from itertools import chain
 
 import numpy as np
-
-from itertools import chain
 from monty.serialization import loadfn
 from pymatgen.core import Structure, PeriodicSite
 from pymatgen.io.vasp.inputs import Poscar
@@ -83,9 +82,11 @@ class PybatNEBSet(BulkRelaxSet):
             self._config_dict["INCAR"]["EDIFF"] = self._config_dict[
                 "INCAR"].pop("EDIFF_PER_ATOM")
 
-        # NEB specific defaults
-        defaults = {'IMAGES': len(structures) - 2, 'IBRION': 1, 'ISYM': 0,
-                    'LCHARG': False, 'LCLIMB': True, 'ISIF': 2}
+        # NEB specific defaults -> Use LBFGS optimizer from VTST
+        defaults = {"IMAGES": len(structures) - 2, "IBRION": 3, "POTIM": 0, "ICHAIN": 0,
+                    "LCLIMB": True, "IOPT": 1, "SPRING": -5, "ISYM": 0, "LCHARG": False,
+                    "ISIF": 2}
+
         self._config_dict["INCAR"].update(defaults)
 
     @property
