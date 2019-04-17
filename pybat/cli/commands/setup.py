@@ -374,10 +374,7 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False):
     user_incar_settings = {}
 
     # Set up the functional
-    if functional[0] != "pbe":
-        functional_config = _load_yaml_config(functional[0] + "Set")
-        functional_config["INCAR"].update(functional[1])
-        user_incar_settings.update(functional_config["INCAR"])
+    user_incar_settings.update(_load_functional(functional))
 
     # Add the standard Methfessel-Paxton smearing for metals
     if is_metal:
