@@ -85,7 +85,7 @@ class PybatNEBSet(BulkRelaxSet):
         # NEB specific defaults -> Use LBFGS optimizer from VTST
         defaults = {"IMAGES": len(structures) - 2, "IBRION": 3, "POTIM": 0, "ICHAIN": 0,
                     "LCLIMB": True, "IOPT": 1, "SPRING": -5, "ISYM": 0, "LCHARG": False,
-                    "ISIF": 2}
+                    "ISIF": 2, "EDIFF": 1e-4, "EDIFFG": -0.02}
 
         self._config_dict["INCAR"].update(defaults)
 
