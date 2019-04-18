@@ -316,6 +316,40 @@ class Cathode(Structure):
         else:
             raise IOError("Incorrect site input.")
 
+    def migrate_element(self, site, final_site):
+        """
+        Migrate an element to an empty site.
+
+        Args:
+            site: Site or site index of the migrating element.
+            final_site: Site or site index of the site the element is migrating to.
+
+        Returns:
+
+        """
+        if isinstance(site, Site):
+            site_index = self.index[site]
+        elif isinstance(site, int):
+            site_index = site
+            site = self.sites[site]
+        else:
+            raise IOError("Input sites must be either an integer or pymatgen.Site!")
+
+        if isinstance(final_site, Site):
+            final_site_index = self.index[final_site]
+        elif isinstance(final_site, int):
+            final_site_index = final_site
+            final_site = self.sites[final_site]
+        else:
+            raise IOError("Input sites must be either an integer or pymatgen.Site!")
+
+        if final_site.species == Composition():
+            self.replace(final_site_index, site.species)
+            self.replace(site_index, Composition())
+        else:
+            raise ValueError("Final migration site is not empty!")
+
+
     def change_site_distance(self, sites, distance):
         """
         Change the coordinates of two sites in a structure in order to adjust

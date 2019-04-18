@@ -4,9 +4,6 @@
 
 import _warnings as warnings
 import os
-from string import ascii_letters
-
-from pymatgen.core import Composition
 
 """
 Set of scripts used to define structural changes easily using the command line
@@ -22,20 +19,17 @@ __email__ = "marnik.bercx@uantwerpen.be"
 __date__ = "Mar 2019"
 
 
-def define_migration(structure, migration_indices=(0, 0),
-                     write_cif=False):
+def define_migration(structure, site, final_site, write_cif=False):
     """
-    This script allows the user to define a migration of a cation in a
-    Cathode structure.
-
-    The user has to identify the site that is migrating, as well as provide the
-    fractional coordinates to which the site will migrate, or a vacant site
-    index.
+    This script allows the user to define a migration of an element in a
+    Cathode structure. The user has to identify the sites of the migrating element,
+    as well as the site the element is migrating to. Note that the final site must be
+    empty!
 
     Args:
         structure (pybat.core.Cathode): Cathode for which to define a migration.
-        migration_indices (tuple): Tuple of the indices which designate the
-        migrating site and the vacant site to which the cation will migrate.
+        site: Site or site index of the migrating element.
+        final_site: Site or site index of the site the element is migrating to.
         write_cif (bool): Flag that determines if the initial and final
         structures should also be written in a cif format.
 
@@ -44,114 +38,23 @@ def define_migration(structure, migration_indices=(0, 0),
 
     """
     final_structure = structure.copy()
-
-    if migration_indices == (0, 0):
-        # Prompt the user for the migration site
-        print("")
-        print(structure)
-        print("")
-        migration_site_index = int(input("Please provide the index of the "
-                                         "migrating cation (Note: Not the "
-                                         "VESTA index!): "))
-        print("")
-
-        migration_site = structure.sites[migration_site_index]
-        migration_species = migration_site.species_and_occu
-
-        # Check if the site to which the ion should migrate is actually
-        # occupied
-        if migration_species == Composition():
-            raise ValueError("Chosen site is vacant.")
-
-        # Ask the user for the final coordinates of the migrating ion
-        final_coords = input("Please provide the index of the site the cation "
-                             "is migrating to, or the final fractional "
-                             "coordinates of the migration site: ")
-        print("")
-        final_coords = [float(number) for number
-                        in list(final_coords.split(" "))]
-    else:
-        migration_site_index = migration_indices[0]
-        migration_site = structure.sites[migration_site_index]
-        migration_species = migration_site.species_and_occu
-
-        # Check if the site to which the ion should migrate is actually
-        # occupied
-        if migration_species == Composition():
-            raise ValueError("Chosen site is vacant.")
-        final_coords = [migration_indices[1]]
-
-    # In case of a site index as input
-    if len(final_coords) == 1:
-
-        # Grab the required information about the final site
-        final_site_index = int(final_coords[0])
-        final_site = structure.sites[final_site_index]
-        final_coords = final_site.frac_coords
-        final_species = final_site.species_and_occu
-
-        # Check if site is occupied
-        if final_species != Composition():
-            raise ValueError("Chosen final site is not vacant.")
-
-        # Change the coordinates of the migration site with the ones of
-        # the final site.
-        final_structure.replace(i=migration_site_index,
-                                species=migration_species,
-                                coords=final_coords,
-                                properties=migration_site.properties)
-
-        # Do the opposite for the final site
-        final_structure.replace(i=final_site_index,
-                                species=final_species,
-                                coords=migration_site.frac_coords,
-                                properties=final_site.properties)
-
-        migration_id = str(migration_site_index) + "_" + str(final_site_index)
-
-    # In case of a set of fractional coordinates as input
-    elif len(final_coords) == 3:
-
-        # Replace the site with the site of the new coordinates
-        final_structure.replace(i=migration_site_index,
-                                species=migration_species,
-                                coords=final_coords,
-                                properties=final_structure.sites[
-                                    migration_site_index].properties)
-
-        migration_id = str(migration_site_index) + "_a"
-
-        letter_index = 0
-
-        while "migration_" + migration_id in os.listdir(os.getcwd()) and \
-                        letter_index < len(ascii_letters):
-            letter_index += 1
-            migration_id = str(migration_site_index) + "_" + \
-                           ascii_letters[letter_index]
-
-    else:
-        raise IOError("Provided input is incorrect.")
-
-    # Replace the
-    final_structure.remove_sites([migration_site_index])
-
-    # Add the final position of the migrating ion
-    final_structure.insert(i=migration_site_index,
-                           species=migration_species,
-                           coords=final_coords,
-                           properties=final_structure.sites[
-                               migration_site_index].properties)
+    final_structure.migrate_element(site=site, final_site=final_site)
 
     # Set up the migration directory
+    site_index = site if isinstance(site, int) else final_structure.index(site)
+    final_site_index = final_site if isinstance(final_site, int) \
+        else final_structure.index(final_site)
+    migration_id = str(site_index) + "_" + str(final_site_index)
+
     migration_dir = os.path.join(os.getcwd(), "migration_" + migration_id)
     try:
-        os.mkdir(migration_dir)
+        os.makedirs(migration_dir)
     except FileExistsError:
         print("WARNING: Migration directory already exists.")
 
     # Set up the filenames
     struc_name = str(structure.composition.reduced_composition).replace(" ", "")
-    migration_name = "_m_" + "_".join([str(el) for el in migration_indices])
+    migration_name = "_m_" + migration_id
 
     initial_structure_file = struc_name + migration_name + "_init"
     dimer_structure_file = struc_name + migration_name + "_final"

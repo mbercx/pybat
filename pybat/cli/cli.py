@@ -260,13 +260,102 @@ def migration(structure_file, migration_indices, write_cif):
     Define a migration of an ion in a structure.
 
     """
-    from pybat.cli.commands.define import define_migration
 
     cat = Cathode.from_file(structure_file)
 
-    define_migration(structure=cat,
-                     migration_indices=migration_indices,
-                     write_cif=write_cif)
+    # TODO Fix this method for new define method
+    #
+    # if migration_indices == (0, 0):
+    #     # Prompt the user for the migration site
+    #     print("")
+    #     print(structure)
+    #     print("")
+    #     migration_site_index = int(input("Please provide the index of the "
+    #                                      "migrating cation (Note: Not the "
+    #                                      "VESTA index!): "))
+    #     print("")
+    #
+    #     migration_site = structure.sites[migration_site_index]
+    #     migration_species = migration_site.species_and_occu
+    #
+    #     # Check if the site to which the ion should migrate is actually
+    #     # occupied
+    #     if migration_species == Composition():
+    #         raise ValueError("Chosen site is vacant.")
+    #
+    #     # Ask the user for the final coordinates of the migrating ion
+    #     final_coords = input("Please provide the index of the site the cation "
+    #                          "is migrating to, or the final fractional "
+    #                          "coordinates of the migration site: ")
+    #     print("")
+    #     final_coords = [float(number) for number
+    #                     in list(final_coords.split(" "))]
+    # else:
+    #     migration_site_index = migration_indices[0]
+    #     migration_site = structure.sites[migration_site_index]
+    #     migration_species = migration_site.species_and_occu
+    #
+    #     # Check if the site to which the ion should migrate is actually
+    #     # occupied
+    #     if migration_species == Composition():
+    #         raise ValueError("Chosen site is vacant.")
+    #     final_coords = [migration_indices[1]]
+    #
+    #
+    # # In case of a site index as input
+    # if len(final_coords) == 1:
+    #
+    #     # Grab the required information about the final site
+    #     final_site_index = int(final_coords[0])
+    #     final_site = structure.sites[final_site_index]
+    #     final_coords = final_site.frac_coords
+    #     final_species = final_site.species_and_occu
+    #
+    #     # Check if site is occupied
+    #     if final_species != Composition():
+    #         raise ValueError("Chosen final site is not vacant.")
+    #
+    #     # Change the coordinates of the migration site with the ones of
+    #     # the final site.
+    #     final_structure.replace(i=migration_site_index,
+    #                             species=migration_species,
+    #                             coords=final_coords,
+    #                             properties=migration_site.properties)
+    #
+    #     # Do the opposite for the final site
+    #     final_structure.replace(i=final_site_index,
+    #                             species=final_species,
+    #                             coords=migration_site.frac_coords,
+    #                             properties=final_site.properties)
+    #
+    #     migration_id = str(migration_site_index) + "_" + str(final_site_index)
+    #
+    # # In case of a set of fractional coordinates as input
+    # elif len(final_coords) == 3:
+    #
+    #     # Replace the site with the site of the new coordinates
+    #     final_structure.replace(i=migration_site_index,
+    #                             species=migration_species,
+    #                             coords=final_coords,
+    #                             properties=final_structure.sites[
+    #                                 migration_site_index].properties)
+    #
+    #     migration_id = str(migration_site_index) + "_a"
+    #
+    #     letter_index = 0
+    #
+    #     while "migration_" + migration_id in os.listdir(os.getcwd()) and \
+    #                     letter_index < len(ascii_letters):
+    #         letter_index += 1
+    #         migration_id = str(migration_site_index) + "_" + \
+    #                        ascii_letters[letter_index]
+    #
+    # else:
+    #     raise IOError("Provided input is incorrect.")
+    #
+    # define_migration(structure=cat,
+    #                  migration_indices=migration_indices,
+    #                  write_cif=write_cif)
 
 
 @define.command(context_settings=CONTEXT_SETTINGS)
