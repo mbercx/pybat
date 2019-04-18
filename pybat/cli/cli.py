@@ -260,10 +260,20 @@ def migration(structure_file, migration_indices, write_cif):
     Define a migration of an ion in a structure.
 
     """
+    from pybat.cli.commands.define import define_migration
 
     cat = Cathode.from_file(structure_file)
 
-    # TODO Fix this method for new define method
+    if migration_indices == (0, 0):
+        raise NotImplementedError("Please provide the migration indices using the '-i' "
+                                  "option.")
+
+    define_migration(structure=cat,
+                     site=migration_indices[0],
+                     final_site=migration_indices[1],
+                     write_cif=write_cif)
+
+    # TODO Fix the extra IO method for new define method below
     #
     # if migration_indices == (0, 0):
     #     # Prompt the user for the migration site
@@ -353,9 +363,6 @@ def migration(structure_file, migration_indices, write_cif):
     # else:
     #     raise IOError("Provided input is incorrect.")
     #
-    # define_migration(structure=cat,
-    #                  migration_indices=migration_indices,
-    #                  write_cif=write_cif)
 
 
 @define.command(context_settings=CONTEXT_SETTINGS)
