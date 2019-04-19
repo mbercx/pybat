@@ -236,6 +236,7 @@ def check():
     from pybat.config import check
     check()
 
+
 # endregion
 
 # region * Define
@@ -955,6 +956,44 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
                               include_existing=include_existing,
                               in_custodian=in_custodian,
                               number_nodes=number_nodes)
+    )
+
+
+@workflow.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("structure_file", nargs=1)
+@click.option("-i", "--migration_indices", default=(0, 0),
+              help=MIGRATION_INDICES_HELP)
+@click.option("--functional", "-f", default="pbe", help=FUNCTIONAL_HELP)
+@click.option("--is_metal", "-m", is_flag=True, help=IS_METAL_HELP)
+@click.option("--in_custodian", "-c", is_flag=True, help=IN_CUSTODIAN_HELP)
+@click.option("--number_nodes", "-n", default=0, help=NUMBER_NODES_HELP)
+@click.option("--launchpad_file", "-l", default=None,
+              help="Path to the launchpad file which contains the database information")
+@click.option("--lpad_name", "-N", default="base",
+              help="Name of the launchpad to which submit the workflow, i.e. configured "
+                   "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
+                   "order to configure a new launchpad, use 'pybat config launchpad'.")
+def dimer(structure_file, migration_indices, functional, is_metal,
+          in_custodian, number_nodes, launchpad_file, lpad_name):
+    """
+    Set up dimer calculation workflows.
+    """
+    from pybat.workflow.workflows import get_wf_migration
+
+    cat = LiRichCathode.from_file(structure_file)
+
+    if launchpad_file:
+        lpad = LaunchPad.from_file(launchpad_file)
+    else:
+        lpad = _load_launchpad(lpad_name)
+
+    lpad.add_wf(
+        get_wf_migration(structure=cat,
+                         migration_indices=migration_indices,
+                         functional=string_to_functional(functional),
+                         is_metal=is_metal,
+                         in_custodian=in_custodian,
+                         number_nodes=number_nodes)
     )
 
 

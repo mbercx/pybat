@@ -201,7 +201,7 @@ def get_wf_configurations(structure, directory, substitution_sites=None,
     )
 
 
-def get_fw_migration(structure, migration_indices=(0, 0),
+def get_wf_migration(structure, migration_indices=(0, 0),
                      functional=("pbe", {}), is_metal=False,
                      in_custodian=False, number_nodes=None):
     """
