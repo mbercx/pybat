@@ -973,8 +973,8 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
               help="Name of the launchpad to which submit the workflow, i.e. configured "
                    "in the $HOME/.pybat_config/launchpad<name>_launchpad.yaml file. In "
                    "order to configure a new launchpad, use 'pybat config launchpad'.")
-def dimer(structure_file, migration_indices, functional, is_metal,
-          in_custodian, number_nodes, launchpad_file, lpad_name):
+def migration(structure_file, migration_indices, functional, is_metal,
+              in_custodian, number_nodes, launchpad_file, lpad_name):
     """
     Set up dimer calculation workflows.
     """
