@@ -237,9 +237,12 @@ def get_fw_migration(structure, migration_indices=(0, 0),
     # steps to the workflow means that these will have to be rerun manually,
     #  instead of simply relying on the fireworks commands.
 
+    # TODO Can currently not be executed from jupyter notebook
+
     # Let the user define a migration
     migration_dir = define_migration(structure=structure,
-                                     migration_indices=migration_indices,
+                                     site=migration_indices[0],
+                                     final_site=migration_indices[1],
                                      write_cif=True)
 
     # Set up the transition calculation
@@ -253,6 +256,13 @@ def get_fw_migration(structure, migration_indices=(0, 0),
     else:
         vasprun = VaspTask(directory=os.path.join(migration_dir, "final"))
 
+    # Extract the final cathode from the geometry optimization
+    get_cathode = PyTask(
+        func="pybat.cli.commands.get.get_cathode",
+        kwargs={"directory": os.path.join(migration_dir, "final"),
+                "write_cif": True}
+    )
+
     # Add number of nodes to spec, or "none"
     firework_spec = {}
     if number_nodes is None:
@@ -260,14 +270,26 @@ def get_fw_migration(structure, migration_indices=(0, 0),
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
-    transition_firework = Firework(tasks=[vasprun],
+    transition_firework = Firework(tasks=[vasprun, get_cathode],
                                    name="Migration Geometry optimization",
                                    spec=firework_spec)
+
+    # Set up the static calculation directory
+    static_dir = os.path.join(migration_dir, "static_final")
+
+    final_cathode = os.path.join(migration_dir, "final", "final_cathode.json")
+
+    # Set up the static calculation
+    static_fw = PybatStaticFW(
+        structure=final_cathode, functional=functional,
+        directory=static_dir, write_chgcar=False, in_custodian=in_custodian,
+        number_nodes=number_nodes
+    )
 
     struc_name = str(structure.composition.reduced_composition).replace(" ", "")
 
     return Workflow(
-        fireworks=[transition_firework],
+        fireworks=[transition_firework, static_fw],
         name=struc_name + " " + migration_dir.split("/")[-1]
     )
 
