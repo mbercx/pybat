@@ -4,9 +4,7 @@
 
 import os
 
-from monty.io import zopen
 from pymatgen import Structure
-from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from pybat.core import Cathode
@@ -112,23 +110,6 @@ def make_supercell(structure_file, supercell, fmt="json"):
                            + "." + fmt
 
     cathode.to(fmt, super_structure_file)
-
-
-def data(vasprun_file):
-    """
-    Extract the main data from a vasprun.xml file and write it as a data.json.
-
-    Args:
-        vasprun_file (str):
-
-    Returns:
-
-    """
-    directory = os.path.dirname(os.path.abspath(vasprun_file))
-    vasprun = Vasprun(vasprun_file)
-
-    with zopen(os.path.join(directory, "data.json"), "w") as file:
-        file.write(vasprun.to_json())
 
 
 def print_structure(structure_file):

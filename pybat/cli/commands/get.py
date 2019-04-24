@@ -3,12 +3,13 @@
 # Distributed under the terms of the MIT License
 
 import os
-import pdb
+
+from monty.io import zopen
+from pymatgen import Structure
+from pymatgen.analysis.transition_state import NEBAnalysis
+from pymatgen.io.vasp.outputs import Outcar, Vasprun
 
 from pybat.core import Cathode, DimerNEBAnalysis
-from pymatgen import Structure
-from pymatgen.io.vasp.outputs import Outcar
-from pymatgen.analysis.transition_state import NEBAnalysis
 
 """
 Set of scripts used to extract information from VASP output files for analysis.
@@ -94,6 +95,23 @@ def get_cathode(directory, to_current_dir=False, write_cif=False,
 
     if write_cif:
         cathode.to("cif", filename + ".cif")
+
+
+def data(vasprun_file):
+    """
+    Extract data from a vasprun.xml file and write it as a data.json.
+
+    Args:
+        vasprun_file (str):
+
+    Returns:
+
+    """
+    directory = os.path.dirname(os.path.abspath(vasprun_file))
+    vasprun = Vasprun(vasprun_file)
+
+    with zopen(os.path.join(directory, "data.json"), "w") as file:
+        file.write(vasprun.to_json())
 
 
 def get_barrier(directory, method="pymatgen"):

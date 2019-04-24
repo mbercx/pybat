@@ -447,6 +447,17 @@ def cathode(directory, to_current_dir, ignore_magmom, write_cif):
 
 
 @get.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("vasprun_file", nargs=1)
+def data(vasprun_file):
+    """
+    Compress the data of the vasprun.xml file to a JSON file.
+
+    """
+    from pybat.cli.commands.get import data
+
+    data(vasprun_file=vasprun_file)
+
+@get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
 @click.option("--method", "-M", default="pymatgen")
 def barrier(directory, method):
@@ -671,18 +682,6 @@ def conv(structure_file, file_format):
 
     conventional_structure(structure_file=structure_file,
                            fmt=file_format)
-
-
-@util.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("vasprun_file", nargs=1)
-def data(vasprun_file):
-    """
-    Compress the data of the vasprun.xml file to a JSON file.
-
-    """
-    from pybat.cli.commands.util import data
-
-    data(vasprun_file=vasprun_file)
 
 
 @util.command(context_settings=CONTEXT_SETTINGS)
