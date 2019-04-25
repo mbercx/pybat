@@ -60,6 +60,8 @@ def _set_up_directory(directory, functional, calculation):
     return directory
 
 
+# demo change
+
 def static(structure, directory="", functional=("pbe", {}), write_chgcar=False):
     """
     Set up a standard static calculation using the tetrahedron method to
