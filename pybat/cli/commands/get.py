@@ -2,6 +2,7 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
+import json
 import os
 
 from monty.io import zopen
@@ -97,12 +98,20 @@ def get_cathode(directory, to_current_dir=False, write_cif=False,
         cathode.to("cif", filename + ".cif")
 
 
-def data(vasprun_file):
+def data(vasprun_file, data="basic"):
     """
-    Extract data from a vasprun.xml file and write it as a data.json.
+    Extract data from a vasprun.xml file and write it as a data.json. Mainly used to
+    make the data files more compact.
 
     Args:
-        vasprun_file (str):
+        vasprun_file (str): Path to the vasprun.xml file.
+        data: String or List of strings that details the data to extract from the
+            vasprun.xml. Defaults to "basic", which simply parses the vasprun.xml file
+            with the standard kwargs of the Vasprun class,
+            see pymatgen.io.vasp.outputs.Vasprun. Other options include:
+
+            "energy": Extract the final energy.
+            "structure": Extract the final structure.
 
     Returns:
 
@@ -110,8 +119,18 @@ def data(vasprun_file):
     directory = os.path.dirname(os.path.abspath(vasprun_file))
     vasprun = Vasprun(vasprun_file)
 
+    data_dict = {}
+
+    if "basic" in data:
+        data_dict.update(vasprun.as_dict())
+    if "energy" in data:
+        data_dict.update({"energy": vasprun.final_energy})
+    if "structure" in data:
+        data_dict.update({"structure": vasprun.final_structure.to_json()})
+
     with zopen(os.path.join(directory, "data.json"), "w") as file:
-        file.write(vasprun.to_json())
+
+        file.write(json.dumps(data_dict))
 
 
 def get_barrier(directory, method="pymatgen"):

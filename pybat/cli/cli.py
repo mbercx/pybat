@@ -448,14 +448,26 @@ def cathode(directory, to_current_dir, ignore_magmom, write_cif):
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("vasprun_file", nargs=1)
-def data(vasprun_file):
+@click.option("-c", "--choice", default="basic",
+              help="Which data to extract from the vasprun.xml. Can be either a string "
+                   "or a list of strings. Defaults to 'basic', which simply parses the "
+                   "vasprun.xml file with the standard kwargs of the Vasprun class, "
+                   "see pymatgen.io.vasp.outputs.Vasprun. Other options include: "
+                   "'energy', 'structure'. ")
+def data(vasprun_file, choice):
     """
     Compress the data of the vasprun.xml file to a JSON file.
 
     """
     from pybat.cli.commands.get import data
 
-    data(vasprun_file=vasprun_file)
+    try:
+        data_choice = eval(choice)
+    except NameError:
+        data_choice = choice
+
+    data(vasprun_file=vasprun_file,
+         data=data_choice)
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
