@@ -298,7 +298,7 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False):
     final_dir = os.path.join(directory, "final")
 
     try:
-        # Check to see if the initial final_cathode structure is present
+        # Check to see if the initial final_cathode.json structure is present
         initial_structure = Cathode.from_file(
             os.path.join(initial_dir, "final_cathode.json")
         ).as_ordered_structure()
@@ -309,7 +309,8 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False):
         initial_structure = Structure.from_file(os.path.join(initial_dir,
                                                              "CONTCAR"))
 
-        # Add the magnetic configuration to the initial structure
+        # Add the magnetic configuration to the initial structure, if present in the
+        # OUTCAR
         initial_out = Outcar(os.path.join(initial_dir, "OUTCAR"))
         initial_magmom = [site["tot"] for site in initial_out.magnetization]
 
@@ -317,10 +318,8 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False):
             initial_structure.add_site_property("magmom", initial_magmom)
         except ValueError:
             if len(initial_magmom) == 0:
-                print("No magnetic moments found in OUTCAR file. Setting "
-                      "magnetic moments to zero.")
-                initial_magmom = [0] * len(initial_structure)
-                initial_structure.add_site_property("magmom", initial_magmom)
+                print("No magnetic moments found in OUTCAR file of initial geometry. "
+                      "Setting up non-spin-polarized calculation.")
             else:
                 raise ValueError("Number of magnetic moments in OUTCAR file "
                                  "do not match the number of sites!")
@@ -375,6 +374,11 @@ def neb(directory, nimages=7, functional=("pbe", {}), is_metal=False):
 
     # Set up the functional
     user_incar_settings.update(_load_functional(functional))
+
+    # Check if a magnetic moment was provided for the sites of the initial structure.
+    # If so, perform a spin-polarized calculation
+    if "magmom" in initial_structure.site_properties.keys():
+        user_incar_settings.update({"ISPIN": 2, "MAGMOM": True})
 
     # Add the standard Methfessel-Paxton smearing for metals
     if is_metal:
