@@ -102,7 +102,7 @@ def static(structure, directory="", functional=("pbe", {}), write_chgcar=False):
     # Set up the functional
     user_incar_settings.update(_load_functional(functional))
 
-    # Check if a magnetic moment was not provided for the sites. If so, perform a
+    # Check if a magnetic moment was provided for the sites. If so, perform a
     # spin-polarized calculation
     if "magmom" in structure.site_properties.keys():
         user_incar_settings.update({"ISPIN": 2, "MAGMOM": True})
@@ -171,7 +171,7 @@ def optimize(structure, directory="", functional=("pbe", {}),
     # Set up the functional
     user_incar_settings.update(_load_functional(functional))
 
-    # Check if a magnetic moment was not provided for the sites. If so, perform a
+    # Check if a magnetic moment was provided for the sites. If so, perform a
     # spin-polarized calculation
     if "magmom" in structure.site_properties.keys():
         user_incar_settings.update({"ISPIN": 2, "MAGMOM": True})
@@ -233,9 +233,9 @@ def transition(directory, functional=("pbe", {}), is_metal=False,
     # Set up the functional
     user_incar_settings.update(_load_functional(functional))
 
-    # Check if a magnetic moment was not provided for the sites of the initial structure.
+    # Check if a magnetic moment was provided for the sites of the initial structure.
     # If so, perform a spin-polarized calculation
-    if "magmom" not in initial_cathode.site_properties.keys():
+    if "magmom" in initial_cathode.site_properties.keys():
         user_incar_settings.update({"ISPIN": 2, "MAGMOM": True})
 
     # For metals, add some Methfessel Paxton smearing
