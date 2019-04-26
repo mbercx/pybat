@@ -344,8 +344,19 @@ class Cathode(Structure):
             raise IOError("Input sites must be either an integer or pymatgen.Site!")
 
         if final_site.species == Composition():
+
+            # Store the initial magnetic moments, if any
+            magmom = self.site_properties.get("magmom", None)
+
+            # Adjust the Species of the initial and final site
             self.replace(final_site_index, site.species)
             self.replace(site_index, Composition())
+
+            # Switch the magnetic moments (if any) and update the site properties
+            if magmom:
+                magmom[site_index], magmom[final_site_index] = \
+                    magmom[final_site_index], magmom[site_index]
+                self.add_site_property("magmom", magmom)
         else:
             raise ValueError("Final migration site is not empty!")
 
