@@ -290,7 +290,8 @@ def get_wf_migration(structure, migration_indices=(0, 0),
 
     return Workflow(
         fireworks=[transition_firework, static_fw],
-        name=struc_name + " " + migration_dir.split("/")[-1]
+        name=struc_name + " " + migration_dir.split("/")[-1],
+        links_dict={transition_firework: [static_fw]}
     )
 
 
