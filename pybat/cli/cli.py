@@ -994,6 +994,10 @@ def migration(structure_file, migration_indices, functional, is_metal,
 
     cat = LiRichCathode.from_file(structure_file)
 
+    # Process the input options
+    if number_nodes == 0:
+        number_nodes = None
+
     if launchpad_file:
         lpad = LaunchPad.from_file(launchpad_file)
     else:
@@ -1031,6 +1035,10 @@ def dimer(structure_file, dimer_indices, distance, functional, is_metal,
     from pybat.workflow.workflows import get_wf_dimer
 
     cat = LiRichCathode.from_file(structure_file)
+
+    # Process the input options
+    if number_nodes == 0:
+        number_nodes = None
 
     if launchpad_file:
         lpad = LaunchPad.from_file(launchpad_file)
