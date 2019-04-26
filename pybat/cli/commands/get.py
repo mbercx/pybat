@@ -117,16 +117,18 @@ def data(vasprun_file, data="basic"):
 
     """
     directory = os.path.dirname(os.path.abspath(vasprun_file))
-    vasprun = Vasprun(vasprun_file)
+    vr = Vasprun(vasprun_file)
 
     data_dict = {}
 
     if "basic" in data:
-        data_dict.update(vasprun.as_dict())
+        data_dict.update(vr.as_dict())
     if "energy" in data:
-        data_dict.update({"energy": vasprun.final_energy})
+        data_dict.update({"energy": vr.final_energy})
     if "structure" in data:
-        data_dict.update({"structure": vasprun.final_structure.to_json()})
+        data_dict.update({"structure": vr.final_structure.to_json()})
+    if "dos" in data:
+        data_dict.update({"dos": vr.complete_dos.as_dict()})
 
     with zopen(os.path.join(directory, "data.json"), "w") as file:
 
