@@ -110,8 +110,9 @@ def data(vasprun_file, data="basic"):
             with the standard kwargs of the Vasprun class,
             see pymatgen.io.vasp.outputs.Vasprun. Other options include:
 
-            "energy": Extract the final energy.
-            "structure": Extract the final structure.
+            "energy": The final energy
+            "structure": The final structure
+            "dos": The CompleteDos
 
     Returns:
 

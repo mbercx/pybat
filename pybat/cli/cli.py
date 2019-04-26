@@ -453,7 +453,7 @@ def cathode(directory, to_current_dir, ignore_magmom, write_cif):
                    "or a list of strings. Defaults to 'basic', which simply parses the "
                    "vasprun.xml file with the standard kwargs of the Vasprun class, "
                    "see pymatgen.io.vasp.outputs.Vasprun. Other options include: "
-                   "'energy', 'structure'. ")
+                   "'energy', 'structure', 'dos'. ")
 def data(vasprun_file, choice):
     """
     Compress the data of the vasprun.xml file to a JSON file.
