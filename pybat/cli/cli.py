@@ -987,7 +987,8 @@ def configuration(structure_file, functional, sub_sites, element_list, sizes,
 def migration(structure_file, migration_indices, functional, is_metal,
               in_custodian, number_nodes, launchpad_file, lpad_name):
     """
-    Set up dimer calculation workflows.
+    Set up migration calculation workflow.
+
     """
     from pybat.workflow.workflows import get_wf_migration
 

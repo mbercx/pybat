@@ -205,7 +205,7 @@ def get_wf_migration(structure, migration_indices=(0, 0),
                      functional=("pbe", {}), is_metal=False,
                      in_custodian=False, number_nodes=None):
     """
-    Set up a workflow that calculates the thermodynamics for a migration in
+    Set up a workflow that calculates the reaction energy for a migration in
     the current directory.
 
     Can later be expanded to also include kinetic barrier calculation.
