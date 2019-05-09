@@ -75,10 +75,10 @@ def get_wf_static(structure, directory, functional=("pbe", {}),
 
 
 def get_wf_optimize(structure, directory, functional=("pbe", {}),
-                    is_metal=False, in_custodian=False, number_nodes=None):
+                    is_metal=False, in_custodian=False, number_nodes=None,
+                    fw_action=None):
     """
-    Set up a geometry optimization workflow and add it to the launchpad of the
-    mongoDB server defined in the config file.
+    Set up a geometry optimization workflow.
 
     Args:
         structure (pymatgen.Structure): Structure for which to set up the geometry
@@ -96,6 +96,8 @@ def get_wf_optimize(structure, directory, functional=("pbe", {}),
         number_nodes (int): Number of nodes that should be used for the calculations.
             Is required to add the proper `_category` to the Firework generated, so
             it is picked up by the right Fireworker.
+        fw_action (fireworks.FWAction): FWAction to return after the final
+                PulayTask is completed.
 
     Returns:
         None
@@ -108,7 +110,8 @@ def get_wf_optimize(structure, directory, functional=("pbe", {}),
                                   directory=directory,
                                   is_metal=is_metal,
                                   in_custodian=in_custodian,
-                                  number_nodes=number_nodes)
+                                  number_nodes=number_nodes,
+                                  fw_action=fw_action)
 
     # Set up a clear name for the workflow
     workflow_name = str(structure.composition.reduced_formula).replace(" ", "")
