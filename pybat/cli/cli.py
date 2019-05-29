@@ -137,12 +137,13 @@ def qlaunch(lpad_name, fworker_name, number_nodes, walltime, number_jobs):
         os.path.expanduser("~"), ".pybat_config", "fworker",
         fworker_name + "_fworker.yaml"
     )
+    qadapter["rocket_launch"] += " --timeout " + str(walltime * 3000)
 
     rapidfire(launchpad=load_config("launchpad", lpad_name),
               fworker=load_config("fworker", fworker_name), qadapter=qadapter,
-              launch_dir=os.path.expanduser("~"), nlaunches=number_jobs,
+              launch_dir=qadapter["logdir"], nlaunches=number_jobs,
               njobs_queue=0, njobs_block=500,
-              sleep_time=1, reserve=False, fill_mode=True)
+              sleep_time=0, reserve=False, fill_mode=True)
 
 
 # TODO Add checks for U-value input
