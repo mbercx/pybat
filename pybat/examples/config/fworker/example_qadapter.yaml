@@ -8,5 +8,5 @@ nnodes: null
 walltime: null
 launchpad_file: null
 fireworker_file: null
-logdir: <logdir>
+logdir: < LOGDIR > # <----- Enter your logdir here!
 rocket_launch: rapidfire --nlaunches infinite --max_loops 30 --sleep 10

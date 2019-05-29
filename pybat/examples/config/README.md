@@ -13,11 +13,11 @@ In this directory you can find some example configuration files for the pybat wo
 In order to get these files and start adjusting them, just open a terminal and execute the following:
 
 ```
-wget https://www.dropbox.com/s/ruv8j51z8euy2nb/config.tar.gz
+wget https://www.dropbox.com/s/bku4kwxk159f7gv/config.tar.gz
 tar -xvzf config.tar.gz
 rm config.tar.gz
 ```
 
-Once you've made the necessary changes, use `pybat config` to configure pybat based on the configuration files. Be sure to check the help of each `config` subcommand with `-h` before using them.
+Once you've made the necessary changes, use `pybat config` to configure pybat based on the adjusted configuration files. Be sure to check the help of each `config` subcommand with `-h` before using them.
 
 

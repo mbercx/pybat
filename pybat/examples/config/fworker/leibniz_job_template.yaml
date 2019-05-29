@@ -10,9 +10,9 @@
 
 # Set up the python environment
 echo "Sourcing conda setup"
-source $VSC_DATA/miniconda3/etc/profile.d/conda.sh # <----- This should be the path to YOUR conda install
+  source < PATH TO CONDA.SH > # <----- This should be the path to YOUR conda install
 echo "Loading pmg environment"
-conda activate pmg # <----- In case your conda environment has a different name, change it here
+  conda activate < CONDA ENVIRONMENT>  # <----- Input your conda evironment name here
 
 # Set up the linux environment  <----- This loads the modules for the VSC clusters
 case "$VSC_INSTITUTE_CLUSTER" in
@@ -30,18 +30,18 @@ case "$VSC_INSTITUTE_CLUSTER" in
 
   ;;
 
-	'leibniz')
-		
-		echo "Assigning LD_BIND_NOW"	
-		export LD_BIND_NOW=1
-		echo "Purging modules"
-		module purge
-		echo "Loading leibniz/2016b"
-		module load leibniz/2016b
-		echo "Loading leibniz/supported"
-		module load leibniz/supported
-		echo "Loading VASP module"
-		module load VASP/5.4.4-intel-2016b
+  'leibniz')
+
+  echo "Assigning LD_BIND_NOW"
+  export LD_BIND_NOW=1
+  echo "Purging modules"
+  module purge
+  echo "Loading leibniz/2016b"
+  module load leibniz/2016b
+  echo "Loading leibniz/supported"
+  module load leibniz/supported
+  echo "Loading VASP module"
+  module load VASP/5.4.4-intel-2016b
 
 	;;
 
@@ -58,10 +58,11 @@ esac
 # Go to the logdir, so any output is put here
 cd $${logdir}
 
-# This is a workaround for making sure that fireworks with a specified number of nodes only get picked up by jobs that have that number of nodes.
+  # This is a workaround for makisq
+  ng sure that fireworks with a specified number of nodes only get picked up by jobs that have that number of nodes.
 echo "Adjusting fworker to number of nodes"
 sed -i s/"[0-9]*nodes"/$${nnodes}nodes/ $${fireworker_file}
-	
-# Run the rlaunch command  <----- You shouldn't have to change this, normally. Specify rlaunch options using the rocket_launch variable in the queue adapter file.
+
+  # Run the rlaunch command  <----- You shouldn't have to change this, normally. Specify rlaunch options using the rocket_launch variable in the queue adapter file.
 echo "Running rlaunch command"
 rlaunch -w $${fireworker_file} -l $${launchpad_file} $${rocket_launch}
