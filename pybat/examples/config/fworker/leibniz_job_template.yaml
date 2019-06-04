@@ -3,7 +3,7 @@
 #PBS -N pybat_$${nnodes}nodes
 #PBS -q batch
 #PBS -L tasks=$${nnodes}:lprocs=28
-#PBS -l walltime=$${walltime}
+#PBS -l walltime=$${walltime}:00:00
 #PBS -j eo
 
 # IMPORTANT: This template is set up for the leibniz cluster of CalcUA. You will probably have to change quite a bit to make this work on a different machine.

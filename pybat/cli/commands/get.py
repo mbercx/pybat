@@ -136,7 +136,7 @@ def data(vasprun_file, data="basic"):
         file.write(json.dumps(data_dict))
 
 
-def get_barrier(directory, method="pymatgen"):
+def get_barrier(directory, method="pymatgen", show_plot=False):
     """
     Plot the migration barrier of a transition in a directory.
     Args:
@@ -152,7 +152,8 @@ def get_barrier(directory, method="pymatgen"):
 
         neb = NEBAnalysis.from_dir(directory, relaxation_dirs=('initial',
                                                                'final'))
-        neb.get_plot().show()
+        if show_plot:
+            neb.get_plot().show()
 
     if method == "dimers":
         # This method makes some assumptions about the directory structure
@@ -172,8 +173,9 @@ def get_barrier(directory, method="pymatgen"):
             neb = DimerNEBAnalysis.from_dir(directory)
             neb.to("json", os.path.join(directory, "neb_data.json"))
 
-        neb.setup_spline({"saddle_point": "zero_slope"})
-        neb.get_plot(label_barrier=False).show()
+        if show_plot:
+            neb.setup_spline({"saddle_point": "zero_slope"})
+            neb.get_plot(label_barrier=False).show()
 
 
 def get_voltage(directory, calculation="relax", functional=None):
