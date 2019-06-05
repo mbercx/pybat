@@ -132,7 +132,7 @@ class PulayTask(FiretaskBase):
     # Basically, PulayTask calculates the 2-norm of the absolute matrix taken from the
     # difference between the initial and final matrices of the lattice vectors of the
     # structure.
-    pulay_tolerance = 1e-2
+    pulay_tolerance = 5e-2
 
     def run_task(self, fw_spec):
         """
