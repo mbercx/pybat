@@ -155,7 +155,7 @@ def get_barrier(directory, method="pymatgen", show_plot=False):
         if show_plot:
             neb.get_plot().show()
 
-    if method == "dimers":
+    elif method == "dimer":
         # This method makes some assumptions about the directory structure
         # for it to work:
         #
@@ -176,6 +176,8 @@ def get_barrier(directory, method="pymatgen", show_plot=False):
         if show_plot:
             neb.setup_spline({"saddle_point": "zero_slope"})
             neb.get_plot(label_barrier=False).show()
+    else:
+        raise NameError("Method for gathering NEB data not recognised.")
 
 
 def get_voltage(directory, calculation="relax", functional=None):
