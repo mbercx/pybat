@@ -473,14 +473,17 @@ def data(vasprun_file, choice):
 @get.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--directory", "-d", default=".")
 @click.option("--method", "-M", default="pymatgen")
-def barrier(directory, method):
+@click.option("--show_plot", "-p", is_flag=True)
+def barrier(directory, method, show_plot):
     """
-    Combine the images of a NEB calculation to show the transition.
+    Gather the images and data of a NEB calculation.
+
     """
     from pybat.cli.commands.get import get_barrier
 
     get_barrier(directory=directory,
-                method=method)
+                method=method,
+                show_plot=show_plot)
 
 
 @get.command(context_settings=CONTEXT_SETTINGS)
