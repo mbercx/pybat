@@ -6,6 +6,7 @@ import itertools
 import json
 import math
 import os
+import warnings
 
 import numpy as np
 from icet.tools.structure_enumeration import enumerate_structures
@@ -359,7 +360,6 @@ class Cathode(Structure):
                 self.add_site_property("magmom", magmom)
         else:
             raise ValueError("Final migration site is not empty!")
-
 
     def change_site_distance(self, sites, distance):
         """
@@ -1360,6 +1360,11 @@ class DimerNEBAnalysis(NEBAnalysis):
                  os.path.abspath(root_dir).split('/')[-1].split('_')
                  if all([is_number(c) for c in el])]
             )
+            if len(dimer_indices) != 2:
+                warnings.warn("Could not extract the O-O dimer indices from the "
+                              "directory. Make sure that they are set correctly in "
+                              "case you want to know the distances between the oxygen "
+                              "atoms.")
 
         # Use the method of the superclass for the forces and energies
         neb = super().from_dir(
