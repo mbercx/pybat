@@ -160,10 +160,10 @@ def get_barrier(directory, method="pymatgen", show_plot=False):
         # for it to work:
         #
         # - The image directories are two characters long, and there are no
-        # other directories which are two characters long.
+        #   other directories which are two characters long.
         # - The directory in which the nudged elastic band was performed
-        #  contains the dimer indices, delimited by '_', and with no other
-        # numbers delimited in such a way present.
+        #   contains the dimer indices, delimited by '_', and with no other
+        #   numbers delimited in such a way present.
 
         if os.path.exists(os.path.join(directory, "neb_data.json")):
             neb = DimerNEBAnalysis.from_file(
@@ -171,7 +171,8 @@ def get_barrier(directory, method="pymatgen", show_plot=False):
             )
         else:
             neb = DimerNEBAnalysis.from_dir(directory)
-            neb.to("json", os.path.join(directory, "neb_data.json"))
+            neb.to("json", os.path.join(directory, "neb_data.json"),
+                   spline_options={"saddle_point": "zero_slope"})
 
         if show_plot:
             neb.setup_spline({"saddle_point": "zero_slope"})
