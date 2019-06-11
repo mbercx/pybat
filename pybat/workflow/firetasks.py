@@ -241,6 +241,13 @@ class ConfigurationTask(FiretaskBase):
             max_conf_to_generate = None
 
         if not self.get("configuration_list", None):
+
+            structure = self["structure"]
+
+            # In case the input geometry is a Structure, convert it to a Cathode
+            if isinstance(structure, Structure):
+                structure = Cathode.from_structure(structure)
+
             configurations = self["structure"].get_cation_configurations(
                 substitution_sites=self["substitution_sites"],
                 cation_list=self["element_list"],
