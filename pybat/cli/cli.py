@@ -67,9 +67,10 @@ def _load_launchpad(name="base"):
     Load the launchpad from the configuration folder in $HOME/.pybat_config/launchpad.
 
     Args:
-        name (str):
+        name (str): Name of the launchpad. Defaults to "base".
 
     Returns:
+        fireworks.LaunchPad corresponding to the requested name.
 
     """
     if name != "base":
@@ -113,8 +114,6 @@ def qlaunch(lpad_name, fworker_name, number_nodes, walltime, number_jobs):
     """
     Launch jobs to the queue that will accept Fireworks.
 
-    Returns:
-
     """
     from fireworks.queue.queue_launcher import rapidfire
     from pybat.config import load_config
@@ -137,6 +136,7 @@ def qlaunch(lpad_name, fworker_name, number_nodes, walltime, number_jobs):
         os.path.expanduser("~"), ".pybat_config", "fworker",
         fworker_name + "_fworker.yaml"
     )
+    # This line adds the timeout option to the
     qadapter["rocket_launch"] += " --timeout " + str(walltime * 3000)
 
     rapidfire(launchpad=load_config("launchpad", lpad_name),
