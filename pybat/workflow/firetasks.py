@@ -248,7 +248,7 @@ class ConfigurationTask(FiretaskBase):
             if isinstance(structure, Structure):
                 structure = Cathode.from_structure(structure)
 
-            configurations = self["structure"].get_cation_configurations(
+            configurations = structure.get_cation_configurations(
                 substitution_sites=self["substitution_sites"],
                 cation_list=self["element_list"],
                 sizes=self["sizes"],
