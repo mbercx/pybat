@@ -1411,8 +1411,11 @@ class DimerNEBAnalysis(MSONable):
                       and os.path.isdir(os.path.join(root_dir, file))]
         image_dirs.sort()
 
-        energies = [Outcar(os.path.join(d, "OUTCAR")).data["energy"]
-                    for d in image_dirs]
+        energies = []
+        for d in image_dirs:
+            out = Outcar(os.path.join(d, "OUTCAR"))
+            out.read_neb()
+            energies.append(out.data["energy"])
 
         # However, the image directories do not contain a Cathode json file, so we'll
         # use the following workaround: Load the Cathode from the initial geometry,
