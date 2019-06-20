@@ -14,7 +14,6 @@ from monty.io import zopen
 from monty.json import jsanitize, MSONable
 from pymatgen.analysis.chemenv.coordination_environments.voronoi \
     import DetailedVoronoiContainer
-from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.core import Structure, Composition, Molecule, Site, Element
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.io.vasp.outputs import Outcar
@@ -1265,19 +1264,60 @@ class Dimer(MSONable):
                    dimer_indices=d["dimer_indices"])
 
 
-class DimerNEBAnalysis(NEBAnalysis):
+class DimerNEBAnalysis(MSONable):
     """
-    Subclass of the NEBAnalysis class in order to change the plotting of the
-    barriers, as well as allowing for saving the NEB analysis to a json file.
+    Adjusted from the NEBAnalysis class in order to change the x-coordinate of
+    the barrier plots to the O-O distance of the dimer.
+
+    So far we haven't implemented Henkelman's method of using the tangent forces in
+    the spline fitting of the energy barrier. #TODO
 
     """
 
-    def __init__(self, r, energies, forces, structures, spline_options=None,
-                 dimer_indices=None):
-        super(DimerNEBAnalysis, self).__init__(
-            r, energies, forces, structures, spline_options
-        )
-        self._dimer_indices = tuple(dimer_indices)
+    def __init__(self, energies, structures, spline_options=None, dimer_indices=None):
+
+        self.energies = np.array(energies)
+        self.structures = structures
+        self.spline_options = spline_options if spline_options else {}
+        self._dimer_indices = tuple(dimer_indices) if dimer_indices else None
+
+        self.spline = self.setup_spline(spline_options=self.spline_options)
+
+    def setup_spline(self, spline_options=None):
+        """
+        Setup of the options for the spline interpolation
+
+        Args:
+            spline_options (dict): Options for cubic spline. For example,
+                {"saddle_point": "zero_slope"} forces the slope at the saddle to
+                be zero.
+        """
+        self.spline_options = spline_options
+        relative_energies = self.energies - self.energies[0]
+
+        # To perform the spline interpolation, we have to invert the distances and
+        # corresponding energies, as the distances are decreasing
+        inv_dist = self.dimer_distances[::-1]
+        inv_energy = relative_energies[::-1]
+
+        if self.spline_options.get('saddle_point', '') == 'zero_slope':
+
+            imax = np.argmax(inv_energy)
+
+            spline = CubicSpline(x=inv_dist[:imax + 1], y=inv_energy[:imax + 1],
+                                 bc_type=((1, 0.0), (1, 0.0)))
+            # The bc_type sets the derivative to zero for the initial and final points
+
+            cspline2 = CubicSpline(x=inv_dist[imax:], y=inv_energy[imax:],
+                                   bc_type=((1, 0.0), (1, 0.0)))
+
+            spline.extend(c=cspline2.c, x=cspline2.x[1:])
+
+        else:
+            spline = CubicSpline(x=inv_dist, y=inv_energy,
+                                 bc_type=((1, 0.0), (1, 0.0)))
+
+        return spline
 
     @property
     def dimer_indices(self):
@@ -1301,9 +1341,7 @@ class DimerNEBAnalysis(NEBAnalysis):
         """
         return {"@module": self.__class__.__module__,
                 "@class": self.__class__.__name__,
-                'r': jsanitize(self.r),
                 'energies': jsanitize(self.energies),
-                'forces': jsanitize(self.forces),
                 'structures': [s.as_dict() for s in self.structures],
                 "dimer_indices": self.dimer_indices}
 
@@ -1366,17 +1404,15 @@ class DimerNEBAnalysis(NEBAnalysis):
                               "case you want to know the distances between the oxygen "
                               "atoms.")
 
-        # Use the method of the superclass for the forces and energies
-        neb = super().from_dir(
-            root_dir, relaxation_dirs=("initial", "final"), **kwargs
-        )
-
         # Because the dimer indices are based on the internal indices of the
         # Cathode object, we need to load the cathode json files to
         # determine the distance between the dimers properly.
-        image_dirs = [file for file in os.listdir(root_dir) if len(file) == 2 and
-                      os.path.isdir(os.path.join(root_dir, file))]
+        image_dirs = [file for file in os.listdir(root_dir) if file.isdigit()
+                      and os.path.isdir(os.path.join(root_dir, file))]
         image_dirs.sort()
+
+        energies = [Outcar(os.path.join(d, "OUTCAR")).data["energy"]
+                    for d in image_dirs]
 
         # However, the image directories do not contain a Cathode json file, so we'll
         # use the following workaround: Load the Cathode from the initial geometry,
@@ -1395,11 +1431,8 @@ class DimerNEBAnalysis(NEBAnalysis):
         )))
 
         dimer_neb = DimerNEBAnalysis(
-            r=neb.r,
-            energies=neb.energies,
-            forces=neb.forces,
+            energies=energies,
             structures=structures,
-            spline_options=neb.spline_options,
             dimer_indices=dimer_indices,
         )
 
@@ -1437,15 +1470,14 @@ class DimerNEBAnalysis(NEBAnalysis):
     @classmethod
     def from_dict(cls, d):
 
-        return cls(r=d['r'], energies=d["energies"], forces=d["forces"],
+        return cls(energies=d["energies"],
                    structures=[LiRichCathode.from_dict(structure) for
                                structure in d["structures"]],
                    dimer_indices=d["dimer_indices"])
 
-    def get_plot(self, normalize_rnx_coodinate=True, label_barrier=True):
+    def get_plot(self, label_barrier=True):
         """
-        Returns the NEB plot. Uses Henkelman's approach of spline fitting
-        each section of the reaction path based on tangent force and energies.
+        Returns the NEB plot.
 
         Args:
             label_barrier (bool): Whether to label the maximum barrier.
@@ -1455,32 +1487,31 @@ class DimerNEBAnalysis(NEBAnalysis):
         """
         plt = pretty_plot(12, 8)
 
-        spline_x = np.arange(0, np.max(self.r), 0.01)
+        spline_x = np.arange(np.min(self.dimer_distances),
+                             np.max(self.dimer_distances), 0.01)
         spline_y = self.spline(spline_x) * 1000
 
         relative_energies = self.energies - self.energies[0]
 
-        plt.plot(spline_x, spline_y, 'k--',
-                 self.r, relative_energies * 1000, 'ro',
+        plt.plot(spline_x, spline_y, "k-", linewidth=2)
+        plt.plot(self.dimer_distances, relative_energies * 1000, 'ro',
                  linewidth=2,
                  markersize=10)
 
         plt.xlabel("O-O Distance ($\mathrm{\AA}$)")
         max_index = np.argmax(self.energies)
-        plt.xticks(self.r.take([0, max_index, -1]),
-                   [str(round(d, 2)) for d
-                    in self.dimer_distances.take([0, max_index, -1])])
+        # plt.xticks(self.r.take([0, max_index, -1]),
+        #            [str(round(d, 2)) for d
+        #             in self.dimer_distances.take([0, max_index, -1])])
         plt.ylabel("Energy (meV)")
-        plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
+        # plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
+        plt.xlim(self.dimer_distances.max() + 0.05, self.dimer_distances.min() - 0.05)
 
-        if label_barrier:
-            data = zip(spline_x, spline_y)
-            barrier = max(data, key=lambda d: d[1])
-            plt.plot([0, barrier[0]], [barrier[1], barrier[1]], 'k--')
-            plt.annotate('%.0f meV' % (np.max(spline_y) - np.min(spline_y)),
-                         xy=(barrier[0] / 2, barrier[1] * 1.02),
-                         xytext=(barrier[0] / 2, barrier[1] * 1.02),
-                         horizontalalignment='center')
+        # if label_barrier:
+        #     pass
+        #     barrier = max(relative_energies)
+        #     plt.annotate('%.0f meV' % barrier,
+        #                  horizontalalignment='center')
 
         plt.tight_layout()
         return plt
