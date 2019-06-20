@@ -1413,8 +1413,8 @@ class DimerNEBAnalysis(MSONable):
         # Because the dimer indices are based on the internal indices of the
         # Cathode object, we need to load the cathode json files to
         # determine the distance between the dimers properly.
-        image_dirs = [file for file in os.listdir(root_dir) if file.isdigit()
-                      and os.path.isdir(os.path.join(root_dir, file))]
+        image_dirs = [os.path.join(root_dir, file) for file in os.listdir(root_dir)
+                      if file.isdigit() and os.path.isdir(os.path.join(root_dir, file))]
         image_dirs.sort()
 
         energies = []
