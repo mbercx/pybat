@@ -1274,9 +1274,11 @@ class DimerNEBAnalysis(MSONable):
 
     """
 
-    def __init__(self, energies, structures, spline_options=None, dimer_indices=None):
+    def __init__(self, energies, forces, structures, spline_options=None,
+                 dimer_indices=None):
 
         self.energies = np.array(energies)
+        self.forces = forces
         self.structures = structures
         self.spline_options = spline_options if spline_options else {}
         self._dimer_indices = tuple(dimer_indices) if dimer_indices else None
@@ -1314,8 +1316,12 @@ class DimerNEBAnalysis(MSONable):
             spline.extend(c=cspline2.c, x=cspline2.x[1:])
 
         else:
-            spline = CubicSpline(x=inv_dist, y=inv_energy,
-                                 bc_type=((1, 0.0), (1, 0.0)))
+            inv_force = self.forces[::-1]
+            spline = PiecewisePolynomial(
+                inv_dist, np.array([inv_energy, -inv_force]).T,
+                orders=3)
+            # spline = CubicSpline(x=inv_dist, y=inv_energy,
+            #                      bc_type=((1, 0.0), (1, 0.0)))
 
         return spline
 
@@ -1412,10 +1418,12 @@ class DimerNEBAnalysis(MSONable):
         image_dirs.sort()
 
         energies = []
+        forces = []
         for d in image_dirs:
             out = Outcar(os.path.join(d, "OUTCAR"))
             out.read_neb()
             energies.append(out.data["energy"])
+            forces.append(out.data["tangent_force"])
 
         # However, the image directories do not contain a Cathode json file, so we'll
         # use the following workaround: Load the Cathode from the initial geometry,
@@ -1435,6 +1443,7 @@ class DimerNEBAnalysis(MSONable):
 
         dimer_neb = DimerNEBAnalysis(
             energies=energies,
+            forces=forces,
             structures=structures,
             dimer_indices=dimer_indices,
             spline_options=spline_options
