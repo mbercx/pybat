@@ -157,10 +157,10 @@ def get_barrier(directory, method="pymatgen", show_plot=False):
 
     elif method == "dimer":
         # This method makes some assumptions about the directory structure
-        # for it to work:
+        # for it to work properly:
         #
-        # - The image directories are two characters long, and there are no
-        #   other directories which are two characters long.
+        # - The image directories are digits, and there are no
+        #   other directories which are digits.
         # - The directory in which the nudged elastic band was performed
         #   contains the dimer indices, delimited by '_', and with no other
         #   numbers delimited in such a way present.
@@ -170,9 +170,10 @@ def get_barrier(directory, method="pymatgen", show_plot=False):
                 os.path.join(directory, "neb_data.json")
             )
         else:
-            neb = DimerNEBAnalysis.from_dir(directory)
-            neb.to("json", os.path.join(directory, "neb_data.json"),
-                   spline_options={"saddle_point": "zero_slope"})
+            neb = DimerNEBAnalysis.from_dir(
+                directory, spline_options={"saddle_point": "zero_slope"}
+            )
+            neb.to("json", os.path.join(directory, "neb_data.json"))
 
         if show_plot:
             neb.setup_spline({"saddle_point": "zero_slope"})

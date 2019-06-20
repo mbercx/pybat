@@ -1358,7 +1358,7 @@ class DimerNEBAnalysis(MSONable):
                                       "supported.")
 
     @classmethod
-    def from_dir(cls, root_dir, dimer_indices=None, **kwargs):
+    def from_dir(cls, root_dir, dimer_indices=None, spline_options=None):
         """
         As the class relies on the from_dir() method of its parent, the directory
         structure should be similar for the VASP OUTPUT files. Additionally, the
@@ -1437,6 +1437,7 @@ class DimerNEBAnalysis(MSONable):
             energies=energies,
             structures=structures,
             dimer_indices=dimer_indices,
+            spline_options=spline_options
         )
 
         return dimer_neb
