@@ -176,7 +176,6 @@ def get_barrier(directory, method="pymatgen", show_plot=False):
             neb.to("json", os.path.join(directory, "neb_data.json"))
 
         if show_plot:
-            neb.setup_spline({"saddle_point": "zero_slope"})
             neb.get_plot(label_barrier=False).show()
     else:
         raise NameError("Method for gathering NEB data not recognised.")
