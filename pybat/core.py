@@ -19,15 +19,8 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.util.plotting import pretty_plot
+from scipy.interpolate import CubicSpline
 from tabulate import tabulate
-
-scipy_old_piecewisepolynomial = True
-try:
-    from scipy.interpolate import PiecewisePolynomial
-except ImportError:
-    from scipy.interpolate import CubicSpline
-
-    scipy_old_piecewisepolynomial = False
 
 """
 Module that contains basic classes to represent and calculate the properties of
@@ -1278,12 +1271,12 @@ class DimerNEBAnalysis(MSONable):
                  dimer_indices=None):
 
         self.energies = np.array(energies)
-        self.forces = forces
+        self.forces = np.array(forces)
         self.structures = structures
         self.spline_options = spline_options if spline_options else {}
         self._dimer_indices = tuple(dimer_indices) if dimer_indices else None
-
-        self.spline = self.setup_spline(spline_options=self.spline_options)
+        self.spline = None
+        self.setup_spline(spline_options=self.spline_options)
 
     def setup_spline(self, spline_options=None):
         """
@@ -1294,7 +1287,7 @@ class DimerNEBAnalysis(MSONable):
                 {"saddle_point": "zero_slope"} forces the slope at the saddle to
                 be zero.
         """
-        self.spline_options = spline_options
+        self.spline_options = spline_options if spline_options else {}
         relative_energies = self.energies - self.energies[0]
 
         # To perform the spline interpolation, we have to invert the distances and
@@ -1303,6 +1296,7 @@ class DimerNEBAnalysis(MSONable):
         inv_energy = relative_energies[::-1]
 
         if self.spline_options.get('saddle_point', '') == 'zero_slope':
+            print("No!")
 
             imax = np.argmax(inv_energy)
 
@@ -1315,15 +1309,25 @@ class DimerNEBAnalysis(MSONable):
 
             spline.extend(c=cspline2.c, x=cspline2.x[1:])
 
-        else:
+        elif self.spline_options.get("force_based", False):
+            print("yay!")
             inv_force = self.forces[::-1]
-            spline = PiecewisePolynomial(
-                inv_dist, np.array([inv_energy, -inv_force]).T,
-                orders=3)
-            # spline = CubicSpline(x=inv_dist, y=inv_energy,
-            #                      bc_type=((1, 0.0), (1, 0.0)))
+            spline = CubicSpline(x=inv_dist[:2], y=inv_energy[:2],
+                                 bc_type=((1, inv_force[0]), (1, inv_force[1])))
+            for i in range(2, len(inv_energy)):
+                print("bla")
+                next_spline = CubicSpline(x=inv_dist[i - 1:i + 1],
+                                          y=inv_energy[i - 1:i + 1],
+                                          bc_type=(
+                                              (1, inv_force[i - 1]), (1, inv_force[i])))
+                spline.extend(c=next_spline.c, x=next_spline.x[1:])
 
-        return spline
+        else:
+            print("What the?")
+            spline = CubicSpline(x=inv_dist, y=inv_energy,
+                                 bc_type=((1, 0.0), (1, 0.0)))
+
+        self.spline = spline
 
     @property
     def dimer_indices(self):
@@ -1484,6 +1488,7 @@ class DimerNEBAnalysis(MSONable):
     def from_dict(cls, d):
 
         return cls(energies=d["energies"],
+                   forces=d["forces"],
                    structures=[LiRichCathode.from_dict(structure) for
                                structure in d["structures"]],
                    dimer_indices=d["dimer_indices"])

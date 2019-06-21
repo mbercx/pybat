@@ -10,7 +10,7 @@ from custodian import Custodian
 from custodian.vasp.handlers import VaspErrorHandler, UnconvergedErrorHandler
 from custodian.vasp.jobs import VaspJob
 from fireworks import FiretaskBase
-from fireworks import Firework, FWAction, ScriptTask
+from fireworks import Firework, FWAction, ScriptTask, PyTask
 from pymatgen import Structure
 
 from pybat.core import Cathode
@@ -188,6 +188,13 @@ class PulayTask(FiretaskBase):
             else:
                 vasprun = VaspTask(directory=directory)
 
+            # Extract the final cathode from the geometry optimization
+            get_cathode = PyTask(
+                func="pybat.cli.commands.get.get_cathode",
+                kwargs={"directory": os.path.join(directory),
+                        "write_cif": True}
+            )
+
             # Create the PyTask that check the Pulay stresses again
             pulay_task = PulayTask(
                 directory=directory, in_custodian=in_custodian,
@@ -203,7 +210,7 @@ class PulayTask(FiretaskBase):
                 firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
             # Combine the two FireTasks into one FireWork
-            optimize_fw = Firework(tasks=[copy_contcar, vasprun, pulay_task],
+            optimize_fw = Firework(tasks=[copy_contcar, vasprun, get_cathode, pulay_task],
                                    name="Pulay Step",
                                    spec=firework_spec)
 
