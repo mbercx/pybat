@@ -448,7 +448,7 @@ def get_wf_dimer(structure, directory, dimer_indices, distance,
     )
 
     wf_name = str(structure.composition.reduced_composition).replace(" ", "")
-    wf_name += " dimer" + str(dimer_indices)
+    wf_name += "\n dimer" + str(dimer_indices)
 
     return Workflow(
         fireworks=[dimer_firework, static_fw],
