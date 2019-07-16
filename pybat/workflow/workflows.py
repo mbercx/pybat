@@ -513,6 +513,17 @@ def get_wfs_noneq_dimers(structure, distance, functional=("pbe", {}),
     return workflows
 
 
+# TODO Add to both multiple dimer workflows
+# # Create the dimer directory
+# dimer_dir = os.path.join(
+#     os.getcwd(), "dimer_" + "_".join([str(el) for el in dimer_indices])
+# )
+# try:
+#     os.mkdir(dimer_dir)
+# except FileExistsError:
+#     warnings.warn("Warning: " + dimer_dir + " already exists, "
+#                                             "overwriting...")
+
 def get_wfs_site_dimers(structure, site_index, distance,
                         functional=("pbe", {}), is_metal=False,
                         in_custodian=False, number_nodes=None):

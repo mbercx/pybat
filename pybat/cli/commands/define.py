@@ -2,7 +2,6 @@
 # Copyright (c) Marnik Bercx, University of Antwerp
 # Distributed under the terms of the MIT License
 
-import _warnings as warnings
 import os
 
 """
@@ -75,8 +74,7 @@ def define_migration(structure, site, final_site, write_cif=False):
     return migration_dir
 
 
-def define_dimer(structure, dimer_indices=(0, 0), distance=0,
-                 remove_cations=False, write_cif=False):
+def define_dimer(structure, directory, dimer_indices=(0, 0), distance=0, write_cif=False):
     """
     Define the formation of an oxygen dimer in a Cathode structure.
 
@@ -85,11 +83,11 @@ def define_dimer(structure, dimer_indices=(0, 0), distance=0,
 
     Args:
         structure (pybat.core.LiRichCathode): LiRichCathode for which to define a dimer.
+        directory (str): Path to the directory in which the dimer structure files
+            should be written.
         dimer_indices (tuple): Indices of the oxygen sites which are to form a
             dimer.
         distance (float): Final distance between the oxygen atoms.
-        remove_cations (bool): Flag that allows the user to remove the
-            cations (Li, Na, ...) around the chosen oxygen pair.
         write_cif (bool): Flag that indicates that the initial and final
         structure files should also be written in a cif format.
 
@@ -117,23 +115,15 @@ def define_dimer(structure, dimer_indices=(0, 0), distance=0,
         print("")
         distance = float(distance)
 
-    if remove_cations:
-        # Remove the cations around the oxygen dimer
-        structure.remove_dimer_cations(dimer_indices)
-
     # Change the distance between the oxygen atoms for the dimer structure
     dimer_structure = structure.copy()
     dimer_structure.change_site_distance(dimer_indices, distance)
 
-    # Create the dimer directory
-    dimer_dir = os.path.join(
-        os.getcwd(), "dimer_" + "_".join([str(el) for el in dimer_indices])
-    )
+    # Set up the dimer directory
     try:
-        os.mkdir(dimer_dir)
+        os.makedirs(directory)
     except FileExistsError:
-        warnings.warn("Warning: " + dimer_dir + " already exists, "
-                                                "overwriting...")
+        pass
 
     # Set up the filenames
     struc_name = str(structure.composition.reduced_composition).replace(" ", "")
@@ -143,12 +133,10 @@ def define_dimer(structure, dimer_indices=(0, 0), distance=0,
     dimer_structure_file = struc_name + dimer_name + "_final"
 
     # Write out the initial and final structures
-    structure.to("json", os.path.join(dimer_dir, initial_structure_file + ".json"))
-    dimer_structure.to("json", os.path.join(dimer_dir, dimer_structure_file + ".json"))
+    structure.to("json", os.path.join(directory, initial_structure_file + ".json"))
+    dimer_structure.to("json", os.path.join(directory, dimer_structure_file + ".json"))
 
     # Write the structures to a cif format if requested
     if write_cif:
-        structure.to("cif", os.path.join(dimer_dir, initial_structure_file + ".cif"))
-        dimer_structure.to("cif", os.path.join(dimer_dir, dimer_structure_file + ".cif"))
-
-    return dimer_dir
+        structure.to("cif", os.path.join(directory, initial_structure_file + ".cif"))
+        dimer_structure.to("cif", os.path.join(directory, dimer_structure_file + ".cif"))

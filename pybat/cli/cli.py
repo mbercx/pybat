@@ -369,12 +369,12 @@ def migration(structure_file, migration_indices, write_cif):
 
 @define.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("structure_file", nargs=1)
+@click.option("-D", "--directory", default=".")
 @click.option("-i", "--dimer_indices", default=(0, 0))
 @click.option("-d", "--distance", default=float(0))
-@click.option("-r", "--remove_cations", is_flag=True)
 @click.option("-w", "--write_cif", is_flag=True,
               help=WRITE_CIF_HELP)
-def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
+def dimer(structure_file, directory, dimer_indices, distance, write_cif):
     """
     Define the formation of a dimer in a structure.
 
@@ -384,9 +384,9 @@ def dimer(structure_file, dimer_indices, distance, remove_cations, write_cif):
     cat = LiRichCathode.from_file(structure_file)
 
     define_dimer(structure=cat,
+                 directory=os.path.abspath(directory),
                  dimer_indices=dimer_indices,
                  distance=distance,
-                 remove_cations=remove_cations,
                  write_cif=write_cif)
 
 
