@@ -399,6 +399,7 @@ def get_wf_dimer(structure, directory, dimer_indices, distance,
     setup_dimer = PyTask(
         func="pybat.cli.commands.define.dimer",
         kwargs={"structure": structure,
+                "directory": directory,
                 "dimer_indices": dimer_indices,
                 "distance": distance,
                 "write_cif": True}
