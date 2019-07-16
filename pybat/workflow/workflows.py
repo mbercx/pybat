@@ -393,7 +393,6 @@ def get_wf_dimer(structure, directory, dimer_indices, distance,
 
     """
     # TODO Change naming scheme
-    # TODO Can currently not be executed from jupyter notebook
 
     # Let the user define a dimer, unless one is provided
     setup_dimer = PyTask(
