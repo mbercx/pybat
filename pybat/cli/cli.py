@@ -379,15 +379,15 @@ def dimer(structure_file, directory, dimer_indices, distance, write_cif):
     Define the formation of a dimer in a structure.
 
     """
-    from pybat.cli.commands.define import define_dimer
+    from pybat.cli.commands.define import dimer
 
     cat = LiRichCathode.from_file(structure_file)
 
-    define_dimer(structure=cat,
-                 directory=os.path.abspath(directory),
-                 dimer_indices=dimer_indices,
-                 distance=distance,
-                 write_cif=write_cif)
+    dimer(structure=cat,
+          directory=os.path.abspath(directory),
+          dimer_indices=dimer_indices,
+          distance=distance,
+          write_cif=write_cif)
 
 
 # endregion

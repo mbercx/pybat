@@ -74,7 +74,7 @@ def define_migration(structure, site, final_site, write_cif=False):
     return migration_dir
 
 
-def define_dimer(structure, directory, dimer_indices=(0, 0), distance=0, write_cif=False):
+def dimer(structure, directory, dimer_indices=(0, 0), distance=0, write_cif=False):
     """
     Define the formation of an oxygen dimer in a Cathode structure.
 

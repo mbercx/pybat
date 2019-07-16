@@ -7,7 +7,7 @@ import os
 import numpy as np
 from fireworks import Firework, PyTask, Workflow
 
-from pybat.cli.commands.define import define_dimer, define_migration
+from pybat.cli.commands.define import define_migration
 from pybat.cli.commands.setup import transition
 from pybat.core import Cathode, Dimer
 from pybat.workflow.firetasks import VaspTask, CustodianTask, ConfigurationTask, \
@@ -359,7 +359,7 @@ def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     )
 
 
-def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
+def get_wf_dimer(structure, directory, dimer_indices, distance,
                  functional=("pbe", {}), is_metal=False, in_custodian=False,
                  number_nodes=None):
     """
@@ -372,6 +372,8 @@ def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
         structure (pybat.core.LiRichCathode): LiRichCathode for which to perform a
             dimer workflow. Should be a LiRichCathode, as only for this class the dimer
             scripts are defined.
+        directory (str): Path to the directory in which the dimer calculation should
+            be run.
         dimer_indices (tuple): Indices of the oxygen sites which are to form a
             dimer. If no indices are provided, the user will be prompted.
         distance (float): Final distance between the oxygen atoms. If no
@@ -394,29 +396,32 @@ def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
     # TODO Can currently not be executed from jupyter notebook
 
     # Let the user define a dimer, unless one is provided
-    dimer_dir = define_dimer(structure=structure,
-                             dimer_indices=dimer_indices,
-                             distance=distance,
-                             write_cif=True)
+    setup_dimer = PyTask(
+        func="pybat.cli.commands.define.dimer",
+        kwargs={"structure": structure,
+                "dimer_indices": dimer_indices,
+                "distance": distance,
+                "write_cif": True}
+    )
 
     # Set up the FireTask that sets up the transition calculation
     setup_transition = PyTask(
         func="pybat.cli.commands.setup.transition",
-        kwargs={"directory": dimer_dir,
+        kwargs={"directory": directory,
                 "functional": functional,
                 "is_metal": is_metal}
     )
 
     # Create the PyTask that runs the calculation
     if in_custodian:
-        vasprun = CustodianTask(directory=os.path.join(dimer_dir, "final"))
+        vasprun = CustodianTask(directory=os.path.join(directory, "final"))
     else:
-        vasprun = VaspTask(directory=os.path.join(dimer_dir, "final"))
+        vasprun = VaspTask(directory=os.path.join(directory, "final"))
 
     # Extract the final cathode from the geometry optimization
     get_cathode = PyTask(
         func="pybat.cli.commands.get.get_cathode",
-        kwargs={"directory": os.path.join(dimer_dir, "final"),
+        kwargs={"directory": os.path.join(directory, "final"),
                 "write_cif": True}
     )
 
@@ -427,14 +432,13 @@ def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
-    transition_firework = Firework(tasks=[setup_transition, vasprun, get_cathode],
-                                   name="Dimer Geometry optimization",
-                                   spec=firework_spec)
+    dimer_firework = Firework(tasks=[setup_dimer, setup_transition, vasprun, get_cathode],
+                              name="Dimer Geometry optimization",
+                              spec=firework_spec)
 
     # Set up the static calculation directory
-    static_dir = os.path.join(dimer_dir, "static_final")
-
-    final_cathode = os.path.join(dimer_dir, "final", "final_cathode.json")
+    static_dir = os.path.join(directory, "static_final")
+    final_cathode = os.path.join(directory, "final", "final_cathode.json")
 
     # Set up the static calculation
     static_fw = PybatStaticFW(
@@ -446,9 +450,9 @@ def get_wf_dimer(structure, dimer_indices=(0, 0), distance=0,
     struc_name = str(structure.composition.reduced_composition).replace(" ", "")
 
     return Workflow(
-        fireworks=[transition_firework, static_fw],
-        name=struc_name + dimer_dir.split("/")[-1],
-        links_dict={transition_firework: [static_fw]}
+        fireworks=[dimer_firework, static_fw],
+        name=struc_name + directory.split("/")[-1],
+        links_dict={dimer_firework: [static_fw]}
     )
 
 
