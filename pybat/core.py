@@ -416,7 +416,7 @@ class Cathode(Structure):
 
         Args:
             directory (str): Directory in which the geometry optimization
-                output files (i.e. CONTCAR and OUTCAR) are stores.
+                output files (i.e. CONTCAR and OUTCAR) are stored.
             ignore_magmom (bool): Flag that indicates that the final magnetic
                 moments of the optimized structure should be ignored. This means
                 that the magnetic moments of the Cathode structure will
