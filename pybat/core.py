@@ -290,6 +290,7 @@ class Cathode(Structure):
             # Remove all the working ions
             self.working_ion_configuration = []
 
+
         # If a List of integers is given
         elif all([isinstance(item, int) for item in sites]):
             for index in sites:
@@ -470,7 +471,7 @@ class Cathode(Structure):
         """
         raise NotImplementedError
 
-    def find_noneq_cations(self):
+    def find_noneq_cations(self, symm_prec=1e-3):
         """
         Find a list of the site indices of all non-equivalent cations.
 
@@ -478,7 +479,8 @@ class Cathode(Structure):
             (list): List of site indices
 
         """
-        symmops = SpacegroupAnalyzer(self).get_space_group_operations()
+        symmops = SpacegroupAnalyzer(
+            self, symprec=symm_prec).get_space_group_operations()
 
         cation_indices = [
             index for index in range(len(self.sites))
@@ -500,7 +502,8 @@ class Cathode(Structure):
 
                 s2 = [self.sites[inequive_index], ]
 
-                if symmops.are_symmetrically_equivalent(s1, s2):
+                if symmops.are_symmetrically_equivalent(
+                        s1, s2, symm_prec=symm_prec):
                     inequivalent = False
 
             if inequivalent:
@@ -587,7 +590,8 @@ class Cathode(Structure):
                 self.site_properties["magmom"] * int(len(structure) / len(self))
             )
             # Sort the structure and redefine it as a cathode
-            cathode = Cathode.from_structure(structure.get_sorted_structure())
+            cathode = self.__class__.from_structure(
+                structure.get_sorted_structure())
             cathode.remove_working_ions(
                 [i for i, site in enumerate(cathode)
                  if site.species_string == "Lr"]
@@ -788,7 +792,7 @@ class LiRichCathode(Cathode):
 
         self.remove_working_ions(remove_sites)
 
-    def find_noneq_dimers(self, site_index=None, method="symmops"):
+    def find_noneq_dimers(self, site_index=None, method="symmops", symm_prec=1e-3):
         """
         A script that distills the non-equivalent oxygen dimers around a site
         index.
@@ -813,17 +817,17 @@ class LiRichCathode(Cathode):
             List of Tuples with the dimer indices
 
         """
-
         ineq_dimers = []
 
         if method == "symmops":
 
-            symmops = SpacegroupAnalyzer(self).get_space_group_operations()
+            symmops = SpacegroupAnalyzer(
+                self, symprec=symm_prec).get_space_group_operations()
 
             # If no site is provided, consider all inequivalent cation sites
             if site_index is None:
 
-                ineq_cations = self.find_noneq_cations()
+                ineq_cations = self.find_noneq_cations(symm_prec=symm_prec)
 
                 for index in ineq_cations:
 
@@ -840,7 +844,8 @@ class LiRichCathode(Cathode):
                             d2 = [self.sites[ineq_dimer[0]],
                                   self.sites[ineq_dimer[1]]]
 
-                            if symmops.are_symmetrically_equivalent(d1, d2):
+                            if symmops.are_symmetrically_equivalent(
+                                    d1, d2, symm_prec=symm_prec):
                                 inequivalent = False
 
                         if inequivalent:
@@ -861,7 +866,8 @@ class LiRichCathode(Cathode):
                         d2 = [self.sites[ineq_dimer[0]],
                               self.sites[ineq_dimer[1]]]
 
-                        if symmops.are_symmetrically_equivalent(d1, d2):
+                        if symmops.are_symmetrically_equivalent(
+                                d1, d2, symm_prec=symm_prec):
                             inequivalent = False
 
                     if inequivalent:
@@ -907,7 +913,7 @@ class LiRichCathode(Cathode):
             raise IOError("Method for finding non-equivalent dimers is not "
                           "recognized.")
 
-    def list_noneq_dimers(self, site_index=None):
+    def list_noneq_dimers(self, site_index=None, symm_prec=1e-3):
         """
         Create a list of lists of equivalent dimers of the various
         non-equivalent dimers, i.e. group all dimers in the structure in
@@ -917,11 +923,13 @@ class LiRichCathode(Cathode):
 
         """
 
-        symmops = SpacegroupAnalyzer(self).get_space_group_operations()
+        symmops = SpacegroupAnalyzer(
+            self, symprec=symm_prec).get_space_group_operations()
 
         dimers = self.find_oxygen_dimers(site_index)
 
-        noneq_dimer_lists = [[dimer, ] for dimer in self.find_noneq_dimers(site_index)]
+        noneq_dimer_lists = [[dimer, ] for dimer in
+                             self.find_noneq_dimers(site_index, symm_prec=symm_prec)]
 
         for dimer in dimers:
 
@@ -932,7 +940,8 @@ class LiRichCathode(Cathode):
                 d2 = [self.sites[noneq_dimer_list[0][0]],
                       self.sites[noneq_dimer_list[0][1]]]
 
-                if symmops.are_symmetrically_equivalent(d1, d2) and not d1 == d2:
+                if symmops.are_symmetrically_equivalent(
+                        d1, d2, symm_prec=symm_prec) and not d1 == d2:
                     noneq_dimer_list.append(dimer)
 
         return noneq_dimer_lists
@@ -1319,7 +1328,8 @@ class DimerNEBAnalysis(MSONable):
                 next_spline = CubicSpline(x=inv_dist[i - 1:i + 1],
                                           y=inv_energy[i - 1:i + 1],
                                           bc_type=(
-                                              (1, inv_force[i - 1]), (1, inv_force[i])))
+                                              (1, inv_force[i - 1]),
+                                              (1, inv_force[i])))
                 spline.extend(c=next_spline.c, x=next_spline.x[1:])
 
         else:
@@ -1418,7 +1428,8 @@ class DimerNEBAnalysis(MSONable):
         # Cathode object, we need to load the cathode json files to
         # determine the distance between the dimers properly.
         image_dirs = [os.path.join(root_dir, file) for file in os.listdir(root_dir)
-                      if file.isdigit() and os.path.isdir(os.path.join(root_dir, file))]
+                      if
+                      file.isdigit() and os.path.isdir(os.path.join(root_dir, file))]
         image_dirs.sort()
 
         energies = []
@@ -1523,7 +1534,8 @@ class DimerNEBAnalysis(MSONable):
         #             in self.dimer_distances.take([0, max_index, -1])])
         plt.ylabel("Energy (meV)")
         # plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
-        plt.xlim(self.dimer_distances.max() + 0.05, self.dimer_distances.min() - 0.05)
+        plt.xlim(self.dimer_distances.max() + 0.05,
+                 self.dimer_distances.min() - 0.05)
 
         # if label_barrier:
         #     pass
