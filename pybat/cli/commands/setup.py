@@ -160,11 +160,10 @@ def optimize(structure, directory="", functional=("pbe", {}),
     if isinstance(structure, str):
         structure = Cathode.from_file(structure)
 
-    # If the structure is a cathode object
+    # If the structure is a cathode object, convert it to a structure for VASP IO
     if isinstance(structure, Cathode):
+        structure.to("json", os.path.join(directory, "initial_cathode.json"))
         structure = structure.as_ordered_structure()
-
-    structure.to("json", os.path.join(directory, "initial_cathode.json"))
 
     # Set up the calculation
     user_incar_settings = {}
