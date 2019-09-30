@@ -671,7 +671,7 @@ class LiRichCathode(Cathode):
     # octahedron. If the angle between the two vectors connecting the site and
     # the corresponding oxygens is larger than this value, the oxygens are
     # considered to be opposites.
-    oxygen_angle_tol = math.pi * 9 / 10
+    oxygen_angle_tol = math.pi * 8 / 10
 
     def __init__(self, lattice, species, coords, charge=None,
                  validate_proximity=False,
@@ -767,7 +767,7 @@ class LiRichCathode(Cathode):
                     oxygen_dimers.append(oxygen_pair)
 
             if len(oxygen_dimers) > 12:
-                raise Warning(
+                warnings.warn(
                     "Found more than 12 oxygen pairs around a single "
                     "site. This can be caused by the use of a small "
                     "unit cell. Results may not be useful.")
