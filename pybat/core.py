@@ -805,13 +805,15 @@ class LiRichCathode(Cathode):
             should be considered.
             method (str): Method for determining equivalency:
 
-            "symmops" - Two dimers are considered when they are
-            symmetrically equivalent, using the symmetry operations of the
-            cathode unit cell.
+                "symmops" - Two dimers are considered when they are
+                symmetrically equivalent, using the symmetry operations of the
+                cathode unit cell.
 
-            "representation" - Two dimers are equivalent if their
-            environments are the same, i.e. when they have the same
-            representation.
+                "representation" - Two dimers are equivalent if their
+                environments are the same, i.e. when they have the same
+                representation.
+            symm_prec (float): Symmetry precision required in order to consider
+                two oxygen pairs symmetrically equivalent.
 
         Returns:
             List of Tuples with the dimer indices
