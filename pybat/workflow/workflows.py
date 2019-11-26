@@ -169,6 +169,8 @@ def get_wf_configurations(structure, directory, substitution_sites=None,
         None
 
     """
+    substitution_sites = substitution_sites or []
+    sizes = sizes or []
 
     configuration_task = ConfigurationTask(
         structure=structure,

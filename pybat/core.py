@@ -574,7 +574,7 @@ class Cathode(Structure):
 
         # Set up the icet configuration generator
         configuration_generator = enumerate_structures(
-            atoms=AseAtomsAdaptor.get_atoms(self.as_ordered_structure()),
+            structure=AseAtomsAdaptor.get_atoms(self.as_ordered_structure()),
             sizes=sizes,
             chemical_symbols=configuration_space,
             concentration_restrictions=concentration_restrictions
