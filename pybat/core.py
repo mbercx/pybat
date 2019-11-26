@@ -1412,7 +1412,6 @@ class DimerNEBAnalysis(MSONable):
             PybatNEBAnalysis
 
         """
-
         # Figure out the dimer indices based on the directory
         if not dimer_indices:
             dimer_indices = tuple(
