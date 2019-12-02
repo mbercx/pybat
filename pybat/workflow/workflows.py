@@ -301,7 +301,7 @@ def get_wf_migration(structure, migration_indices=(0, 0),
 
 
 def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
-               in_custodian=False, number_nodes=None):
+               in_custodian=False, number_nodes=None, wf_name=None):
     """
     Set up a workflow that calculates the kinetic barrier between two geometries.
 
@@ -349,15 +349,11 @@ def get_wf_neb(directory, nimages=7, functional=("pbe", {}), is_metal=False,
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
-    cathode = Cathode.from_file(
-        os.path.join(directory, "final", "initial_cathode.json")
-    )
-    dir_name = os.path.abspath(directory).split("/")[-1]
-    workflow_name = str(cathode.composition).replace(" ", "") + " " + dir_name
+    wf_name = wf_name or "NEB wf"
 
     return Workflow(
         fireworks=[neb_firework, ],
-        name=workflow_name
+        name=wf_name
     )
 
 
