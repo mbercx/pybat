@@ -19,7 +19,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.io.vasp.outputs import Outcar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.util.plotting import pretty_plot
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, interp1d
 from tabulate import tabulate
 
 """
@@ -1278,27 +1278,27 @@ class DimerNEBAnalysis(MSONable):
 
     """
 
-    def __init__(self, energies, forces, structures, spline_options=None,
+    def __init__(self, energies, forces, structures, interp_options=None,
                  dimer_indices=None):
 
         self.energies = np.array(energies)
         self.forces = np.array(forces)
         self.structures = structures
-        self.spline_options = spline_options if spline_options else {}
+        self.interp_options = interp_options if interp_options else {}
         self._dimer_indices = tuple(dimer_indices) if dimer_indices else None
-        self.spline = None
-        self.setup_spline(spline_options=self.spline_options)
+        self.interpolation = None
+        self.setup_interpolation(interp_options=self.interp_options)
 
-    def setup_spline(self, spline_options=None):
+    def setup_interpolation(self, interp_options=None):
         """
         Setup of the options for the spline interpolation
 
         Args:
-            spline_options (dict): Options for cubic spline. For example,
-                {"saddle_point": "zero_slope"} forces the slope at the saddle to
-                be zero.
+            interp_options (dict): Options for the interpolation. For example,
+                {"spline": "zero_slope"} uses a cubic spline with the slope at the
+                saddle equal to zero.
         """
-        self.spline_options = spline_options if spline_options else {}
+        self.interp_options = interp_options if interp_options else {}
         relative_energies = self.energies - self.energies[0]
 
         # To perform the spline interpolation, we have to invert the distances and
@@ -1306,40 +1306,40 @@ class DimerNEBAnalysis(MSONable):
         inv_dist = self.dimer_distances[::-1]
         inv_energy = relative_energies[::-1]
 
-        if self.spline_options.get('saddle_point', '') == 'zero_slope':
-            print("No!")
+        interpolation = None
 
-            imax = np.argmax(inv_energy)
+        if "spline" in self.interp_options.keys():
+            if self.interp_options['spline'] == 'zero_slope':
 
-            spline = CubicSpline(x=inv_dist[:imax + 1], y=inv_energy[:imax + 1],
-                                 bc_type=((1, 0.0), (1, 0.0)))
-            # The bc_type sets the derivative to zero for the initial and final points
+                imax = np.argmax(inv_energy)
+                interpolation = CubicSpline(x=inv_dist[:imax + 1],
+                                            y=inv_energy[:imax + 1],
+                                            bc_type=((1, 0.0), (1, 0.0)))
+                # The bc_type sets the derivative to zero for the initial and
+                # final points
 
-            cspline2 = CubicSpline(x=inv_dist[imax:], y=inv_energy[imax:],
-                                   bc_type=((1, 0.0), (1, 0.0)))
+                cspline2 = CubicSpline(x=inv_dist[imax:], y=inv_energy[imax:],
+                                       bc_type=((1, 0.0), (1, 0.0)))
 
-            spline.extend(c=cspline2.c, x=cspline2.x[1:])
+                interpolation.extend(c=cspline2.c, x=cspline2.x[1:])
 
-        elif self.spline_options.get("force_based", False):
-            print("yay!")
-            inv_force = self.forces[::-1]
-            spline = CubicSpline(x=inv_dist[:2], y=inv_energy[:2],
-                                 bc_type=((1, inv_force[0]), (1, inv_force[1])))
-            for i in range(2, len(inv_energy)):
-                print("bla")
-                next_spline = CubicSpline(x=inv_dist[i - 1:i + 1],
-                                          y=inv_energy[i - 1:i + 1],
-                                          bc_type=(
-                                              (1, inv_force[i - 1]),
-                                              (1, inv_force[i])))
-                spline.extend(c=next_spline.c, x=next_spline.x[1:])
+            elif self.interp_options["spline"] == 'force_based':
+                inv_force = self.forces[::-1]
+                interpolation = CubicSpline(x=inv_dist[:2], y=inv_energy[:2],
+                                            bc_type=((1, inv_force[0]),
+                                                     (1, inv_force[1])))
+                for i in range(2, len(inv_energy)):
+                    next_spline = CubicSpline(x=inv_dist[i - 1:i + 1],
+                                              y=inv_energy[i - 1:i + 1],
+                                              bc_type=(
+                                                  (1, inv_force[i - 1]),
+                                                  (1, inv_force[i])))
+                    interpolation.extend(c=next_spline.c, x=next_spline.x[1:])
 
-        else:
-            print("What the?")
-            spline = CubicSpline(x=inv_dist, y=inv_energy,
-                                 bc_type=((1, 0.0), (1, 0.0)))
+        elif "linear" in self.interp_options.keys():
+            interpolation = interp1d(x=inv_dist, y=inv_energy, kind="linear")
 
-        self.spline = spline
+        self.interpolation = interpolation
 
     @property
     def dimer_indices(self):
@@ -1353,6 +1353,77 @@ class DimerNEBAnalysis(MSONable):
     def dimer_distances(self):
         return np.array([s.distance_matrix[self.dimer_indices]
                          for s in self.structures])
+
+    def get_plot(self, label_barrier=True):
+        """
+        Returns the NEB plot.
+
+        Args:
+            label_barrier (bool): Whether to label the maximum barrier.
+
+        Returns:
+            matplotlib.pyplot object.
+        """
+        plt = pretty_plot(12, 8)
+
+        if self.interpolation is not None:
+            interpolation_x = np.arange(np.min(self.dimer_distances),
+                                        np.max(self.dimer_distances), 0.01)
+            interpolation_y = self.interpolation(interpolation_x) * 1000
+            plt.plot(interpolation_x, interpolation_y, "k--", linewidth=2)
+
+        relative_energies = self.energies - self.energies[0]
+
+        plt.plot(self.dimer_distances, relative_energies * 1000, 'ro',
+                 linewidth=2,
+                 markersize=10)
+
+        plt.xlabel("O-O Distance ($\mathrm{\AA}$)")
+        max_index = np.argmax(self.energies)
+        # plt.xticks(self.r.take([0, max_index, -1]),
+        #            [str(round(d, 2)) for d
+        #             in self.dimer_distances.take([0, max_index, -1])])
+        plt.ylabel("Energy (meV)")
+        # plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
+        plt.xlim(self.dimer_distances.max() + 0.05,
+                 self.dimer_distances.min() - 0.05)
+
+        # if label_barrier:
+        #     pass
+        #     barrier = max(relative_energies)
+        #     plt.annotate('%.0f meV' % barrier,
+        #                  horizontalalignment='center')
+
+        plt.tight_layout()
+        return plt
+
+    def add_plot_to_axis(self, axis):
+        """
+        Returns the NEB plot.
+
+        Args:
+
+
+        Returns:
+            matplotlib.pyplot object.
+        """
+
+        if self.interpolation is not None:
+            interpolation_x = np.arange(np.min(self.dimer_distances),
+                                        np.max(self.dimer_distances), 0.01)
+            interpolation_y = self.interpolation(interpolation_x) * 1000
+            axis.plot(interpolation_x, interpolation_y, "k--", linewidth=2)
+
+        relative_energies = self.energies - self.energies[0]
+
+        axis.plot(self.dimer_distances, relative_energies * 1000, 'ro',
+                  linewidth=2,
+                  markersize=6)
+
+        axis.set_xlabel("O-O Distance ($\mathrm{\AA}$)")
+        axis.set_ylabel("Energy (meV)")
+        axis.set_xlim(self.dimer_distances.max() + 0.05,
+                      self.dimer_distances.min() - 0.05)
 
     def as_dict(self):
         """
@@ -1504,48 +1575,6 @@ class DimerNEBAnalysis(MSONable):
                    structures=[LiRichCathode.from_dict(structure) for
                                structure in d["structures"]],
                    dimer_indices=d["dimer_indices"])
-
-    def get_plot(self, label_barrier=True):
-        """
-        Returns the NEB plot.
-
-        Args:
-            label_barrier (bool): Whether to label the maximum barrier.
-
-        Returns:
-            matplotlib.pyplot object.
-        """
-        plt = pretty_plot(12, 8)
-
-        spline_x = np.arange(np.min(self.dimer_distances),
-                             np.max(self.dimer_distances), 0.01)
-        spline_y = self.spline(spline_x) * 1000
-
-        relative_energies = self.energies - self.energies[0]
-
-        plt.plot(spline_x, spline_y, "k-", linewidth=2)
-        plt.plot(self.dimer_distances, relative_energies * 1000, 'ro',
-                 linewidth=2,
-                 markersize=10)
-
-        plt.xlabel("O-O Distance ($\mathrm{\AA}$)")
-        max_index = np.argmax(self.energies)
-        # plt.xticks(self.r.take([0, max_index, -1]),
-        #            [str(round(d, 2)) for d
-        #             in self.dimer_distances.take([0, max_index, -1])])
-        plt.ylabel("Energy (meV)")
-        # plt.ylim((np.min(spline_y) - 10, np.max(spline_y) * 1.02 + 20))
-        plt.xlim(self.dimer_distances.max() + 0.05,
-                 self.dimer_distances.min() - 0.05)
-
-        # if label_barrier:
-        #     pass
-        #     barrier = max(relative_energies)
-        #     plt.annotate('%.0f meV' % barrier,
-        #                  horizontalalignment='center')
-
-        plt.tight_layout()
-        return plt
 
 
 # SO Plagiarism
