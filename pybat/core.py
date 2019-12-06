@@ -1451,14 +1451,14 @@ class DimerNEBAnalysis(MSONable):
                                       "supported.")
 
     @classmethod
-    def from_dir(cls, root_dir, dimer_indices=None, spline_options=None):
+    def from_dir(cls, root_dir, dimer_indices=None, interp_options=None):
         """
         As the class relies on the from_dir() method of its parent, the directory
-        structure should be similar for the VASP OUTPUT files. Additionally, the
-        script relies on the Cathode class for determining the distances between the
-        correct dimers, so the initial directory set up by the transition script should
-        still be present, containing the final geometry of that Cathode:
-
+        structure should be similar for the VASP OUTPUT files. Additionally,
+        the script relies on the Cathode class for determining the distances
+        between the correct dimers, so the initial directory set up by the
+        transition script should still be present, containing the final geometry
+        of that Cathode:
 
         initial:
         - final_cathode.json
@@ -1493,8 +1493,8 @@ class DimerNEBAnalysis(MSONable):
             if len(dimer_indices) != 2:
                 warnings.warn("Could not extract the O-O dimer indices from the "
                               "directory. Make sure that they are set correctly in "
-                              "case you want to know the distances between the oxygen "
-                              "atoms.")
+                              "case you want to know the distances between the "
+                              "oxygen atoms.")
 
         # Because the dimer indices are based on the internal indices of the
         # Cathode object, we need to load the cathode json files to
@@ -1533,7 +1533,7 @@ class DimerNEBAnalysis(MSONable):
             forces=forces,
             structures=structures,
             dimer_indices=dimer_indices,
-            spline_options=spline_options
+            interp_options=interp_options
         )
 
         return dimer_neb
