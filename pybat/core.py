@@ -1446,6 +1446,7 @@ class DimerNEBAnalysis(MSONable):
         return {"@module": self.__class__.__module__,
                 "@class": self.__class__.__name__,
                 'energies': jsanitize(self.energies),
+                'forces': jsanitize(self.forces),
                 'structures': [s.as_dict() for s in self.structures],
                 "dimer_indices": self.dimer_indices}
 
