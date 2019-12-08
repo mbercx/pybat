@@ -1286,7 +1286,6 @@ class DimerNEBAnalysis(MSONable):
         self.structures = structures
         self.interp_options = interp_options if interp_options else {}
         self._dimer_indices = tuple(dimer_indices) if dimer_indices else None
-        self.interpolation = None
         self.setup_interpolation(interp_options=self.interp_options)
 
     def setup_interpolation(self, interp_options=None):
@@ -1353,6 +1352,18 @@ class DimerNEBAnalysis(MSONable):
     def dimer_distances(self):
         return np.array([s.distance_matrix[self.dimer_indices]
                          for s in self.structures])
+
+    def remove_image(self, index):
+        """
+        Remove an image from the DimerNebAnalysis.
+
+        Returns:
+
+        """
+        self.energies = np.delete(self.energies, index)
+        self.forces = np.delete(self.forces, index)
+        del self.structures[index]
+        self.setup_interpolation(interp_options=self.interp_options)
 
     def get_plot(self, label_barrier=True):
         """
