@@ -123,7 +123,8 @@ def get_wf_optimize(structure, directory, functional=("pbe", {}),
 
 
 def get_wf_configurations(structure, directory, substitution_sites=None,
-                          element_list=None, sizes=None, concentration_restrictions=None,
+                          element_list=None, sizes=None,
+                          concentration_restrictions=None,
                           max_configurations=None, configuration_list=None,
                           include_existing=True, functional=("pbe", {}),
                           in_custodian=False, number_nodes=None):
@@ -430,9 +431,10 @@ def get_wf_dimer(structure, directory, dimer_indices, distance,
     else:
         firework_spec.update({"_category": str(number_nodes) + "nodes"})
 
-    dimer_firework = Firework(tasks=[setup_dimer, setup_transition, vasprun, get_cathode],
-                              name="Dimer Geometry optimization",
-                              spec=firework_spec)
+    dimer_firework = Firework(
+        tasks=[setup_dimer, setup_transition, vasprun, get_cathode],
+        name="Dimer Geometry optimization",
+        spec=firework_spec)
 
     # Set up the static calculation directory
     static_dir = os.path.join(directory, "static_final")
@@ -586,7 +588,8 @@ def find_all(name, path):
 
 
 def find_all_cathode_hashes(path):
-    return [Cathode.from_file(file).__hash__() for file in find_all("cathode.json", path)]
+    return [Cathode.from_file(file).__hash__() for file in
+            find_all("cathode.json", path)]
 
 
 def find_hash_dict(path):
